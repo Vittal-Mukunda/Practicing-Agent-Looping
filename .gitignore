@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# Data and run outputs — never commit raw data, Parquet caches, or checkpoints.
+# Curated result summaries get promoted into docs/ deliberately, not committed here.
+data/*
+!data/README.md
+results/
+outputs/
+multirun/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini

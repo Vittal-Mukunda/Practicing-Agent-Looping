@@ -1,0 +1,12 @@
+# CA-DVAE (proposed model) — SKELETON. Values here demonstrate the config
+# schema; architecture hyperparameters are not final until Phase 4, and beta /
+# lambda_align are the swept variables that generate the trade-off curve (Phase 5).
+name: cadvae
+latent_dim: 16            # CLAUDE.md allows 8–32
+aligned_dims: null        # designated construct-aligned latent subset — Phase 2/4 decision
+hidden_dims: [128, 64]
+beta: 1.0                 # KL weight on free dims (swept)
+lambda_align: 1.0         # construct-alignment loss weight (swept)
+lr: 1.0e-3
+batch_size: 256
+max_epochs: 200

@@ -1,0 +1,9 @@
+# Autoencoder baseline ("the hard baseline to beat") — SKELETON, finalized in Phase 3.
+# Kept architecturally comparable to CA-DVAE (same latent_dim / hidden_dims defaults)
+# so representation comparisons are fair.
+name: ae
+latent_dim: 16
+hidden_dims: [128, 64]
+lr: 1.0e-3
+batch_size: 256
+max_epochs: 200

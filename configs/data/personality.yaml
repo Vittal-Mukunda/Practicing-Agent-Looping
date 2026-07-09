@@ -1,0 +1,14 @@
+# Dataset A — Customer Personality Analysis
+# Kaggle: imakash3011/customer-personality-analysis
+# Role in the paper: interpretability story (rich demographics + campaign response).
+name: personality
+raw_path: data/raw/customer_personality/marketing_campaign.csv
+processed_dir: data/processed/personality
+split:
+  type: stratified        # mandated by CLAUDE.md — guarded by tests/test_config.py
+  # Ratios and the stratification column are consequential (affect results):
+  # they are a Phase 1 gate decision. Nulls here mean "not yet decided", and
+  # Phase 1 code must refuse to run while they are null.
+  test_size: null
+  val_size: null
+  stratify_on: null

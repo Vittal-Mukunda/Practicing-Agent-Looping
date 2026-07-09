@@ -1,0 +1,17 @@
+# Dataset B — eCommerce behavior data, multi-category store
+# Kaggle: mkechinov/ecommerce-behavior-data-from-multi-category-store
+# Role in the paper: scale + downstream-lift story. Multi-category store chosen
+# over the cosmetics shop because the category-affinity construct is vacuous
+# with a single category (owner decision, kickoff message 2026-07-09).
+name: ecommerce
+raw_dir: data/raw/ecommerce_multicategory
+files: null               # set after download is verified, e.g. [2019-Oct.csv, 2019-Nov.csv]
+processed_dir: data/processed/ecommerce
+split:
+  type: temporal          # mandated by CLAUDE.md — guarded by tests/test_config.py
+  # Window boundaries are the #1 leakage surface and require owner sign-off
+  # at the Phase 1 gate. Nulls mean "not yet decided"; Phase 1 code must
+  # refuse to run while they are null.
+  train_end: null         # e.g. "2019-11-10T00:00:00Z" — TBD
+  val_end: null
+  test_end: null
