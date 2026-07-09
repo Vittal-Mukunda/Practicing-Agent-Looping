@@ -16,10 +16,10 @@ A cold-start session reconstructs project state from this file + NOTEBOOK.md.
 | 0.7 | Local run logging (`RunLogger`: resolved config, config hash, git commit, seed, metrics.jsonl) | Completed (tests pending 0.3) |
 | 0.8 | pytest harness green (environment, config, seeding, run-logging) | Completed 2026-07-09 (15 passed) |
 | 0.9 | Lint (ruff) + type-check (mypy basic) clean on src/ | Completed 2026-07-09 (ruff clean after UP017 autofix in run_logging.py; mypy: no issues in 9 files; pytest re-run green after fix) |
-| 0.10 | Datasets downloaded to `data/raw/` | **Blocked — no Kaggle credentials on this machine; owner action (see data/README.md)** |
-| 0.11 | Schema inspection (actual files) + data cards emitted | **Blocked — depends on 0.10; skeletons at docs/data_cards/** |
-| 0.12 | Dataset licenses confirmed on Kaggle pages | Pending — owner action at gate |
-| 0.13 | GATE sign-off: structure + data cards + open decisions (D-005, D-008, D-009, D-011) | Pending |
+| 0.10 | Datasets downloaded to `data/raw/` | Completed for gate 2026-07-09 — A (`marketing_campaign.csv`, CC0, sha256 recorded) + B `2019-Oct.csv` (42.4M rows, 5.67 GB) on disk. **B `2019-Nov.csv` deferred to Phase 1 start** (identical schema; no gate value in pulling 9 GB now) |
+| 0.11 | Schema inspection (actual files) + data cards emitted | **Completed 2026-07-09** — both cards filled from real inspection (A: full polars profile; B-Oct: streaming lazy scan). Key finds: A imbalance 14.9%, constant Z-cols, Income nulls/outlier; B purchase-rate 1.75%, category_code 31.84% null, **no remove_from_cart in Oct** |
+| 0.12 | Dataset licenses confirmed on Kaggle pages | A = **CC0-1.0 confirmed** first-hand (CLI); B = **`copyright-authors`** per CLI — **owner must review before publication** (D-011) |
+| 0.13 | GATE sign-off: structure + data cards + open decisions (D-004, D-005, D-008, D-011-B) | **Pending owner** — D-009 resolved (repo at C:\VAE) |
 
 ## Phase 1 — Data — not started (gated)
 ## Phase 2 — Constructs — not started (gated)

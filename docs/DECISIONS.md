@@ -52,12 +52,11 @@ Zero extra dependency, strong tabular default, CPU-fast. XGBoost/LightGBM would 
 a dep without an obvious accuracy story at these data sizes. Metric-affecting →
 consequential. *Status: provisional — decide no later than Phase 3 gate.*
 
-**D-009 (2026-07-09) — repo location risk: OneDrive-synced folder.**
-Repo lives under `C:\Users\vitta\OneDrive\Desktop\VAE`. OneDrive will try to sync
-`.venv` (~5 GB, thousands of files) and, worse, `data/raw` (~15 GB) — sync churn,
-file-lock interference, quota burn. Recommendation: move the repo to a non-synced
-path (e.g. `C:\dev\VAE`) before downloading Dataset B, or pause/exclude sync.
-*Status: pending owner decision — Phase 0 gate item.*
+**D-009 (2026-07-09) — repo location risk: OneDrive-synced folder. RESOLVED.**
+Original concern: repo under `C:\Users\vitta\OneDrive\Desktop\VAE` would sync
+`.venv` (~5 GB) and `data/raw` (~15 GB). **Resolved 2026-07-09: repo relocated to
+`C:\VAE` (non-synced; confirmed `pwd` = `/c/VAE`).** 734 GB free on C:, ample for
+the ~15 GB Dataset B. No OneDrive interference. *Status: locked (resolved).*
 
 **D-010 (2026-07-09) — determinism posture.**
 `seed_everything` seeds python/numpy/torch(+CUDA), forces deterministic cuDNN,
@@ -67,9 +66,18 @@ are *surfaced* in logs rather than silently allowed (CLAUDE.md: document unavoid
 GPU nondeterminism). Revisit warn-only vs strict at Phase 4 when the training loop
 exists. *Status: locked (engineering), revisit Phase 4.*
 
-**D-011 (2026-07-09) — licenses not yet verified first-hand.**
-Kaggle pages are JS-rendered; programmatic verification failed. Secondary source
-(Hugging Face mirror of Dataset B) states REES46 terms as "free to use for
-research, books, and educational materials. Please mention the source." Dataset A
-is commonly labeled CC0 but this is UNVERIFIED. Owner confirms both on the Kaggle
-pages at the Phase 0 gate. *Status: pending owner confirmation.*
+**D-011 (2026-07-09) — dataset licenses, now verified first-hand at download.**
+Kaggle pages are JS-rendered, so earlier programmatic verification failed; the
+Kaggle **CLI**, however, prints the license string at download time.
+- **Dataset A → `CC0-1.0` (public domain).** Confirmed first-hand. No restriction;
+  no attribution legally required (we will credit the source anyway). RESOLVED.
+- **Dataset B → `copyright-authors`** (Kaggle's "Data files © Original Authors"
+  label). This is the **actual Kaggle license tag** and it CONTRADICTS the softer
+  HF-mirror wording ("free to use for research… please mention the source"). It is
+  *not* an open/CC license. Practically, academic-research use of REES46's public
+  Kaggle release with attribution is the common and intended use, but the label is
+  restrictive, not permissive. **Owner must eyeball the Kaggle page's license
+  section and decide** whether the terms are acceptable for a public paper +
+  code-release, or whether to (a) proceed with attribution, (b) contact REES46, or
+  (c) swap Dataset B. Flagged as a Phase 0 gate item — do not treat as settled.
+*Status: A resolved; B pending owner confirmation (gate).*
