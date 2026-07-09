@@ -19,7 +19,7 @@ from cadvae.data import constructs as K
 from cadvae.data import ecommerce as E
 from cadvae.data import personality as P
 from cadvae.eval.protocol import evaluate_baselines
-from cadvae.eval.stats import aggregate, paired_wilcoxon_vs_best
+from cadvae.eval.stats import aggregate, significance_vs_best
 from cadvae.utils.run_logging import RunLogger
 
 
@@ -39,8 +39,8 @@ def run_dataset(cfg: DictConfig) -> dict:
         ps, ks = _prepare(cfg, int(seed))
         records.extend(evaluate_baselines(ps, ks, cfg, int(seed), device=device))
     summary = aggregate(records)
-    wilcoxon = paired_wilcoxon_vs_best(records, metric=cfg.eval.primary_metric, head="gbt")
-    return {"records": records, "summary": summary, "wilcoxon": wilcoxon}
+    sig = significance_vs_best(records, metric=cfg.eval.primary_metric, head="gbt")
+    return {"records": records, "summary": summary, "significance": sig}
 
 
 def _print_bar(cfg: DictConfig, out: dict) -> None:
@@ -52,7 +52,7 @@ def _print_bar(cfg: DictConfig, out: dict) -> None:
         print(f"  {r['head']:6s} {r['method']:12s} "
               f"roc={r['roc_auc_mean']:.4f}±{r['roc_auc_std']:.4f}  "
               f"pr={r['pr_auc_mean']:.4f}±{r['pr_auc_std']:.4f}")
-    w = out["wilcoxon"]
+    w = out["significance"]
     print(f"BAR TO BEAT ({pm}, gbt head): {w['best_method']} = {w['best_mean']:.4f}")
 
 
@@ -62,7 +62,7 @@ def main(cfg: DictConfig) -> None:
     logger = RunLogger(Path(cfg.results_dir) / "phase3" / f"{cfg.data.name}_baselines", cfg)
     (logger.run_dir / "records.json").write_text(json.dumps(out["records"], indent=2))
     (logger.run_dir / "summary.json").write_text(json.dumps(out["summary"], indent=2))
-    (logger.run_dir / "wilcoxon.json").write_text(json.dumps(out["wilcoxon"], indent=2))
+    (logger.run_dir / "significance.json").write_text(json.dumps(out["significance"], indent=2))
     OmegaConf.save(cfg, logger.run_dir / "resolved_config.yaml", resolve=True)
     _print_bar(cfg, out)
 

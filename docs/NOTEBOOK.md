@@ -210,3 +210,61 @@ as exit 0 — now the python exit code is captured directly.)
 rate; ROC 0.79–0.86 (not too-good-to-be-true); temporal split clean → no leakage
 flag; seed variance real. **Phase 3 at the GATE once the B run lands** — the bar to
 beat is fixed BEFORE any CA-DVAE work (Phase 4).
+
+## 2026-07-09 — Session 5 (Phase 3 B run landed + significance refinement → GATE)
+
+Cold start: Phase 3 B run had landed while the last session was paused. Reconciled
+provenance from result-dir mtimes, verified integrity, refined the stats, closed the
+cheap checks, and brought Phase 3 to the gate.
+
+**Dataset B — the bar to beat (5 seeds, GPU, subsample 200k / 40 epochs), PR-AUC
+(base rate 0.033):**
+| method | head | ROC-AUC | PR-AUC |
+|---|---|---|---|
+| **rfm** | gbt | 0.789±0.002 | **0.1947±0.0044** |
+| ae | gbt | 0.786±0.004 | 0.1724±0.0056 |
+| rfm | logreg | 0.769±0.003 | 0.1789±0.0033 |
+| ae | logreg | 0.774±0.006 | 0.1625±0.0162 |
+| gmm_ae | gbt | 0.741±0.013 | 0.1078±0.0080 |
+| rfm_kmeans | gbt | 0.723±0.010 | 0.1085±0.0052 |
+| dec | gbt | 0.706±0.017 | 0.0859±0.0050 |
+| ae_kmeans | gbt | 0.642±0.007 | 0.0692±0.0057 |
+
+→ **B bar to beat = RFM, gbt PR-AUC 0.1947.** RFM significantly beats AE
+(paired-t p=3.6e-4). **Honest finding confirmed at 5 seeds: for behavioral data
+RFM ≥ AE** — 3 raw recency/frequency/monetary features are a very strong
+purchase-prediction baseline; the AE embedding of the full user×feature table does
+not add lift. Ordering sane: RFM > AE > {gmm_ae ≈ rfm_kmeans} > dec > ae_kmeans; all
+beat the 0.033 base rate; K-means hard one-hots are the weakest (assignment discards
+signal). This is a genuinely hard, *non-neural* bar — good for the paper's honesty.
+
+**Statistics refinement (D-019 updated; `paired_wilcoxon_vs_best` →
+`significance_vs_best`).** Caught that a two-sided Wilcoxon signed-rank has a discrete
+p-floor of 2^-(n-1) = **0.0625 at n=5** — it *cannot* reach p<0.05 no matter how
+consistent the win (indeed every method's Wilcoxon p pins to exactly 0.0625 on both
+datasets). CLAUDE.md permits Wilcoxon *or* paired t; we now report **both**, plus
+`n_seeds` and the `wilcoxon_floor`, so the reader sees why the t-test carries the
+5-seed claim. **Recommendation logged for Phase 5 headline claims: ≥6 seeds**
+(Wilcoxon floor → 0.03125 < 0.05). Backward-compatible alias kept. Both baseline
+`significance.json` recomputed from the saved per-seed `records.json`.
+
+**Integrity checks (before touching anything):**
+- Provenance from mtimes: A records written 19:32 @ commit `3bbd66e` (git_dirty=true
+  — that dirtiness *was* the GMM fix, committed moments later as `0f889a1`); B records
+  19:51 @ `0f889a1` clean. Both datasets therefore on the *identical fixed* protocol
+  (robust diag-GMM). `significance.json` for both was patched in at 19:53 as a pure
+  post-hoc recompute — records/summary untouched.
+- **Verified** the patched `significance.json` reproduces byte-for-byte from
+  `records.json` via the committed `significance_vs_best` (script:
+  job tmp `verify_sig.py`) — for both datasets. So the stats layer is a faithful
+  function of the real per-seed runs; no GPU re-run needed for a stats-only change.
+- Removed the stale `wilcoxon.json` from both result dirs (superseded; the committed
+  runner no longer emits it). `results/` is gitignored — local hygiene only.
+
+**Cheap checks (CLAUDE.md §4):** `pytest` **31 passed** (+2 eval smoke incl. the
+updated `test_aggregate_and_significance_over_seeds` asserting both families + the
+n=2 Wilcoxon floor of 0.5); `ruff` clean; `mypy` clean (18 source files).
+
+**Phase 3 is at the GATE (3.8).** The bar to beat is fixed and logged BEFORE any
+CA-DVAE work: **A = AE embedding, PR-AUC 0.532 (gbt); B = RFM, PR-AUC 0.195 (gbt).**
+Awaiting owner sign-off. Next phase after sign-off = Phase 4 (CA-DVAE + ablations).

@@ -51,11 +51,11 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 3.1 | Protocol + K/latent/subsample decisions (D-019/020) | **Completed** — config-driven |
 | 3.2 | Models: AE (`models/ae.py`), DEC (`models/dec.py`) | **Completed** |
 | 3.3 | Baselines + frozen-rep harness + metrics (`eval/protocol.py`, `eval/metrics.py`) — RFM, RFM+KMeans, AE, AE+KMeans, GMM-on-AE, DEC × {logreg, HistGBT} | **Completed** |
-| 3.4 | Multi-seed aggregation + Wilcoxon (`eval/stats.py`), Hydra runner (`eval/run_baselines.py`) | **Completed** |
-| 3.5 | Smoke test (`tests/test_eval_smoke.py`) | **Completed** — full suite green, ruff+mypy clean |
-| 3.6 | Run Dataset A (5 seeds) — bar to beat | **Completed** — AE embedding PR-AUC 0.53(gbt)/0.57(logreg) |
-| 3.7 | Run Dataset B (5 seeds, subsample 200k) — bar to beat | **In Progress** — background run (~25 min); 1-seed sanity: RFM PR-AUC 0.195 |
-| 3.8 | GATE: owner reviews baseline numbers (bar fixed) | Pending — after 3.7 lands |
+| 3.4 | Multi-seed aggregation + significance (`eval/stats.py`), Hydra runner (`eval/run_baselines.py`) | **Completed** — `significance_vs_best` reports **both** paired Wilcoxon AND paired t (Wilcoxon two-sided p-floor = 2^-(n-1) = 0.0625 at n=5, so the t-test carries significance at 5 seeds; ≥6 seeds recommended for Phase 5 headline claims — D-019 updated) |
+| 3.5 | Smoke test (`tests/test_eval_smoke.py`) | **Completed** — full suite **31 passed**, ruff+mypy clean |
+| 3.6 | Run Dataset A (5 seeds) — bar to beat | **Completed** — AE embedding PR-AUC 0.532±0.006 (gbt) / 0.572±0.042 (logreg); AE beats every other method (paired-t p<0.003) |
+| 3.7 | Run Dataset B (5 seeds, subsample 200k) — bar to beat | **Completed 2026-07-09** — RFM gbt PR-AUC **0.1947±0.0044** (best); AE gbt 0.1724±0.0056; RFM > AE (paired-t p=3.6e-4). Honest finding: RFM ≥ AE on behavioral data |
+| 3.8 | GATE: owner reviews baseline numbers (bar fixed) | **Pending owner review** — both runs landed, numbers below |
 ## Phase 4 — CA-DVAE + ablations — not started (gated)
 ## Phase 5 — Campaign — not started (gated)
 ## Phase 6 — Analysis + figures — not started (gated)

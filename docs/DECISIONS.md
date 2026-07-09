@@ -258,9 +258,14 @@ predictive signal clustering discards vs the raw embedding.
 - **Metrics:** ROC-AUC + **PR-AUC (primary; both labels imbalanced)** + top-k.
   Clustering methods also get silhouette / Davies–Bouldin / Calinski–Harabasz and
   (Phase 6) ARI/NMI stability.
-- **Statistics:** mean ± std over **≥5 seeds** (seeds = 0..4), + a paired **Wilcoxon**
-  vs the strongest baseline. The "bar to beat" = best baseline test PR-AUC, fixed and
-  logged BEFORE any CA-DVAE run (Phase 3 gate). *Status: provisional (gate-reviewable).*
+- **Statistics:** mean ± std over **≥5 seeds** (seeds = 0..4), + paired significance
+  vs the strongest baseline. **We report BOTH paired Wilcoxon AND paired t** because
+  two-sided Wilcoxon signed-rank has a discrete p-floor of 2^-(n-1) = **0.0625 at
+  n=5** — it *cannot* reach p<0.05 regardless of effect size, so at 5 seeds the
+  t-test carries the significance claim. **Recommendation for Phase 5 headline claims:
+  ≥6 seeds** (Wilcoxon floor → 0.03125). The "bar to beat" = best baseline test
+  PR-AUC, fixed and logged BEFORE any CA-DVAE run (Phase 3 gate).
+  *Status: provisional (gate-reviewable).*
 
 **D-020 (2026-07-09) — latent dim, cluster count, Dataset B training subsample.**
 - **Latent dim d = 16** (CLAUDE.md 8–32; balanced default; config `model.latent_dim`).

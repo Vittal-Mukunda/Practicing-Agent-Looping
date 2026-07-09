@@ -11,7 +11,7 @@ from omegaconf import OmegaConf
 from cadvae.data.constructs import ConstructSet
 from cadvae.data.personality import PreparedSplit
 from cadvae.eval.protocol import evaluate_baselines
-from cadvae.eval.stats import aggregate, paired_wilcoxon_vs_best
+from cadvae.eval.stats import aggregate, significance_vs_best
 
 METHODS = {"rfm", "rfm_kmeans", "ae", "ae_kmeans", "gmm_ae", "dec"}
 
@@ -55,13 +55,20 @@ def test_evaluate_baselines_runs_and_is_sane():
             assert 0.0 <= r[m] <= 1.0
 
 
-def test_aggregate_and_wilcoxon_over_seeds():
+def test_aggregate_and_significance_over_seeds():
     ps0, ks0 = _tiny(0)
     ps1, ks1 = _tiny(1)
     recs = evaluate_baselines(ps0, ks0, _cfg(), 0, "cpu") + \
         evaluate_baselines(ps1, ks1, _cfg(), 1, "cpu")
     summary = aggregate(recs)
     assert all(r["n_seeds"] == 2 for r in summary)
-    w = paired_wilcoxon_vs_best(recs, metric="pr_auc", head="gbt")
+    w = significance_vs_best(recs, metric="pr_auc", head="gbt")
     assert w["best_method"] in METHODS
     assert 0.0 <= w["best_mean"] <= 1.0
+    # both significance families are reported vs the best baseline (CLAUDE.md §statistics)
+    assert w["n_seeds"] == 2
+    assert w["best_method"] not in w["ttest_p"]  # the best is not compared against itself
+    others = METHODS - {w["best_method"]}
+    assert set(w["wilcoxon_p"]) == set(w["ttest_p"]) == others
+    # n=2 Wilcoxon floor is 2^-(n-1) = 0.5 — it cannot approach 0.05; the t-test carries it
+    assert w["wilcoxon_floor"] == 0.5

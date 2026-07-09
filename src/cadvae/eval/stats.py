@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 import numpy as np
-from scipy.stats import wilcoxon
+from scipy.stats import ttest_rel, wilcoxon
 
 METRICS = ["roc_auc", "pr_auc", "prec_at_10pct"]
 
@@ -35,26 +35,41 @@ def _by_seed(records, method, head, metric):
     return d
 
 
-def paired_wilcoxon_vs_best(records: list[dict], metric: str = "pr_auc",
-                            head: str = "gbt") -> dict:
-    """Paired Wilcoxon of every method's per-seed metric vs the best-mean method.
-    Returns {best_method, best_mean, pvalues: {method: p}} (p=nan if identical/too few)."""
+def significance_vs_best(records: list[dict], metric: str = "pr_auc",
+                         head: str = "gbt") -> dict:
+    """Paired significance of every method's per-seed metric vs the best-mean method.
+
+    Reports BOTH a paired Wilcoxon signed-rank and a paired t-test (CLAUDE.md allows
+    either). NOTE: two-sided Wilcoxon has a discrete p-floor of 2^-(n-1) — at n=5
+    seeds that floor is 0.0625, so it can never reach p<0.05 no matter how consistent
+    the win. The paired t-test can, and ``n_seeds`` is reported so the reader can
+    judge. For headline claims, ≥6 seeds are recommended (Wilcoxon floor → 0.03125).
+    """
     methods = sorted({r["method"] for r in records if r["head"] == head})
     means = {m: np.mean([r[metric] for r in records
                          if r["method"] == m and r["head"] == head]) for m in methods}
     best = max(means, key=lambda m: means[m])
     best_by_seed = _by_seed(records, best, head, metric)
-    pvals = {}
+    wilcox, tt = {}, {}
+    n_used = 0
     for m in methods:
         if m == best:
             continue
         mb = _by_seed(records, m, head, metric)
         seeds = sorted(set(best_by_seed) & set(mb))
+        n_used = len(seeds)
         a = np.array([best_by_seed[s] for s in seeds])
         b = np.array([mb[s] for s in seeds])
         if len(seeds) < 2 or np.allclose(a, b):
-            pvals[m] = float("nan")
+            wilcox[m] = tt[m] = float("nan")
         else:
-            pvals[m] = float(wilcoxon(a, b).pvalue)
-    return {"best_method": best, "best_mean": float(means[best]),
-            "metric": metric, "head": head, "pvalues": pvals}
+            wilcox[m] = float(wilcoxon(a, b).pvalue)
+            tt[m] = float(ttest_rel(a, b).pvalue)
+    return {"best_method": best, "best_mean": float(means[best]), "metric": metric,
+            "head": head, "n_seeds": n_used,
+            "wilcoxon_floor": (2.0 ** -(n_used - 1) if n_used >= 2 else float("nan")),
+            "wilcoxon_p": wilcox, "ttest_p": tt}
+
+
+# backward-compatible alias
+paired_wilcoxon_vs_best = significance_vs_best
