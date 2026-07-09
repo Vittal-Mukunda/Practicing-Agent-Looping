@@ -1,12 +1,18 @@
-# CA-DVAE (proposed model) — SKELETON. Values here demonstrate the config
-# schema; architecture hyperparameters are not final until Phase 4, and beta /
-# lambda_align are the swept variables that generate the trade-off curve (Phase 5).
+# CA-DVAE (proposed model) — Phase 4. Architecture fixed here; beta / lambda_align
+# are the swept variables that generate the interpretability–performance trade-off
+# curve (Phase 5). See D-021 (alignment mechanism) and D-022 (loss / ablations).
 name: cadvae
-latent_dim: 16            # CLAUDE.md allows 8–32
-aligned_dims: null        # designated construct-aligned latent subset — Phase 2/4 decision
-hidden_dims: [128, 64]
-beta: 1.0                 # KL weight on free dims (swept)
-lambda_align: 1.0         # construct-alignment loss weight (swept)
+latent_dim: 16              # CLAUDE.md allows 8–32; matches the AE baseline (fair comparison)
+hidden_dims: [128, 64]      # same backbone shape as the AE baseline
+# Construct-alignment (Component 1).
+aligned_dims: null          # null → auto min(n_constructs, latent_dim - min_free_dims);
+                            #        forced to 0 when lambda_align == 0 (pure β-VAE ablation)
+min_free_dims: 4            # guarantee ≥4 free dims for the disentanglement block (auto path)
+lambda_align: 1.0           # construct-alignment loss weight (SWEPT in Phase 5)
+# Disentanglement (Component 2).
+beta: 1.0                   # KL weight on the FREE dims (SWEPT in Phase 5)
+aligned_kl_weight: 1.0      # unit-Gaussian prior weight on the aligned dims (keeps them stochastic)
+# Optimization (matches the AE baseline).
 lr: 1.0e-3
 batch_size: 256
 max_epochs: 200

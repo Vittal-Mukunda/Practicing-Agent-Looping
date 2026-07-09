@@ -56,7 +56,18 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 3.6 | Run Dataset A (5 seeds) — bar to beat | **Completed** — AE embedding PR-AUC 0.532±0.006 (gbt) / 0.572±0.042 (logreg); AE beats every other method (paired-t p<0.003) |
 | 3.7 | Run Dataset B (5 seeds, subsample 200k) — bar to beat | **Completed 2026-07-09** — RFM gbt PR-AUC **0.1947±0.0044** (best); AE gbt 0.1724±0.0056; RFM > AE (paired-t p=3.6e-4). Honest finding: RFM ≥ AE on behavioral data |
 | 3.8 | GATE: owner reviews baseline numbers (bar fixed) | **Pending owner review** — both runs landed, numbers below |
-## Phase 4 — CA-DVAE + ablations — not started (gated)
+## Phase 4 — CA-DVAE + ablations  → GATE: owner reviews model + sanity run
+
+| # | Task | Status |
+|---|------|--------|
+| 4.1 | Model: CA-DVAE (`models/cadvae.py`) — VAE + linear construct-alignment head + free/aligned latent split | **Completed** — D-021 |
+| 4.2 | Loss terms `recon + β·KL_free + w_a·KL_aligned + λ·align`; ablations as pure config points (β-VAE=λ0, VAE+align=β1, full) | **Completed** — D-022 |
+| 4.3 | Config `model/cadvae.yaml` finalized (aligned_dims auto-rule, min_free_dims, beta/lambda/aligned_kl_weight) | **Completed** |
+| 4.4 | Smoke tests (`tests/test_cadvae_smoke.py`, 6) — train/shapes/determinism/ablations/loss split | **Completed** — full suite **37 passed**, ruff+mypy clean |
+| 4.5 | Sanity runner (`eval/run_cadvae_sanity.py`) — logged curves + frozen-rep heads + alignment R² | **Completed** |
+| 4.6 | Sanity run A (GPU, 200 ep, seed 7) | **Completed** — gbt PR-AUC 0.479 vs AE bar 0.532 (Δ−0.053, expected); align RFM R²=0.90; exit 0 |
+| 4.7 | Sanity run B (GPU, 50k/40 ep, seed 7) — pipeline + timing | **Completed** — gbt PR-AUC 0.150 vs RFM bar 0.195 (Δ−0.037); align RFM R²=0.68; ~110 s → 200k run ≈3–4 min |
+| 4.8 | GATE: owner reviews model design + sanity run | **Pending owner review** |
 ## Phase 5 — Campaign — not started (gated)
 ## Phase 6 — Analysis + figures — not started (gated)
 ## Phase 7 — Reproduction package — not started (gated)

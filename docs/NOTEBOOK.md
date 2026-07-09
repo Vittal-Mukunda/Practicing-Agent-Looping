@@ -268,3 +268,56 @@ n=2 Wilcoxon floor of 0.5); `ruff` clean; `mypy` clean (18 source files).
 **Phase 3 is at the GATE (3.8).** The bar to beat is fixed and logged BEFORE any
 CA-DVAE work: **A = AE embedding, PR-AUC 0.532 (gbt); B = RFM, PR-AUC 0.195 (gbt).**
 Awaiting owner sign-off. Next phase after sign-off = Phase 4 (CA-DVAE + ablations).
+
+## 2026-07-09 — Session 6 (Phase 4: CA-DVAE + ablations → GATE)
+
+Owner: *"Implement next phase now."* → treated as the Phase-3 gate sign-off (bars
+accepted) + authorization for Phase 4. Seed-count question (5 vs ≥6) carried to the
+Phase-5 gate (it affects the sweep, not Phase 4).
+
+**Built (model machinery, no separate ablation code):**
+- `models/cadvae.py` — `CADVAE` (dense VAE, AE-matched backbone) + **linear**
+  construct-alignment head over a designated aligned latent block; `cadvae_loss`
+  (`recon + β·KL_free + w_a·KL_aligned + λ·align`, ELBO-scaled); `train_cadvae`
+  (returns model + per-epoch loss history), `encode` (frozen posterior-mean μ),
+  `align_predict`, `resolve_aligned_dims`. Design = **D-021** (alignment mechanism)
+  + **D-022** (loss / disentanglement scope / ablations-as-config).
+- `configs/model/cadvae.yaml` finalized; `aligned_dims: null`→auto rule.
+- `eval/run_cadvae_sanity.py` — trains one point, logs curves, runs the *identical*
+  Phase-3 frozen-rep heads, reports per-construct alignment R². Reuses
+  `protocol._fit_eval_heads/_subsample` (same protocol → fair).
+- `tests/test_cadvae_smoke.py` (6): train/shapes, determinism, both ablation config
+  points, aligned/free KL split, `resolve_aligned_dims` rules. **Full suite 37 passed;
+  ruff + mypy clean (20 files).**
+
+**Sanity runs (single arbitrary point β=1, λ=1 — NOT the sweep; NOT tuned to bar):**
+| dataset | aligned/free | downstream gbt PR-AUC | bar | Δ | align R² (mean / RFM) |
+|---|---|---|---|---|---|
+| A personality (200 ep) | 10/6 | 0.479 | AE 0.532 | −0.053 | 0.71 / **0.90** |
+| B ecommerce (50k, 40 ep) | 12/4 | 0.150 | RFM 0.195 | −0.037 | 0.64 / 0.68 |
+
+- **Alignment mechanism works** — the named axes genuinely encode the constructs
+  (A: R=0.91/F=0.88/M=0.90; B RFM 0.68). This is direct evidence for the
+  interpretability claim, independent of the lift claim.
+- **CA-DVAE sits below both bars at this un-swept point** — exactly the predicted
+  interpretability↔performance cost; the Phase-5 β/λ sweep maps the frontier.
+  **Did NOT tune to close the gap** (integrity §3).
+- **Skeptical-numbers observation to exploit in Phase 5:** `kl_free ≈ 0.02` on both
+  datasets → at β=1 the free dims have **collapsed to the prior**; the aligned block
+  carries the signal (kl_aligned 6.7 / 8.4). Sweeping β *down* (and/or λ) should
+  reactivate free capacity and likely recover downstream PR-AUC — a concrete
+  hypothesis for where the sweet spot lives. Not a bug (standard posterior collapse
+  on unused dims); logged as a lead.
+- **Real B timing anchor (promised):** 50k/40 ep end-to-end = **110 s** (incl. the
+  2.55M-row parquet load); the 200k protocol run ≈ **3–4 min**, confirming the
+  ~2–4 min/run estimate for the Phase-5 B sweep budget.
+
+**Gotcha fixed:** the summary `print` used β/λ/²/→ → `UnicodeEncodeError` on the
+Windows cp1252 console (job still wrote `sanity.json` first, so no data lost).
+Rewrote `_print_summary` ASCII-only; both runs now exit 0. A's `metrics.jsonl`
+(appended twice across the crash+fix) regenerated clean = 200 lines matching
+`sanity.json`.
+
+**Phase 4 is at the GATE (4.8).** Awaiting owner review of the model design (D-021/022)
++ sanity evidence. All choices config-driven + revertable. Next after sign-off =
+Phase 5 (multi-seed × β/λ sweep) — **decide seed count (5 vs ≥6) at that gate.**

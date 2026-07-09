@@ -282,3 +282,35 @@ predictive signal clustering discards vs the raw embedding.
   Dataset A (2,240 rows) runs full (no subsample, 200 epochs) in ~53 s / 5 seeds.
   Reproduction commands are logged in each run's `resolved_config.yaml` and in the
   NOTEBOOK. *Status: provisional (gate-reviewable).*
+
+**D-021 (2026-07-09) — CA-DVAE construct-alignment mechanism (Component 1).**
+- **Designated aligned block.** The latent vector is split `z = [z_aligned (a) | z_free (d−a)]`.
+  A **linear** head `A: R^a → R^C` predicts the C standardized Phase-2 construct targets
+  (RFM / price-sensitivity / category-affinity) from the aligned block; alignment loss =
+  summed-MSE. **Linear (not MLP) is deliberate:** each construct then corresponds to an
+  interpretable *direction* in latent space and the per-axis alignment score (Phase 6, MIG/SAP)
+  is well defined. A non-linear head would re-introduce the black box we are trying to remove.
+- **`aligned_dims` (a) auto-rule.** `a = min(n_constructs, latent_dim − min_free_dims)` with
+  `min_free_dims = 4`, so ≥4 free dims always remain for the disentanglement block. Resolves to
+  **A: a=10 (=n_constructs; 6 free)**, **B: a=12 (17 correlated construct targets, 4 free)**.
+  B's 13 category-affinity shares are compositional/low-rank, so a 12-dim block predicting 17
+  targets is not a bottleneck (measured test alignment R² mean 0.64, RFM 0.68). Config
+  `model.aligned_dims` (null→auto) + `model.min_free_dims`; both gate-reviewable.
+- **Frozen embedding = posterior mean μ (all d dims)** for the downstream protocol — identical
+  treatment to the AE baseline (which uses its encoder output), so lift differences are about
+  the *objective*, not the read-out. *Status: provisional (gate-reviewable).*
+
+**D-022 (2026-07-09) — CA-DVAE loss, disentanglement scope, ablation parameterization.**
+- **Loss:** `L = recon_MSE + β·KL_free + w_a·KL_aligned + λ·align_MSE` (CLAUDE.md
+  `recon + β·KL + λ·align`, made explicit). **β weights only the FREE-dim KL** (CLAUDE.md:
+  "β-VAE KL weighting on the remaining free dims"); aligned dims keep a standard unit-Gaussian
+  prior at weight `w_a = aligned_kl_weight = 1.0` so they stay stochastic instead of collapsing
+  under alignment pressure.
+- **ELBO reduction convention:** recon and each KL block are **summed over their dimension,
+  averaged over the batch** (align likewise over constructs) — the standard VAE ELBO scaling, so
+  β, λ ≈ O(1) are meaningful. Absolute scale is absorbed by the Phase-5 sweep regardless.
+- **Ablations are pure config points (no separate code paths):** β-VAE = `λ=0` (→ `a` forced 0,
+  β weights the whole KL — a *pure* β-VAE); VAE+align = `β=1`; CA-DVAE full = `β,λ` swept. This
+  is the "two independently ablatable components" requirement satisfied by one model class.
+- **β, λ are the Phase-5 swept variables** that generate the interpretability–performance
+  trade-off curve. *Status: provisional (gate-reviewable).*
