@@ -165,5 +165,39 @@ with the SAME per-seed partition as `prepare()`, target matrix standardized
   sanity. **Full suite 29 passed; ruff + mypy clean.**
 
 **Phase 2 at the GATE (2.5).** Awaiting owner review of construct definitions.
-Next after sign-off = Phase 3 (baselines through the frozen-rep protocol — the bar
-to beat, fixed before any CA-DVAE work).
+
+**Owner: "proceed phase 3" → Phase 3 executed same session.**
+
+## 2026-07-09 — Session 4 cont. (Phase 3: baselines / the bar to beat)
+
+Frozen-representation protocol (D-019/020). Built: `models/ae.py` (AE),
+`models/dec.py` (DEC, Xie 2016), `eval/metrics.py`, `eval/protocol.py` (RFM,
+RFM+K-means, AE, AE+K-means, GMM-on-AE, DEC → 2 heads: L2-logistic + HistGBT),
+`eval/stats.py` (mean±std + paired Wilcoxon), `eval/run_baselines.py` (Hydra
+entrypoint → results/phase3/). Smoke test `tests/test_eval_smoke.py` (2) on tiny
+CPU synthetic. K=8 clusters, latent d=16. **Full suite green; ruff + mypy clean.**
+
+**Dataset A — the bar to beat (5 seeds, GPU, ~53 s), PR-AUC (base rate 0.149):**
+| method | head | ROC-AUC | PR-AUC |
+|---|---|---|---|
+| **ae** | logreg | 0.857±0.007 | **0.572±0.042** |
+| **ae** | gbt | 0.840±0.014 | **0.532±0.061** |
+| gmm_ae | gbt | 0.763±0.020 | 0.399±0.051 |
+| rfm | logreg | 0.763±0.012 | 0.394±0.015 |
+| rfm | gbt | 0.725±0.032 | 0.349±0.045 |
+| ae_kmeans / dec / rfm_kmeans | — | 0.70–0.74 | 0.30–0.36 |
+
+→ **A bar to beat = AE embedding, PR-AUC ≈ 0.53 (gbt) / 0.57 (logreg).** Ordering
+sane: continuous AE embedding > RFM(3) > K=8 cluster one-hots (clustering discards
+signal). CA-DVAE must beat the AE embedding — a genuinely hard bar.
+
+**Dataset B — 1-seed timing/sanity (subsample 200k, 40 epochs, ~5 min), PR-AUC
+(base rate 0.033):** RFM gbt roc=0.789 pr=**0.195** (best) ≈ AE gbt roc=0.788
+pr=0.175; clusters 0.07–0.10. **Honest finding: for behavioral data RFM ≈ AE** —
+recency/frequency/monetary is a very strong purchase-prediction baseline. Full
+5-seed B run launched in background (results → results/phase3/ecommerce_baselines).
+
+**Skeptical-numbers pass:** ordering plausible both datasets; all reps beat base
+rate; ROC 0.79–0.86 (not too-good-to-be-true); temporal split clean → no leakage
+flag; seed variance real. **Phase 3 at the GATE once the B run lands** — the bar to
+beat is fixed BEFORE any CA-DVAE work (Phase 4).

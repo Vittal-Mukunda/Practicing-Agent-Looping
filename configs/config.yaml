@@ -14,6 +14,14 @@ device: cuda          # CPU fallback must be explicit (device=cpu), never silent
 results_dir: results
 run_name: ${model.name}_${data.name}_seed${seed}
 
+# Evaluation protocol (Phase 3, D-019/D-020). Frozen-representation downstream lift.
+eval:
+  seeds: [0, 1, 2, 3, 4]      # >=5 seeds → mean ± std + paired Wilcoxon
+  n_clusters: 8               # K for segmentation baselines (D-020)
+  train_subsample: null       # cap on train users for rep/head fitting; B overrides (D-020)
+  k_frac: 0.10                # precision@k targeting fraction
+  primary_metric: pr_auc      # imbalanced labels → PR-AUC is the headline
+
 hydra:
   run:
     dir: ${results_dir}/runs/${now:%Y-%m-%d_%H-%M-%S}_${run_name}

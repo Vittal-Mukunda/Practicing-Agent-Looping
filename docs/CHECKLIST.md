@@ -44,7 +44,18 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 2.3 | Verify on real data (shapes, alignment, sane raw values) | **Completed** — A: 10 targets, affinity sums to 1, deal-reliance∈[0,1]; B: 17 targets, affinity sum 0.69 ≡ known-category rate |
 | 2.4 | Leakage-guard + definition tests | **Completed** — `tests/test_constructs.py` (4); full suite **29 passed**, ruff+mypy clean |
 | 2.5 | GATE: owner reviews construct definitions | **Pending owner review** |
-## Phase 3 — Baselines — not started (gated)
+## Phase 3 — Baselines  → GATE: bar to beat fixed before any CA-DVAE work
+
+| # | Task | Status |
+|---|------|--------|
+| 3.1 | Protocol + K/latent/subsample decisions (D-019/020) | **Completed** — config-driven |
+| 3.2 | Models: AE (`models/ae.py`), DEC (`models/dec.py`) | **Completed** |
+| 3.3 | Baselines + frozen-rep harness + metrics (`eval/protocol.py`, `eval/metrics.py`) — RFM, RFM+KMeans, AE, AE+KMeans, GMM-on-AE, DEC × {logreg, HistGBT} | **Completed** |
+| 3.4 | Multi-seed aggregation + Wilcoxon (`eval/stats.py`), Hydra runner (`eval/run_baselines.py`) | **Completed** |
+| 3.5 | Smoke test (`tests/test_eval_smoke.py`) | **Completed** — full suite green, ruff+mypy clean |
+| 3.6 | Run Dataset A (5 seeds) — bar to beat | **Completed** — AE embedding PR-AUC 0.53(gbt)/0.57(logreg) |
+| 3.7 | Run Dataset B (5 seeds, subsample 200k) — bar to beat | **In Progress** — background run (~25 min); 1-seed sanity: RFM PR-AUC 0.195 |
+| 3.8 | GATE: owner reviews baseline numbers (bar fixed) | Pending — after 3.7 lands |
 ## Phase 4 — CA-DVAE + ablations — not started (gated)
 ## Phase 5 — Campaign — not started (gated)
 ## Phase 6 — Analysis + figures — not started (gated)

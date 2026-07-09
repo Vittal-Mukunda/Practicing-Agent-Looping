@@ -235,3 +235,43 @@ per-seed split as `prepare()`.
 
 Orientation of every target is documented in code. Definitions live in the data
 configs (`constructs:` block) → swappable/reviewable. *Status: provisional (gate-reviewable).*
+
+---
+## Phase 3 baselines / evaluation protocol (owner-delegated; reviewable at gate)
+
+**D-019 (2026-07-09) — frozen-representation downstream protocol.**
+Each method yields a per-user frozen representation → two downstream heads (D-008:
+L2-logistic + `HistGradientBoostingClassifier`) trained on **train**, evaluated on
+**test**. Representations (all fit on train only, per seed):
+- **RFM (incumbent floor, continuous):** the 3 standardized RFM construct values.
+- **RFM+K-means:** hard cluster one-hot (K) from K-means on train RFM.
+- **AE (the hard baseline, continuous):** the d-dim AE embedding.
+- **AE+K-means:** hard cluster one-hot (K) on the frozen AE embedding.
+- **GMM-on-AE:** soft responsibilities (K) from a GMM on the frozen AE embedding.
+- **DEC:** soft cluster assignment (K).
+(β-VAE / VAE+align / CA-DVAE embeddings are added in Phase 4 — same protocol.)
+Reporting continuous *and* segment representations answers CLAUDE.md's requirement
+that every listed baseline gets a downstream-lift number, and shows how much
+predictive signal clustering discards vs the raw embedding.
+- **Metrics:** ROC-AUC + **PR-AUC (primary; both labels imbalanced)** + top-k.
+  Clustering methods also get silhouette / Davies–Bouldin / Calinski–Harabasz and
+  (Phase 6) ARI/NMI stability.
+- **Statistics:** mean ± std over **≥5 seeds** (seeds = 0..4), + a paired **Wilcoxon**
+  vs the strongest baseline. The "bar to beat" = best baseline test PR-AUC, fixed and
+  logged BEFORE any CA-DVAE run (Phase 3 gate). *Status: provisional (gate-reviewable).*
+
+**D-020 (2026-07-09) — latent dim, cluster count, Dataset B training subsample.**
+- **Latent dim d = 16** (CLAUDE.md 8–32; balanced default; config `model.latent_dim`).
+- **K = 8 clusters** for all segmentation baselines (comparable across methods; config
+  `eval.n_clusters`). Silhouette-based K selection noted as a robustness alternative.
+- **Dataset B training subsample:** representation learning (AE/DEC/K-means/GMM fit)
+  and head fitting use a seed-stratified sample of **train** users
+  (`eval.train_subsample`, default 200k) for tractability on the 6 GB / 16 GB laptop
+  across many runs; **evaluation is always on the FULL held-out test set** (no
+  subsampling of test). Documented; the subsample size is config-driven and its
+  effect is a logged robustness check.
+- **Measured + finalized (2026-07-09):** Dataset B uses `eval.train_subsample=200000`
+  + `model.max_epochs=40` → ~5 min/seed (~25 min for the 5-seed run) on the RTX 4050.
+  Dataset A (2,240 rows) runs full (no subsample, 200 epochs) in ~53 s / 5 seeds.
+  Reproduction commands are logged in each run's `resolved_config.yaml` and in the
+  NOTEBOOK. *Status: provisional (gate-reviewable).*
