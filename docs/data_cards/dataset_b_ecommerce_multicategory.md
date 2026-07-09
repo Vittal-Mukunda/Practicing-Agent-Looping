@@ -68,15 +68,34 @@ labels → **PR-AUC is the primary metric**, ROC-AUC secondary; report top-k.
 3. `brand` 14.40% null; `price` has 68,673 exact-zero rows (free items /
    placeholders?) worth a policy decision but no negatives.
 
-## Facts still PENDING (Nov file + gate decisions)
-- `2019-Nov.csv`: per-file row count, event_time range, event_type mix, and
-  **Oct↔Nov user overlap** (drives churn/repeat labels + temporal split) — download
-  at Phase 1 start.
-- Duplicate-event strategy: documented, not yet decided.
-- Aggregation plan: user×feature matrix via Polars lazy `group_by` → Parquet cache
-  once (3.02M users Oct; 16 GB RAM → never materialize raw frame). Phase 1.
+## Both months verified (Phase 1) — combined facts
+`2019-Nov.csv` downloaded + inspected. **Combined Oct+Nov: 109,950,743 rows**,
+event_time `2019-10-01 00:00:00` → `2019-11-30 23:59:59` UTC. Event mix across both
+months: view 104.34M / cart 3.96M / **purchase 1.66M** — **`remove_from_cart` absent
+in BOTH months** (public docs were wrong; confirmed).
 
-## Splits (temporal boundaries), label definitions
-PENDING — Phase 1 gate decisions (consequential; the #1 leakage surface; owner
-sign-off required). Configs hold `null` for `train_end`/`val_end`/`test_end` and
-`files` until then (D-007).
+**Daily-purchase finding that corrected the split rationale (D-015):** the purchase
+surge is **Nov 16 (68k) and Nov 17 (185k, ~7× the ~24k/day baseline)**, NOT Black
+Friday (Nov 29 = 32k). The original "predict Black-Friday buying" story was refuted
+by the data (skeptical-numbers pass); the Nov 22–30 label window is a **routine,
+promotion-unconfounded** future period — a cleaner target. Window kept, rationale
+corrected.
+
+## Splits, universe, labels — RESOLVED at Phase 1 (D-015/016/017)
+- **Temporal cut:** feature window `[2019-10-01, 2019-11-22)` (52 d) → label window
+  `[2019-11-22, 2019-11-30]` (9 d). Every feature event strictly precedes every label
+  event (leakage-guard test asserts it).
+- **Universe:** ≥5 feature-window events → **2,545,394 users** (threshold chosen from
+  the observed sensitivity table, D-015). **Train/val/test user-disjoint 60/20/20** by
+  seed-salted `user_id` hash.
+- **Primary label** `purchased` (≥1 label-window purchase): **positive rate 3.27%**
+  → PR-AUC primary. `churned` (no label-window event): 70.8%. `next_category` defined
+  (D-016) for the multiclass task.
+
+## Processed artifact (Phase 1)
+`build_user_table()` (one streaming pass, ~200 s, bounded RAM) →
+`data/processed/ecommerce/user_table.parquet` (2,545,394 × 30; 78 MB; gitignored).
+`prepare(cfg, seed)` yields frozen train/val/test matrices: **27 features** (13
+behavioral: recency/frequency/monetary/conversion + 13 known top-level category
+shares + `unknown`; category `other` omitted — only 13 top-level categories exist).
+Module: `src/cadvae/data/ecommerce.py`.

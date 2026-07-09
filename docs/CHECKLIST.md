@@ -27,14 +27,14 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 
 | # | Task | Status |
 |---|------|--------|
-| 1.1 | Download `2019-Nov.csv` (Dataset B month 2, 9 GB) + verify | Pending |
-| 1.2 | Consequential-decision block: A split ratios + stratify col; B temporal boundaries; label definitions (campaign / repeat / next-cat / churn); feature definitions | Pending → D-entries |
-| 1.3 | Dataset A preprocessing: clean (Income/Year_Birth/Marital/Z-cols/Dt_Customer), stratified split, Parquet cache, feature matrix | Pending |
-| 1.4 | Dataset B preprocessing: Polars lazy `scan→filter→group_by→collect(streaming)` user×feature aggregation (Oct+Nov), temporal split, Parquet cache | Pending |
-| 1.5 | Leakage-guard unit tests (train-only fit; no test rows in train; temporal ordering; construct targets not refit on val/test) | Pending |
-| 1.6 | Pipeline/integration test: tiny sampled subset runs end-to-end, emits expected artifacts | Pending |
-| 1.7 | Update both data cards (post-processing shapes, split sizes, Nov facts, user-overlap) | Pending |
-| 1.8 | GATE: owner reviews split logic + leakage tests + data cards | Pending |
+| 1.1 | Download `2019-Nov.csv` (9 GB) + verify | **Completed** — 2019-Nov.csv on disk; combined 109,950,743 rows verified |
+| 1.2 | Consequential-decision block (D-013..017): A split/cleaning; B windows/universe/labels/features | **Completed** — all recorded in DECISIONS.md, config-driven, gate-reviewable |
+| 1.3 | Dataset A preprocessing (clean, stratified split, Parquet cache, feature matrix) | **Completed** — `src/cadvae/data/personality.py`; 2240×34; verified (stratification, no-NaN, determinism) |
+| 1.4 | Dataset B preprocessing (streaming user×feature aggregation Oct+Nov, temporal split, Parquet cache) | **Completed** — `src/cadvae/data/ecommerce.py`; 2.55M×27; ~200 s streaming build cached |
+| 1.5 | Leakage-guard unit tests (train-only fit; temporal ordering; label-window separation; user-disjoint) | **Completed** — `tests/test_leakage.py`, 8 tests incl. perturbation proofs + real-cache cross-check |
+| 1.6 | Pipeline/integration test (contract + emitted artifacts) | **Completed** — `tests/test_pipeline.py`; full suite **25 passed**, ruff+mypy clean |
+| 1.7 | Update both data cards (post-processing shapes, split sizes, Nov facts, corrected BF rationale) | **Completed** |
+| 1.8 | GATE: owner reviews split logic + leakage tests + data cards | **Pending owner review** |
 ## Phase 2 — Constructs — not started (gated)
 ## Phase 3 — Baselines — not started (gated)
 ## Phase 4 — CA-DVAE + ablations — not started (gated)

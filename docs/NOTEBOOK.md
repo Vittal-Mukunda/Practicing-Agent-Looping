@@ -103,3 +103,45 @@ still green from Session 2.
 D-011-B license call, D-004 git identity check, D-005 (results/ gitignored — assent),
 D-008 (GBT head — can defer to Phase 3). Nothing else blocks. Next phase after
 sign-off = Phase 1 (Polars lazy preprocessing + leakage-safe splits + Nov download).
+
+---
+
+## 2026-07-09 — Session 4 (Phase 0 gate closed + Phase 1 executed)
+
+Owner delegated the gate: *"Do what you think is best … ensure it is still
+publishable."* → resolved D-004/005/008/011-B (D-012), then executed Phase 1.
+
+**Environment fix (reproducibility):** the `.venv` was built in the old OneDrive
+location and moved to C:\VAE, orphaning the editable install (`cadvae` unimportable,
+`.pth` finder gone). Repaired with `uv pip install -e . --no-deps --python
+.venv/Scripts/python.exe`. All Polars/pytest runs use `.venv/Scripts/python.exe`
+(with `PYTHONPATH=src` for ad-hoc scripts) to avoid `uv run`'s editable-rebuild lock.
+
+**Consequential decisions (owner-delegated, documented D-013..017, config-driven):**
+A = stratified 60/20/20 on Response + train-only cleaning; B = temporal feature
+window [Oct 1, Nov 22) → label [Nov 22, Nov 30], universe ≥5 events, user-disjoint
+60/20/20 by hashed user_id, labels purchased/churned/next_category.
+
+**Skeptical-numbers catch (CLAUDE.md §5):** the draft D-015 justified the label
+window via a Black-Friday story. Real daily-purchase counts REFUTED it — the surge is
+Nov 16–17 (185k on Nov 17), inside the feature window; Nov 29 is a mild 32k. Rationale
+corrected; window kept (routine, unconfounded target). Universe threshold finalized
+from a real sensitivity table (≥5 → 2.55M users / 3.27% positive).
+
+**Built + verified:**
+- A: `src/cadvae/data/personality.py` → engineered.parquet (2240×27) + `prepare()`
+  (2240×34). Stratification preserved (0.149/0.150/0.150), no NaN, deterministic/seed.
+- B: `src/cadvae/data/ecommerce.py` → user_table.parquet (2.55M×30, 78 MB) via one
+  streaming pass (~200 s, bounded RAM) + `prepare()` (2.55M×27). Fixed a dead
+  all-zero `cat_share_other` column (only 13 top-level cats exist < top_n=15).
+- Leakage guards `tests/test_leakage.py` (8): perturbation proofs that train-fitted
+  transforms ignore val/test (both datasets); label-window purchase excluded from
+  features; temporal ordering; user-disjoint splits; real-cache cross-check.
+- Integration `tests/test_pipeline.py` (2). **Full suite 25 passed; ruff + mypy clean.**
+- `tests/test_config.py`: the D-007 null-guard was UPDATED (not weakened) to LOCK the
+  approved split values (D-014/015) so they cannot drift silently.
+
+**Phase 1 at the GATE (1.8).** Awaiting owner review of split logic + leakage tests +
+data cards. All Phase-1 scientific choices are provisional/gate-reviewable and revert
+via config + cache rebuild. Redundant raw `.zip`s deleted (717 GB free). Next after
+sign-off = Phase 2 (constructs: RFM / price-sensitivity / category-affinity, train-only).

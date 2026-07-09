@@ -4,11 +4,26 @@
 name: personality
 raw_path: data/raw/customer_personality/marketing_campaign.csv
 processed_dir: data/processed/personality
+separator: "\t"           # verified tab-separated (data card A)
+label: Response           # primary downstream task = campaign response (D-014)
+
 split:
   type: stratified        # mandated by CLAUDE.md — guarded by tests/test_config.py
-  # Ratios and the stratification column are consequential (affect results):
-  # they are a Phase 1 gate decision. Nulls here mean "not yet decided", and
-  # Phase 1 code must refuse to run while they are null.
-  test_size: null
-  val_size: null
-  stratify_on: null
+  # Phase 1 decision D-014 (owner-delegated 2026-07-09). Consequential values
+  # locked here and asserted in tests/test_config.py so they cannot drift silently.
+  test_size: 0.2
+  val_size: 0.2           # of the full dataset (train = 0.6)
+  stratify_on: Response
+
+# Cleaning + feature engineering policy — D-013 (all fits are TRAIN-ONLY).
+preprocess:
+  reference_year: 2014            # Age = reference_year - Year_Birth
+  tenure_reference: "2015-01-01"  # Customer_Tenure_Days = tenure_reference - Dt_Customer
+  dt_customer_format: "%d-%m-%Y"  # verified DD-MM-YYYY (data card A)
+  winsor_lower_q: 0.01            # train-fit quantiles for Income, Age
+  winsor_upper_q: 0.99
+  drop_columns: [ID, Year_Birth, Dt_Customer, Z_CostContact, Z_Revenue]
+  marital_status_junk: [Absurd, YOLO, Alone]   # → "Other"
+  marital_status_other: Other
+  numeric_impute: median          # train median (only Income has nulls)
+  standardize: true               # z-score on train mean/std (VAE needs it)

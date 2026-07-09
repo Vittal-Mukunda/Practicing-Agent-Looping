@@ -81,6 +81,19 @@ on this label unless the gate decides otherwise.
 4. `Z_CostContact`, `Z_Revenue`: constant — drop before modeling (uncontroversial).
 5. `Dt_Customer`: parse DD-MM-YYYY explicitly (do not rely on locale inference).
 
-## Splits, missingness policy, outlier policy
-PENDING — Phase 1 gate decisions (consequential; owner sign-off required). Configs
-hold `null` for `test_size` / `val_size` / `stratify_on` until then (D-007).
+## Splits, missingness policy, outlier policy — RESOLVED at Phase 1 (D-013/D-014)
+- **Split:** stratified 60/20/20 on `Response`, re-drawn per seed (D-014). Verified
+  label rate preserved across folds (0.149 / 0.150 / 0.150 at seed 7).
+- **Cleaning (train-only fit):** `Income` nulls → train median; `Income` & `Age`
+  winsorized to train [p1, p99] (absorbs the 666,666 income and the <1920 births —
+  at seed 7 the bounds were Income [8420, 94129], Age [22, 69]); junk marital levels
+  → "Other"; numerics z-scored on train stats. A leakage-guard test proves corrupting
+  val/test leaves every train-fitted transform unchanged (`tests/test_leakage.py`).
+- **Note (tradeoff):** the Age p99 cap (~69) also compresses genuine 70+ ages, not
+  just the birth-year errors; config-adjustable (`winsor_upper_q`).
+
+## Processed artifact (Phase 1)
+`engineer()` → `data/processed/personality/engineered.parquet` (2240 × 27,
+seed-independent, gitignored). `prepare(cfg, seed)` yields the frozen train/val/test
+matrices: **34 features** (23 numeric + one-hot Education(5) + Marital_Status(6)),
+binary `Response` label. Module: `src/cadvae/data/personality.py`.

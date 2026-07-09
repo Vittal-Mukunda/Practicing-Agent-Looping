@@ -112,3 +112,93 @@ stratification column, label definitions, feature definitions) will still be mad
 explicitly and documented here with rationale as new D-entries, and remain
 config-driven and revertable** — the delegation authorizes forward progress, not
 silent or irreversible scientific choices. *Status: locked.*
+
+---
+## Phase 1 consequential decisions (owner-delegated; reviewable at Phase 1 gate)
+
+All fits below are **train-only** and applied to val/test without refitting
+(CLAUDE.md frozen-representation + no-leakage protocol). Every parameter lives in
+the data configs; changing any is a config edit + Phase-1 cache rebuild (cheap
+relative to Phases 3-6), so these remain revertable at the gate.
+
+**D-013 (2026-07-09) — Dataset A feature set + cleaning policy.**
+*Features (VAE/AE input, per customer):* `Income`(cleaned), `Age`(=2014−Year_Birth,
+cleaned), `Kidhome`, `Teenhome`, `Recency`, the 6 `Mnt*`, the 4 `Num*Purchases`,
+`NumWebVisitsMonth`, `Complain`, `Customer_Tenure_Days`(from `Dt_Customer` vs fixed
+reference 2015-01-01), one-hot `Education`(5), one-hot `Marital_Status`(cleaned),
+and prior-campaign flags `AcceptedCmp1..5`.
+*Why AcceptedCmp1..5 are features, not leakage:* the label `Response` is the **6th
+(last)** campaign; Cmp1..5 are strictly-earlier campaigns → legitimate past→present
+predictors. *Dropped:* `ID`, `Year_Birth`(→Age), `Dt_Customer`(→tenure),
+`Z_CostContact`/`Z_Revenue`(constant), `Response`(label).
+*Cleaning (train-fit):* `Income` nulls → train median; `Income` & `Age` winsorized to
+[train p1, train p99] (absorbs the 666,666 income and the <1920 births); junk
+`Marital_Status` {Absurd,YOLO,Alone}→"Other"; unseen categorical levels in val/test →
+all-zero one-hot; all numeric features z-scored on train mean/std. Reference year
+2014 chosen because `Dt_Customer` spans 2012–2014 (campaign era). *Status: provisional (gate-reviewable).*
+
+**D-014 (2026-07-09) — Dataset A split = stratified 60/20/20 on `Response`.**
+2,240 rows, 14.9% positive → 20% test ≈ 448 rows ≈ 67 positives (usable ROC/PR-AUC);
+val 20% for downstream-head tuning. Partition re-drawn per seed (≥5 seeds → mean±std
++ Wilcoxon). Stratifying on the label balances prevalence across folds and is **not**
+leakage — the label is used only to partition; representation learning never sees it.
+Config: `test_size=0.2, val_size=0.2, stratify_on=Response`. *Status: provisional (gate-reviewable).*
+
+**D-015 (2026-07-09) — Dataset B temporal windows + user universe (THE #1 leakage surface).**
+Single temporal feature→label separation:
+- **Feature window** `[2019-10-01 00:00:00Z, 2019-11-21 23:59:59Z]` (52 days of history).
+- **Label window** `[2019-11-22 00:00:00Z, 2019-11-30 23:59:59Z]` (9 days).
+- **Universe:** users with **≥5 events** in the feature window → **2.55M users**,
+  label-window purchase rate **3.27%** (finalized from real data — see below).
+- **Guarantee:** every feature event strictly precedes every label event → no temporal
+  leakage; a leakage-guard test asserts `max(feature event_time) < label_window_start`.
+- **Train/val/test:** users partitioned **disjointly** 60/20/20 by a deterministic hash
+  of `user_id` (seed-salted) → no user appears in two splits (blocks identity leakage).
+  Representation + construct targets fit on **train users only**.
+
+*Verification against the real 110M-row data (2026-07-09) — and a CORRECTED
+rationale.* The original draft justified this window by a "predict Black-Friday
+purchasing" story. **That was wrong and the data refuted it** (caught by the
+skeptical-numbers pass, CLAUDE.md §5): the purchase surge is **Nov 16–17**
+(185k purchases on Nov 17, ~7× the ~24k/day baseline), which falls **inside the
+feature window**; Black Friday (Nov 29) shows only a mild bump (32k). The label
+window Nov 22–30 is therefore a **routine, promotion-unconfounded** future period —
+which is actually a *cleaner* downstream target ("predict routine future purchasing
+from 52 days of history, including any prior promo behavior") than a sale-confounded
+one. Window kept; rationale corrected.
+
+*Universe threshold — chosen from the observed sensitivity table (min feature-window
+events → users / label-window positive rate):* ≥1 → 4.74M / 2.00%; ≥2 → 3.74M /
+2.44%; ≥3 → 3.22M / 2.75%; **≥5 → 2.55M / 3.27%**; ≥10 → 1.78M / 4.08%. Chose **≥5**:
+buyer personas (RFM, category affinity, price sensitivity) are meaningless for a
+1–2-view drive-by user, so a minimum behavioral footprint is required; ≥5 retains
+scale (2.55M users) while excluding near-zero-signal traffic. Config-driven
+(`universe.min_events_feature_window`) → trivially swept as a robustness check.
+Class imbalance (~3.3% positive) → **PR-AUC primary**. Config `train_end/val_end/
+test_end` repurposed as split anchors.
+*Status: provisional (gate-reviewable); universe threshold now finalized from data.*
+
+**D-016 (2026-07-09) — Dataset B label definitions (from the label window).**
+1. **`purchased` (primary, binary):** ≥1 `purchase` event in the label window. Drives
+   the primary downstream-lift claim.
+2. **`next_category` (multiclass / top-k):** top-level category (from `category_code`,
+   mapped via a `category_id`→top-level lookup built from non-null rows to recover the
+   31.84% missing) of the user's **first** label-window purchase; evaluated top-k over
+   the most frequent categories; defined only for label-window purchasers.
+3. **`churned` (binary, dormancy proxy):** active in feature window but **zero** events
+   of any type in the label window. Short-horizon proxy (2-month data) — limitation
+   noted for the paper; longer-horizon churn is future work.
+All label-window events are excluded from features by construction (D-015). *Status: provisional (gate-reviewable).*
+
+**D-017 (2026-07-09) — Dataset B per-user feature aggregation (representation input).**
+Aggregated over the feature window via Polars lazy `scan_csv→filter→group_by→
+collect(engine="streaming")` (never materialize the ~110M-row raw frame; 16 GB RAM):
+- **Recency:** days from user's last feature-window event to label-window start.
+- **Frequency:** n_events, n_views, n_carts, n_purchases, n_sessions, n_active_days.
+- **Monetary:** total/mean/max purchase `price`; total/mean cart `price`.
+- **Category affinity:** event-share over the top-N top-level categories (+`other`) —
+  the category-affinity construct input (N set at Phase 2; features cached wide).
+- **Price/behavior:** mean_view_price, mean_purchase_price, cart_abandon_rate
+  (1−purchases/carts, div-0 guarded), conversion=purchases/views (guarded).
+Output = one row per universe user → Parquet cache (loaded small for every experiment).
+*Status: provisional (gate-reviewable).*

@@ -5,13 +5,36 @@
 # with a single category (owner decision, kickoff message 2026-07-09).
 name: ecommerce
 raw_dir: data/raw/ecommerce_multicategory
-files: null               # set after download is verified, e.g. [2019-Oct.csv, 2019-Nov.csv]
+files: [2019-Oct.csv, 2019-Nov.csv]   # both months verified on disk at Phase 1
 processed_dir: data/processed/ecommerce
+
 split:
   type: temporal          # mandated by CLAUDE.md — guarded by tests/test_config.py
-  # Window boundaries are the #1 leakage surface and require owner sign-off
-  # at the Phase 1 gate. Nulls mean "not yet decided"; Phase 1 code must
-  # refuse to run while they are null.
-  train_end: null         # e.g. "2019-11-10T00:00:00Z" — TBD
-  val_end: null
-  test_end: null
+  # Phase 1 decision D-015 (owner-delegated 2026-07-09). The temporal feature->label
+  # separation is THE #1 leakage surface; a leakage-guard test asserts
+  # max(feature event_time) < label_window_start. Anchors below are UTC.
+  feature_window_start: "2019-10-01T00:00:00Z"
+  label_window_start:   "2019-11-22T00:00:00Z"   # = feature_window_end + 1s (52d features)
+  label_window_end:     "2019-11-30T23:59:59Z"   # spans pre-Black-Friday + BF (Nov 29)
+  # kept for the null-guard test's historical names → now the split anchors:
+  train_end: "2019-11-22T00:00:00Z"   # feature/label boundary (temporal cut)
+  val_end:   null    # user-disjoint 60/20/20 split is by hashed user_id, not by time
+  test_end:  "2019-11-30T23:59:59Z"
+
+# User-disjoint train/val/test partition (D-015) — hash of user_id, seed-salted.
+partition:
+  by: user_id
+  train_frac: 0.6
+  val_frac: 0.2
+  test_frac: 0.2
+
+# Universe + label + feature policy — D-015/016/017 (all fits TRAIN-ONLY).
+universe:
+  min_events_feature_window: 5    # D-015, finalized from 110M-row validation: 2.55M users, 3.27% positive
+labels:
+  purchased: {event_type: purchase, window: label}     # primary binary (D-016)
+  churned:   {any_event_absent_in: label}              # dormancy proxy
+  next_category: {from: first_purchase, window: label, top_k: [1, 3, 5]}
+features:
+  top_n_categories: 15            # category-affinity vector width (+ "other"); N tunable at Phase 2
+  price_zero_policy: keep         # 68,673 exact-zero prices in Oct — kept, flagged in card
