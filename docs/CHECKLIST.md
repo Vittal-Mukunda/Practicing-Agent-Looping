@@ -35,7 +35,15 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 1.6 | Pipeline/integration test (contract + emitted artifacts) | **Completed** — `tests/test_pipeline.py`; full suite **25 passed**, ruff+mypy clean |
 | 1.7 | Update both data cards (post-processing shapes, split sizes, Nov facts, corrected BF rationale) | **Completed** |
 | 1.8 | GATE: owner reviews split logic + leakage tests + data cards | **Pending owner review** |
-## Phase 2 — Constructs — not started (gated)
+## Phase 2 — Constructs  → GATE: owner reviews construct definitions
+
+| # | Task | Status |
+|---|------|--------|
+| 2.1 | Construct definitions (RFM / price-sensitivity / category-affinity) per dataset | **Completed** — D-018; encoded in `constructs:` config blocks |
+| 2.2 | Extraction module, leakage-safe (computed pre-standardization; same per-seed split as prepare; standardized train-only) | **Completed** — `src/cadvae/data/constructs.py` |
+| 2.3 | Verify on real data (shapes, alignment, sane raw values) | **Completed** — A: 10 targets, affinity sums to 1, deal-reliance∈[0,1]; B: 17 targets, affinity sum 0.69 ≡ known-category rate |
+| 2.4 | Leakage-guard + definition tests | **Completed** — `tests/test_constructs.py` (4); full suite **29 passed**, ruff+mypy clean |
+| 2.5 | GATE: owner reviews construct definitions | **Pending owner review** |
 ## Phase 3 — Baselines — not started (gated)
 ## Phase 4 — CA-DVAE + ablations — not started (gated)
 ## Phase 5 — Campaign — not started (gated)

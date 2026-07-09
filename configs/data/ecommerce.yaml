@@ -38,3 +38,10 @@ labels:
 features:
   top_n_categories: 15            # category-affinity vector width (+ "other"); N tunable at Phase 2
   price_zero_policy: keep         # 68,673 exact-zero prices in Oct — kept, flagged in card
+
+# Named marketing constructs — alignment-head targets (D-018). Train-only standardized.
+constructs:
+  rfm: {recency: recency_days, frequency: n_purch, monetary: total_purch_value}
+  price_sensitivity: view_price_tier   # -z(mean_view_price): price-tier proxy (no discount field)
+  affinity_prefix: cat_share_          # 13 known top-level category shares (excludes unknown)
+  affinity_exclude: [cat_share_unknown, cat_share_other]

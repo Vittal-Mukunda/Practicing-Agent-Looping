@@ -202,3 +202,36 @@ collect(engine="streaming")` (never materialize the ~110M-row raw frame; 16 GB R
   (1−purchases/carts, div-0 guarded), conversion=purchases/views (guarded).
 Output = one row per universe user → Parquet cache (loaded small for every experiment).
 *Status: provisional (gate-reviewable).*
+
+---
+## Phase 2 constructs (owner-delegated; reviewable at Phase 2 gate)
+
+**D-018 (2026-07-09) — Named marketing constructs = the alignment-head targets.**
+These are the *named* axes the CA-DVAE aligns latent dims to (interpretability
+claim). Each is a continuous target; the full target matrix is **standardized on the
+TRAIN split only** (leakage-safe — a guard test proves val/test cannot move the
+fitted stats). Raw (unstandardized) values are also returned for persona-card
+interpretation (Phase 6). Constructs are computed from the pre-standardization
+tables (engineered.parquet / user_table.parquet), so they inherit the exact same
+per-seed split as `prepare()`.
+
+*Dataset A (Customer Personality):* 10 targets.
+- **RFM (3):** R = `Recency`; F = Σ of the 4 `Num*Purchases`; M = Σ of the 6 `Mnt*`.
+- **Price sensitivity (1):** `deal_reliance` = `NumDealsPurchases` / max(F, 1) — a
+  genuine discount-seeking measure (A records deal purchases). Higher = more sensitive.
+- **Category affinity (6):** spend share `Mnt_c / max(M, 1)` for wines/fruits/meat/
+  fish/sweets/gold.
+
+*Dataset B (eCommerce):* 17 targets.
+- **RFM (3):** R = `recency_days`; F = `n_purch` (feature-window purchases — sparse by
+  nature, 77% of users have 0, which faithfully reflects non-buyers); M =
+  `total_purch_value`.
+- **Price sensitivity (1):** `view_price_tier` = −z(`mean_view_price`) — a **price-tier
+  proxy** (budget vs premium browser), defined for every user. **Honest limitation:**
+  the event log has no discount field, so unlike A this is *not* discount-responsiveness
+  but the price level a user engages with; documented as such for the paper.
+- **Category affinity (13):** the 13 known top-level `cat_share_*` columns (excludes
+  `unknown`; it is not a named construct).
+
+Orientation of every target is documented in code. Definitions live in the data
+configs (`constructs:` block) → swappable/reviewable. *Status: provisional (gate-reviewable).*

@@ -143,5 +143,27 @@ from a real sensitivity table (≥5 → 2.55M users / 3.27% positive).
 
 **Phase 1 at the GATE (1.8).** Awaiting owner review of split logic + leakage tests +
 data cards. All Phase-1 scientific choices are provisional/gate-reviewable and revert
-via config + cache rebuild. Redundant raw `.zip`s deleted (717 GB free). Next after
-sign-off = Phase 2 (constructs: RFM / price-sensitivity / category-affinity, train-only).
+via config + cache rebuild. Redundant raw `.zip`s deleted (717 GB free).
+
+**Owner: "yes proceed" → Phase 2 executed same session.**
+
+## 2026-07-09 — Session 4 cont. (Phase 2: constructs)
+
+Named marketing constructs = the CA-DVAE alignment-head targets (interpretability
+claim). Definitions D-018, encoded in `constructs:` config blocks; module
+`src/cadvae/data/constructs.py`. Computed from the pre-standardization tables, split
+with the SAME per-seed partition as `prepare()`, target matrix standardized
+**train-only**; raw values returned for persona cards.
+- **A (10 targets):** RFM (R=Recency, F=Σ Num*Purchases, M=Σ Mnt*), price_sensitivity
+  = deal reliance (NumDeals/total ∈[0,1]), 6 spend-share affinities (sum to 1).
+- **B (17 targets):** RFM (recency_days, n_purch, total_purch_value), price_sensitivity
+  = −z(mean_view_price) price-tier proxy (honest limitation: no discount field), 13
+  known-category shares. Affinity sum 0.69 ≡ the 68% non-null category_code rate — a
+  clean internal-consistency check.
+- Leakage guard `tests/test_constructs.py` (4): perturbation proof that val/test can't
+  move the train-fitted construct scaler; split-alignment with prepare(); definition
+  sanity. **Full suite 29 passed; ruff + mypy clean.**
+
+**Phase 2 at the GATE (2.5).** Awaiting owner review of construct definitions.
+Next after sign-off = Phase 3 (baselines through the frozen-rep protocol — the bar
+to beat, fixed before any CA-DVAE work).

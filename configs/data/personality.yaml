@@ -27,3 +27,12 @@ preprocess:
   marital_status_other: Other
   numeric_impute: median          # train median (only Income has nulls)
   standardize: true               # z-score on train mean/std (VAE needs it)
+
+# Named marketing constructs — alignment-head targets (D-018). Train-only standardized.
+constructs:
+  rfm:
+    recency: Recency
+    frequency_cols: [NumDealsPurchases, NumWebPurchases, NumCatalogPurchases, NumStorePurchases]
+    monetary_cols: [MntWines, MntFruits, MntMeatProducts, MntFishProducts, MntSweetProducts, MntGoldProds]
+  price_sensitivity: deal_reliance   # NumDealsPurchases / total purchases (discount-seeking)
+  affinity_cols: [MntWines, MntFruits, MntMeatProducts, MntFishProducts, MntSweetProducts, MntGoldProds]
