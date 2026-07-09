@@ -247,7 +247,9 @@ L2-logistic + `HistGradientBoostingClassifier`) trained on **train**, evaluated 
 - **RFM+K-means:** hard cluster one-hot (K) from K-means on train RFM.
 - **AE (the hard baseline, continuous):** the d-dim AE embedding.
 - **AE+K-means:** hard cluster one-hot (K) on the frozen AE embedding.
-- **GMM-on-AE:** soft responsibilities (K) from a GMM on the frozen AE embedding.
+- **GMM-on-AE:** soft responsibilities (K) from a GMM on the frozen AE embedding
+  (diagonal covariance, `reg_covar=1e-3`, float64 — robust to near-collapsed AE dims;
+  full covariance was singular on some seeds; see NOTEBOOK fix).
 - **DEC:** soft cluster assignment (K).
 (β-VAE / VAE+align / CA-DVAE embeddings are added in Phase 4 — same protocol.)
 Reporting continuous *and* segment representations answers CLAUDE.md's requirement

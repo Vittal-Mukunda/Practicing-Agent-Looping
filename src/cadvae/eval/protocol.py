@@ -73,7 +73,9 @@ def evaluate_baselines(ps, ks, cfg, seed: int, device: str = "cuda") -> list[dic
 
     # --- AE embedding (the hard baseline) + AE-based clustering ---
     ae = train_autoencoder(Xtr, cfg.model, seed, device=device)
-    Etr, Ete = encode(ae, Xtr, device=device), encode(ae, Xte, device=device)
+    # float64 for numerically-stable sklearn clustering (torch encode returns float32)
+    Etr = encode(ae, Xtr, device=device).astype(np.float64)
+    Ete = encode(ae, Xte, device=device).astype(np.float64)
     emit("ae", _fit_eval_heads(Etr, ytr, Ete, yte, seed))
 
     km_ae = KMeans(n_clusters=k, random_state=seed, n_init=10).fit(Etr)
@@ -82,7 +84,10 @@ def evaluate_baselines(ps, ks, cfg, seed: int, device: str = "cuda") -> list[dic
                          _onehot(km_ae.predict(Ete), k), yte, seed),
          clustering_metrics(Ete, km_ae.predict(Ete), seed=seed))
 
-    gmm = GaussianMixture(n_components=k, random_state=seed, reg_covar=1e-4).fit(Etr)
+    # diagonal covariance + reg_covar=1e-3: robust to near-collapsed AE latent dims
+    # (full covariance is singular when a dim degenerates); standard for GMM-on-embeddings
+    gmm = GaussianMixture(n_components=k, random_state=seed, reg_covar=1e-3,
+                          covariance_type="diag").fit(Etr)
     emit("gmm_ae",
          _fit_eval_heads(gmm.predict_proba(Etr), ytr, gmm.predict_proba(Ete), yte, seed),
          clustering_metrics(Ete, gmm.predict(Ete), seed=seed))

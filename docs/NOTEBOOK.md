@@ -194,8 +194,17 @@ signal). CA-DVAE must beat the AE embedding — a genuinely hard bar.
 **Dataset B — 1-seed timing/sanity (subsample 200k, 40 epochs, ~5 min), PR-AUC
 (base rate 0.033):** RFM gbt roc=0.789 pr=**0.195** (best) ≈ AE gbt roc=0.788
 pr=0.175; clusters 0.07–0.10. **Honest finding: for behavioral data RFM ≈ AE** —
-recency/frequency/monetary is a very strong purchase-prediction baseline. Full
-5-seed B run launched in background (results → results/phase3/ecommerce_baselines).
+recency/frequency/monetary is a very strong purchase-prediction baseline.
+
+**Bug + fix (integrity guard §3):** the first full 5-seed B run CRASHED — GMM-on-AE
+hit singular covariance ("ill-defined empirical covariance / collapsed samples") on
+a seed whose AE embedding had a near-collapsed latent dim (float32 + full covariance
+→ singular). Fixed at the root (not by dropping the baseline): float64 embeddings +
+`reg_covar=1e-3` + `covariance_type="diag"` (diag with a variance floor is
+non-singular; standard for GMM-on-embeddings). Re-ran A to keep both datasets on the
+identical protocol — A unchanged (gmm_ae 0.405 vs 0.399; bar still AE 0.532). B
+relaunched. (Also fixed exit-code masking: `python ... | grep` had hidden the crash
+as exit 0 — now the python exit code is captured directly.)
 
 **Skeptical-numbers pass:** ordering plausible both datasets; all reps beat base
 rate; ROC 0.79–0.86 (not too-good-to-be-true); temporal split clean → no leakage
