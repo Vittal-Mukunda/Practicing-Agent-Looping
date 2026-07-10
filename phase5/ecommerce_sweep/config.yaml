@@ -1,0 +1,106 @@
+data:
+  name: ecommerce
+  raw_dir: data/raw/ecommerce_multicategory
+  files:
+  - 2019-Oct.csv
+  - 2019-Nov.csv
+  processed_dir: data/processed/ecommerce
+  split:
+    type: temporal
+    feature_window_start: '2019-10-01T00:00:00Z'
+    label_window_start: '2019-11-22T00:00:00Z'
+    label_window_end: '2019-11-30T23:59:59Z'
+    train_end: '2019-11-22T00:00:00Z'
+    val_end: null
+    test_end: '2019-11-30T23:59:59Z'
+  partition:
+    by: user_id
+    train_frac: 0.6
+    val_frac: 0.2
+    test_frac: 0.2
+  universe:
+    min_events_feature_window: 5
+  labels:
+    purchased:
+      event_type: purchase
+      window: label
+    churned:
+      any_event_absent_in: label
+    next_category:
+      from: first_purchase
+      window: label
+      top_k:
+      - 1
+      - 3
+      - 5
+  features:
+    top_n_categories: 15
+    price_zero_policy: keep
+  constructs:
+    rfm:
+      recency: recency_days
+      frequency: n_purch
+      monetary: total_purch_value
+    price_sensitivity: view_price_tier
+    affinity_prefix: cat_share_
+    affinity_exclude:
+    - cat_share_unknown
+    - cat_share_other
+model:
+  name: cadvae
+  latent_dim: 16
+  hidden_dims:
+  - 128
+  - 64
+  aligned_dims: null
+  min_free_dims: 4
+  lambda_align: 1.0
+  beta: 1.0
+  aligned_kl_weight: 1.0
+  lr: 0.001
+  batch_size: 256
+  max_epochs: 40
+seed: 7
+device: cuda
+results_dir: results
+run_name: cadvae_ecommerce_seed7
+eval:
+  seeds:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  n_clusters: 8
+  train_subsample: 200000
+  k_frac: 0.1
+  primary_metric: pr_auc
+  methods: null
+sweep:
+  betas:
+  - 0.05
+  - 0.1
+  - 0.25
+  - 0.5
+  - 1.0
+  - 2.0
+  lambdas:
+  - 0.0
+  - 0.25
+  - 1.0
+  - 4.0
+phase6:
+  head: gbt
+  x_metric: mig_mean
+  select_on: val_pr_auc
+  y_slack: null
+  stability_users: 50000
+  stability_seed: 20260710
+  n_boot: 20
+  traversal_span: 2.0
+  card_top_features: 8
+repro:
+  seed: 0
+  atol: 1.0e-09
+  rtol: 0.0
