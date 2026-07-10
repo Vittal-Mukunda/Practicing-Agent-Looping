@@ -1,0 +1,111 @@
+data:
+  name: personality
+  raw_path: data/raw/customer_personality/marketing_campaign.csv
+  processed_dir: data/processed/personality
+  separator: "\t"
+  label: Response
+  split:
+    type: stratified
+    test_size: 0.2
+    val_size: 0.2
+    stratify_on: Response
+  preprocess:
+    reference_year: 2014
+    tenure_reference: '2015-01-01'
+    dt_customer_format: '%d-%m-%Y'
+    winsor_lower_q: 0.01
+    winsor_upper_q: 0.99
+    drop_columns:
+    - ID
+    - Year_Birth
+    - Dt_Customer
+    - Z_CostContact
+    - Z_Revenue
+    marital_status_junk:
+    - Absurd
+    - YOLO
+    - Alone
+    marital_status_other: Other
+    numeric_impute: median
+    standardize: true
+  constructs:
+    rfm:
+      recency: Recency
+      frequency_cols:
+      - NumDealsPurchases
+      - NumWebPurchases
+      - NumCatalogPurchases
+      - NumStorePurchases
+      monetary_cols:
+      - MntWines
+      - MntFruits
+      - MntMeatProducts
+      - MntFishProducts
+      - MntSweetProducts
+      - MntGoldProds
+    price_sensitivity: deal_reliance
+    affinity_cols:
+    - MntWines
+    - MntFruits
+    - MntMeatProducts
+    - MntFishProducts
+    - MntSweetProducts
+    - MntGoldProds
+model:
+  name: cadvae
+  latent_dim: 16
+  hidden_dims:
+  - 128
+  - 64
+  aligned_dims: null
+  min_free_dims: 4
+  lambda_align: 1.0
+  beta: 1.0
+  aligned_kl_weight: 1.0
+  lr: 0.001
+  batch_size: 256
+  max_epochs: 200
+seed: 7
+device: cuda
+results_dir: results
+run_name: cadvae_personality_seed7
+eval:
+  seeds:
+  - 0
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  n_clusters: 8
+  train_subsample: null
+  k_frac: 0.1
+  primary_metric: pr_auc
+  methods: null
+sweep:
+  betas:
+  - 0.05
+  - 0.1
+  - 0.25
+  - 0.5
+  - 1.0
+  - 2.0
+  lambdas:
+  - 0.0
+  - 0.25
+  - 1.0
+  - 4.0
+phase6:
+  head: gbt
+  x_metric: mig_mean
+  select_on: val_pr_auc
+  y_slack: null
+  stability_users: 50000
+  stability_seed: 20260710
+  n_boot: 20
+  traversal_span: 2.0
+  card_top_features: 8
+repro:
+  seed: 0
+  atol: 1.0e-09
+  rtol: 0.0
