@@ -475,3 +475,43 @@ tuned): at beta=1,lambda=1 full-scale B gives gbt pr_auc 0.1726 ~= AE bar-mate
     .venv\Scripts\python.exe -m cadvae.eval.run_cadvae_sweep data=personality
 Both are resumable: relaunching skips completed runs. Next after sweep = Phase 6
 (stability ARI/NMI + bootstrap from saved models, trade-off curve, figures).
+
+## 2026-07-10 - Session 7 (cont.): ALL remaining phase code implemented (no runs)
+
+Owner: implement every phase''s code now, NO dry runs / compute; alterable after
+the Phase-5 sweep lands. Interpretation of "no compute" per CLAUDE.md cheap-check
+rule: unit tests on tiny synthetic data still run (seconds, CPU); no dataset
+loads, no training runs, no sweeps.
+
+**Built:**
+- `eval/stability.py` (D-030) - rebuild_cadvae/load_model_state (weights_only),
+  kmeans_assign (D-028 single-thread), pairwise ARI/NMI, bootstrap persistence,
+  universe_matrix + fixed stability_sample.
+- `eval/sweep_analysis.py` (D-031) - flatten/aggregate (NaN-aware), Pareto
+  frontier, sweet-spot rule (slack = best point''s seed-std), per-seed extraction,
+  paired Wilcoxon+t vs bar (zero-diff degenerate case -> p=1.0, not a crash).
+- `viz/figures.py` (D-032) - trade-off curve (bar + ceiling lines, sweet-spot
+  star, per-lambda series), stability bars, markdown tables, persona cards
+  (latent traversal -> inverse-standardized raw-unit deltas).
+- `eval/run_phase6.py` - orchestrator: consumes phase5 runs+models + phase3
+  records only; emits analysis.json + figures/ + tables/; WARNS AND CONTINUES on
+  partial sweeps (missing models/records -> logged warning, not a crash).
+- `eval/repro_check.py` (Phase 7) - re-runs one pinned seed of the baseline
+  protocol, diffs every numeric metric vs recorded records.json (NaN==NaN),
+  exit 1 on mismatch; `repro:` config block (atol for cross-machine).
+- configs: `phase6:` + `repro:` blocks. README rewritten as the Phase-7
+  reproduction guide (all commands, recorded evidence table).
+
+**Crash-proofing evidence (the owner''s explicit ask):** 16 new tests incl. an
+END-TO-END run of analyze() against a fully faked sweep+baseline directory tree
+(exact artifact shapes the real sweep writes), guard tests for every raise path
+(k>n, mismatched lengths, no-finite-points, lambda=0 cards), degenerate-stats
+paths, and a torch.load weights_only round-trip. Full suite **65 passed**;
+ruff + mypy clean (27 files). Known deliberate limits: run_phase6 on REAL sweep
+output is still untested by definition (no compute allowed) - first real
+invocation after the sweep is the integration test, and D-030..032 are expected
+to be tuned then (owner pre-authorized).
+
+**Hygiene note for Phase 7:** `threadpoolctl` is imported directly but is only a
+transitive dep (via scikit-learn) in pyproject - add as direct dependency at the
+next `uv lock` (needs network; deferred deliberately).

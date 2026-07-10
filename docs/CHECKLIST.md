@@ -92,6 +92,24 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 5.3 | Overnight sweep, Dataset B (144 runs) | **Pending — owner launches** (commands in NOTEBOOK) |
 | 5.4 | Overnight sweep, Dataset A (144 runs) | **Pending — owner launches** |
 | 5.5 | GATE: owner reviews raw sweep results | Pending 5.3/5.4 |
-## Phase 6 — Analysis + figures — not started (gated)
-## Phase 7 — Reproduction package — not started (gated)
+## Phase 6 — Analysis + figures  → GATE: owner reviews figures + tables
+
+| # | Task | Status |
+|---|------|--------|
+| 6.1 | Stability metrics (ARI/NMI cross-seed, bootstrap persistence) — D-030 | **Code completed 2026-07-10** — `eval/stability.py`; ground-truth tests |
+| 6.2 | Sweep analysis (aggregate, Pareto, sweet-spot rule, paired tests) — D-031 | **Code completed 2026-07-10** — `eval/sweep_analysis.py` |
+| 6.3 | Figures: trade-off curve, stability bars, persona cards, tables — D-032 | **Code completed 2026-07-10** — `viz/figures.py` |
+| 6.4 | Orchestrator (`eval/run_phase6.py`) — analysis.json + figures + tables | **Code completed 2026-07-10** — e2e-tested on faked sweep artifacts |
+| 6.5 | Run Phase 6 on real sweep output (A + B) | **Blocked on 5.3/5.4** — first real run = integration test; D-030..032 may be tuned then (owner pre-authorized) |
+| 6.6 | GATE: owner reviews figures + tables | Pending 6.5 |
+
+## Phase 7 — Reproduction package  → verify fresh-clone reproduction
+
+| # | Task | Status |
+|---|------|--------|
+| 7.1 | `eval/repro_check.py` — re-run pinned seed, diff vs recorded records (exit 1 on mismatch) | **Code completed 2026-07-10** — comparator unit-tested |
+| 7.2 | README rewritten as reproduction guide (all commands, evidence table) | **Completed 2026-07-10** |
+| 7.3 | Run repro_check on both datasets; fresh-clone walkthrough | **Blocked on Phase 5/6 runs** |
+| 7.4 | Hygiene: add `threadpoolctl` as direct dep at next `uv lock` (network) | Pending |
+| 7.5 | Finalize DECISIONS + NOTEBOOK; final commit | Pending 7.3 |
 

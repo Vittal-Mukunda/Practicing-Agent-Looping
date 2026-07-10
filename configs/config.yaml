@@ -31,6 +31,23 @@ sweep:
   betas: [0.05, 0.1, 0.25, 0.5, 1.0, 2.0]
   lambdas: [0.0, 0.25, 1.0, 4.0]
 
+# Phase-6 analysis (D-030 stability protocol, D-031 sweet-spot rule, D-032 cards).
+phase6:
+  head: gbt                   # downstream head used for curve/tables
+  x_metric: mig_mean          # trade-off x-axis (r2 variant is always emitted too)
+  y_slack: null               # null -> the best point's own seed-std (D-031)
+  stability_users: 50000      # fixed seed-independent user sample (D-030); A uses all
+  stability_seed: 20260710    # RNG for the user sample — NOT a model seed
+  n_boot: 20                  # bootstrap-persistence resamples
+  traversal_span: 2.0         # persona-card traversal, prior units (+/-)
+  card_top_features: 8
+
+# Phase-7 reproduction check (re-run one pinned seed, diff vs recorded records.json).
+repro:
+  seed: 0
+  atol: 1.0e-9                # D-028 bit-reproducible on this machine; loosen cross-machine
+  rtol: 0.0
+
 hydra:
   run:
     dir: ${results_dir}/runs/${now:%Y-%m-%d_%H-%M-%S}_${run_name}

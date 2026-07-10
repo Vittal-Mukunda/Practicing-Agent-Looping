@@ -424,3 +424,38 @@ numbered at write-up time.*
 - **Measured at protocol scale (RTX 4050):** B run (200k/40ep) = 179.5 s ->
   B sweep ~7.5 h (one overnight batch); A sweep ~1.5-2 h. *Status: provisional
   (gate-reviewable).*
+
+**D-030 (2026-07-10) — stability protocol (Phase 6).**
+- **Cross-seed:** a fixed, seed-INDEPENDENT sample of the user universe
+  (`phase6.stability_users`, RNG `phase6.stability_seed` — not a model seed) is
+  embedded by each seed''s saved sweep model (each seed''s own train-only scaler:
+  the FULL per-seed pipeline is what must be stable), K-means partitioned
+  (K = eval.n_clusters, single-threaded per D-028), scored by mean pairwise ARI
+  (Hubert & Arabie 1985) + NMI (Strehl & Ghosh 2002) — both permutation-invariant,
+  so cluster relabeling across seeds does not depress the score. Universe row
+  alignment across seeds is asserted, not assumed.
+- **Bootstrap persistence:** refit on bootstrap resamples, ARI of full-population
+  assignments vs the reference fit (cf. von Luxburg 2010), `phase6.n_boot` = 20.
+- **Configs compared:** the D-031 sweet spot + the two D-022 ablation points —
+  all from SAVED sweep models (no retraining). The plain-AE instability evidence
+  comes from the logged Phase-3 multi-task records (2026-07-10 bimodality finding).
+  *Status: provisional (gate-reviewable; may be revised after the sweep — owner
+  authorized post-sweep alteration 2026-07-10).*
+
+**D-031 (2026-07-10) — sweet-spot selection rule (trade-off curve).**
+- Sweet spot = among Pareto-frontier points of (interpretability x, downstream y),
+  the highest-x point whose y-mean is within `y_slack` of the best y-mean anywhere
+  on the grid; default slack = the best point''s own seed-std ("statistically
+  indistinguishable from the best"). Fallback = best-y point. Rule inputs + chosen
+  point are logged in analysis.json — the choice is reported, not hidden.
+  x = MIG by default (`phase6.x_metric`); the alignment-R2 curve variant is always
+  emitted alongside. *Status: provisional (gate-reviewable).*
+
+**D-032 (2026-07-10) — persona cards + figure conventions.**
+- Persona card = latent traversal of ONE aligned axis from -span to +span (prior
+  units, `phase6.traversal_span`=2), decoded and inverse-standardized to raw
+  feature units; top-N |delta| features shown per axis; axes titled by their
+  best-aligned construct (from the run''s axis_alignment). Cards use the
+  sweet-spot model at the lowest seed.
+- Figures: matplotlib Agg only, PNG 200 dpi, error bars = seed std, no style
+  packages (reviewer reproducibility). *Status: provisional (gate-reviewable).*
