@@ -1,7 +1,13 @@
 # Kaggle Setup — VERIFIED path (use `kaggle_cells.py`)
 
-Free P100 GPU (16 GB VRAM), 30 h/week quota. This flow was verified against the
-actual repo code (config paths, cache requirements, split determinism).
+Free T4 x2 GPU (16 GB VRAM each), 30 h/week quota. This flow was verified
+against the actual repo code (config paths, cache requirements, split
+determinism).
+
+**Do NOT pick the P100 accelerator.** Kaggle's preinstalled PyTorch dropped
+Pascal (sm_60) support: `torch.cuda.is_available()` returns True on the P100
+but the first real CUDA op crashes with "no kernel image". Verified live
+2026-07-10. Use **GPU T4 x2** (sm_75, supported; similar speed for this model).
 
 **Key design decisions (why this differs from a naive setup):**
 
@@ -44,8 +50,8 @@ Name it `cadvae-processed`, visibility **Private**, Create.
 ### 3. Create the notebook (15 min)
 
 kaggle.com/code → **New Notebook**, then:
-- **Settings** (right sidebar): Accelerator = **GPU P100**, Internet = **On**
-  (requires a phone-verified Kaggle account)
+- **Settings** (right sidebar): Accelerator = **GPU T4 x2** (NOT P100 — see
+  warning at top), Internet = **On** (requires a phone-verified Kaggle account)
 - **Add-ons → Secrets**: add secret `GITHUB_TOKEN` = the token from step 1,
   and make sure it is *attached* to this notebook
 - **Add Input**: attach your private `cadvae-processed` dataset

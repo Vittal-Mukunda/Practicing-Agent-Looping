@@ -40,9 +40,14 @@ import polars
 import sklearn
 import torch
 
-assert torch.cuda.is_available(), "No GPU — set Accelerator to GPU P100 in Settings"
+assert torch.cuda.is_available(), "No GPU — set Accelerator to GPU T4 x2 in Settings"
+# Real kernel launch, not just is_available(): Kaggle's torch dropped Pascal
+# (sm_60), so on a P100 is_available()=True but the first CUDA op crashes.
+# Use Accelerator = GPU T4 x2, NOT GPU P100.
+x = torch.randn(64, 64, device="cuda")
+assert torch.isfinite(x @ x).all().item(), "GPU matmul produced non-finite values"
 print("python :", sys.version.split()[0])
-print("torch  :", torch.__version__, "|", torch.cuda.get_device_name(0))
+print("torch  :", torch.__version__, "|", torch.cuda.get_device_name(0), "| gpu matmul ok")
 print("polars :", polars.__version__, "| sklearn:", sklearn.__version__)
 assert polars.__version__ == "1.42.1", "polars pin failed — splits would not match local"
 assert sklearn.__version__ == "1.9.0", "sklearn pin failed — heads would not match local"
