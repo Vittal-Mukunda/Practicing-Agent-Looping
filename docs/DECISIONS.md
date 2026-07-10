@@ -402,3 +402,25 @@ numbered at write-up time.*
 - **Deterministic row order everywhere positional operations happen:** the Dataset-B
   user table is sorted by `user_id` at build AND at load (streaming `group_by` emits
   arbitrary order), and the category vocabulary breaks frequency ties by name.
+
+**D-029 (2026-07-10) — Phase-5 sweep grid + runner design.**
+- **Grid:** `beta in {0.05, 0.1, 0.25, 0.5, 1.0, 2.0} x lambda_align in
+  {0, 0.25, 1.0, 4.0}` x 6 seeds = 144 runs/dataset. beta is swept DOWN from 1
+  because both Phase-4 sanity runs showed `kl_free ~ 0.02` at beta=1 (free dims
+  collapsed to the prior); the lambda=0 column IS the pure beta-VAE ablation and
+  the beta=1 row IS the VAE+align ablation (D-022 config points, no extra runs).
+  Config `sweep:` block; gate-reviewable at Phase 5.
+- **Runner (`eval/run_cadvae_sweep.py`), deliberate deviations from naive Hydra
+  multirun:** internal grid loop so `prepare()` is paid once per SEED (not per
+  run — ~24x saving on B's parquet+constructs cost); per-(seed,beta,lambda)
+  JSON with resume-skip (a mid-night crash costs one ~3-min run, not the batch);
+  model state_dicts saved (~120 KB each) so Phase 6 computes clustering/stability
+  (ARI/NMI, bootstrap) for SELECTED configs without retraining — per-run KMeans
+  deliberately excluded from the sweep (most expensive CPU step under D-028
+  single-threading; only needed for configs Phase 6 inspects).
+- **Interpretability factors** = the Phase-2 standardized construct targets on
+  the TEST split (Z = posterior-mean embedding of test); logged per run alongside
+  downstream metrics for all tasks — the two axes of the headline curve.
+- **Measured at protocol scale (RTX 4050):** B run (200k/40ep) = 179.5 s ->
+  B sweep ~7.5 h (one overnight batch); A sweep ~1.5-2 h. *Status: provisional
+  (gate-reviewable).*

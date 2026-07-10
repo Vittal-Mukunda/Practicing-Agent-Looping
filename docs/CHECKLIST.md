@@ -83,7 +83,15 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | A.9 | Re-run Phase 3 baselines under the audited protocol (bars were stale) | **Completed 2026-07-10** — new bars: A **pca 0.5677**, B **rfm 0.1953** (6 seeds, multi-task); seeds 0–4 integrity-checked vs old runs; old evidence preserved in `*_5seed_preaudit` |
 | A.10 | Fix latent multiclass-head crash (HistGBT auto early-stopping stratified split vs singleton classes) | **Completed 2026-07-10** — `early_stopping=False` on the multiclass head only + regression test; suite **46 passed**, ruff+mypy clean |
 
-## Phase 5 — Campaign — not started (gated)
+## Phase 5 — Campaign  → GATE: owner reviews raw sweep results
+
+| # | Task | Status |
+|---|------|--------|
+| 5.1 | Sweep grid + runner design (D-029): 6β×4λ×6 seeds, resume-skip, saved state_dicts | **Completed 2026-07-10** — `eval/run_cadvae_sweep.py`; suite 49 passed |
+| 5.2 | Dry runs (A + B real caches) + protocol-scale timing anchor (B run = 179.5 s) | **Completed 2026-07-10** — resume verified; B sweep ≈7.5 h, A ≈2 h |
+| 5.3 | Overnight sweep, Dataset B (144 runs) | **Pending — owner launches** (commands in NOTEBOOK) |
+| 5.4 | Overnight sweep, Dataset A (144 runs) | **Pending — owner launches** |
+| 5.5 | GATE: owner reviews raw sweep results | Pending 5.3/5.4 |
 ## Phase 6 — Analysis + figures — not started (gated)
 ## Phase 7 — Reproduction package — not started (gated)
 

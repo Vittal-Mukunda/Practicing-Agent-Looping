@@ -447,3 +447,31 @@ signal no learned rep currently captures.
 B = rfm 0.1953 (gbt).** Both runs: 6 seeds, tie-aware prec@k, deterministic
 protocol, multi-task records logged. Old evidence preserved in
 *_5seed_preaudit dirs.
+
+## 2026-07-10 - Session 7 (cont.): gates signed off; Phase-5 sweep runner built
+
+Owner signed off gates 1.8/2.5/3.8/4.8 (multi-task lift framing blessed at 3.8).
+Audit checkpoint committed as `7b1361d` (clean tree BEFORE the sweep so every
+Phase-5 run logs git_dirty=false).
+
+**Pre-flight (before owner starts heavy compute):**
+- Micro CA-DVAE runs vs the REBUILT B cache: A + B exit 0 (results/preflight).
+- interpretability on real data: A instant; B 3.9 s at FULL 509k test rows;
+  5/17 B factors NaN by design (near-zero-entropy rare-category shares, D-026).
+- Disk 709 GB free. Suite 46 -> 49 passed after sweep tests; ruff+mypy clean.
+
+**Phase 5 runner (`eval/run_cadvae_sweep.py`, D-029):** 6 beta x 4 lambda x 6
+seeds = 144 runs/dataset; per-run JSON + model state_dict; resume-skip verified
+(8/8 SKIP on relaunch, instant); ablations are grid rows/columns. Dry runs: A
+2x2x2 grid 8/8 ok; B 2x2x2 on real cache 8/8 ok (multi-task heads + MIG/SAP per
+run). **Protocol-scale timing anchor: one B run (200k/40ep) = 179.5 s -> B sweep
+~7.5 h, A sweep ~1.5-2 h.** Encouraging single-point lead (NOT a result, not
+tuned): at beta=1,lambda=1 full-scale B gives gbt pr_auc 0.1726 ~= AE bar-mate
+0.1723 with MIG 0.306 - the 50k sanity gap to AE closes at 200k.
+
+**Handoff to owner for overnight compute (exact commands):**
+    powercfg /change standby-timeout-ac 0   # ONCE, before the night
+    .venv\Scripts\python.exe -m cadvae.eval.run_cadvae_sweep data=ecommerce eval.train_subsample=200000 model.max_epochs=40
+    .venv\Scripts\python.exe -m cadvae.eval.run_cadvae_sweep data=personality
+Both are resumable: relaunching skips completed runs. Next after sweep = Phase 6
+(stability ARI/NMI + bootstrap from saved models, trade-off curve, figures).

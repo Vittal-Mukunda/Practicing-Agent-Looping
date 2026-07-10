@@ -24,6 +24,13 @@ eval:
   primary_metric: pr_auc      # imbalanced labels → PR-AUC is the headline
   methods: null               # null = all baselines; subset list for partial runs (D-024)
 
+# Phase-5 CA-DVAE sweep grid (D-029). beta swept DOWN from 1 (sanity runs showed
+# kl_free ~0.02 at beta=1 -> free dims collapsed); lambda=0 column = pure beta-VAE
+# ablation, beta=1 row = VAE+align ablation (D-022 config points).
+sweep:
+  betas: [0.05, 0.1, 0.25, 0.5, 1.0, 2.0]
+  lambdas: [0.0, 0.25, 1.0, 4.0]
+
 hydra:
   run:
     dir: ${results_dir}/runs/${now:%Y-%m-%d_%H-%M-%S}_${run_name}
