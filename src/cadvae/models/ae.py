@@ -13,6 +13,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader, TensorDataset
 
+from cadvae.utils.device import resolve_device
 from cadvae.utils.seeding import seed_everything
 
 
@@ -42,7 +43,7 @@ class Autoencoder(nn.Module):
 def train_autoencoder(X: np.ndarray, model_cfg, seed: int, device: str = "cuda") -> Autoencoder:
     """Train an AE with MSE reconstruction. Deterministic given ``seed``."""
     seed_everything(seed)
-    dev = torch.device(device if (device == "cpu" or torch.cuda.is_available()) else "cpu")
+    dev = resolve_device(device)   # raises if cuda requested but unavailable — D-027
     Xt = torch.as_tensor(X, dtype=torch.float32)
     loader = DataLoader(
         TensorDataset(Xt), batch_size=int(model_cfg.batch_size), shuffle=True,

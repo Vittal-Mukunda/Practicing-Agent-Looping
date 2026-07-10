@@ -34,7 +34,7 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 1.5 | Leakage-guard unit tests (train-only fit; temporal ordering; label-window separation; user-disjoint) | **Completed** — `tests/test_leakage.py`, 8 tests incl. perturbation proofs + real-cache cross-check |
 | 1.6 | Pipeline/integration test (contract + emitted artifacts) | **Completed** — `tests/test_pipeline.py`; full suite **25 passed**, ruff+mypy clean |
 | 1.7 | Update both data cards (post-processing shapes, split sizes, Nov facts, corrected BF rationale) | **Completed** |
-| 1.8 | GATE: owner reviews split logic + leakage tests + data cards | **Pending owner review** |
+| 1.8 | GATE: owner reviews split logic + leakage tests + data cards | **PASSED 2026-07-10** (owner sign-off, session 7) |
 ## Phase 2 — Constructs  → GATE: owner reviews construct definitions
 
 | # | Task | Status |
@@ -43,7 +43,7 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 2.2 | Extraction module, leakage-safe (computed pre-standardization; same per-seed split as prepare; standardized train-only) | **Completed** — `src/cadvae/data/constructs.py` |
 | 2.3 | Verify on real data (shapes, alignment, sane raw values) | **Completed** — A: 10 targets, affinity sums to 1, deal-reliance∈[0,1]; B: 17 targets, affinity sum 0.69 ≡ known-category rate |
 | 2.4 | Leakage-guard + definition tests | **Completed** — `tests/test_constructs.py` (4); full suite **29 passed**, ruff+mypy clean |
-| 2.5 | GATE: owner reviews construct definitions | **Pending owner review** |
+| 2.5 | GATE: owner reviews construct definitions | **PASSED 2026-07-10** (owner sign-off, session 7) |
 ## Phase 3 — Baselines  → GATE: bar to beat fixed before any CA-DVAE work
 
 | # | Task | Status |
@@ -55,7 +55,7 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 3.5 | Smoke test (`tests/test_eval_smoke.py`) | **Completed** — full suite **31 passed**, ruff+mypy clean |
 | 3.6 | Run Dataset A (5 seeds) — bar to beat | **Completed** — AE embedding PR-AUC 0.532±0.006 (gbt) / 0.572±0.042 (logreg); AE beats every other method (paired-t p<0.003) |
 | 3.7 | Run Dataset B (5 seeds, subsample 200k) — bar to beat | **Completed 2026-07-09** — RFM gbt PR-AUC **0.1947±0.0044** (best); AE gbt 0.1724±0.0056; RFM > AE (paired-t p=3.6e-4). Honest finding: RFM ≥ AE on behavioral data |
-| 3.8 | GATE: owner reviews baseline numbers (bar fixed) | **Pending owner review** — both runs landed, numbers below |
+| 3.8 | GATE: owner reviews baseline numbers (bar fixed) | **PASSED 2026-07-10** (owner sign-off, session 7) — audited-protocol bars: A **pca 0.5677**, B **rfm 0.1953** (gbt, 6 seeds); **multi-task framing of the lift claim blessed** (primary + churned + next_category) |
 ## Phase 4 — CA-DVAE + ablations  → GATE: owner reviews model + sanity run
 
 | # | Task | Status |
@@ -67,7 +67,23 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 4.5 | Sanity runner (`eval/run_cadvae_sanity.py`) — logged curves + frozen-rep heads + alignment R² | **Completed** |
 | 4.6 | Sanity run A (GPU, 200 ep, seed 7) | **Completed** — gbt PR-AUC 0.479 vs AE bar 0.532 (Δ−0.053, expected); align RFM R²=0.90; exit 0 |
 | 4.7 | Sanity run B (GPU, 50k/40 ep, seed 7) — pipeline + timing | **Completed** — gbt PR-AUC 0.150 vs RFM bar 0.195 (Δ−0.037); align RFM R²=0.68; ~110 s → 200k run ≈3–4 min |
-| 4.8 | GATE: owner reviews model design + sanity run | **Pending owner review** |
+| 4.8 | GATE: owner reviews model design + sanity run | **PASSED 2026-07-10** (owner sign-off, session 7) |
+## Full repo audit (2026-07-09/10, pre-gate-review) — session 7
+
+| # | Task | Status |
+|---|------|--------|
+| A.1 | Protocol upgrades: 6 seeds, multi-task (B: churned + next_category), raw ceiling + PCA, method subsetting, tie-aware prec@k (D-023/024/025) | **Completed** — verified after session interruption |
+| A.2 | Bit-reproducibility: threadpool_limits on rep-feeding fits, deterministic DEC distance/permutation, sorted row order (D-028) | **Completed** |
+| A.3 | Interpretability metrics MIG/SAP/axis-alignment + ground-truth tests (D-026) | **Completed** — `eval/interpretability.py`, 6 tests |
+| A.4 | Fix streaming-engine crash in next-category label agg (filter-inside-sort_by) | **Completed 2026-07-10** — single-sorted-column form; leakage tests 8/8 |
+| A.5 | Remove silent CPU fallback in AE/CA-DVAE trainers (D-027) | **Completed 2026-07-10** — `resolve_device` raises |
+| A.6 | Audit remaining modules (cadvae, ae, constructs, sanity runner, utils, configs) | **Completed 2026-07-10** — no further defects; stability metrics correctly absent (Phase 5/6 work) |
+| A.7 | Documentation debt: DECISIONS D-023..028, NOTEBOOK session 7, this section | **Completed 2026-07-10** |
+| A.8 | Full cheap-check suite | **Completed 2026-07-10** — pytest 45 passed, ruff clean, mypy clean (21 files) |
+| A.9 | Re-run Phase 3 baselines under the audited protocol (bars were stale) | **Completed 2026-07-10** — new bars: A **pca 0.5677**, B **rfm 0.1953** (6 seeds, multi-task); seeds 0–4 integrity-checked vs old runs; old evidence preserved in `*_5seed_preaudit` |
+| A.10 | Fix latent multiclass-head crash (HistGBT auto early-stopping stratified split vs singleton classes) | **Completed 2026-07-10** — `early_stopping=False` on the multiclass head only + regression test; suite **46 passed**, ruff+mypy clean |
+
 ## Phase 5 — Campaign — not started (gated)
 ## Phase 6 — Analysis + figures — not started (gated)
 ## Phase 7 — Reproduction package — not started (gated)
+

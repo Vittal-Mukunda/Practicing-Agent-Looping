@@ -44,6 +44,7 @@ from torch import nn
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, TensorDataset
 
+from cadvae.utils.device import resolve_device
 from cadvae.utils.seeding import seed_everything
 
 
@@ -147,7 +148,7 @@ def train_cadvae(X: np.ndarray, C: np.ndarray | None, model_cfg, seed: int,
     only for the beta-VAE ablation (lambda_align == 0).
     """
     seed_everything(seed)
-    dev = torch.device(device if (device == "cpu" or torch.cuda.is_available()) else "cpu")
+    dev = resolve_device(device)   # raises if cuda requested but unavailable — D-027
     if n_constructs is None:
         n_constructs = 0 if C is None else int(C.shape[1])
     aligned = resolve_aligned_dims(model_cfg, n_constructs)

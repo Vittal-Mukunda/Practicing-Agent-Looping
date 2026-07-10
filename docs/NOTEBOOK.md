@@ -321,3 +321,129 @@ Rewrote `_print_summary` ASCII-only; both runs now exit 0. A's `metrics.jsonl`
 **Phase 4 is at the GATE (4.8).** Awaiting owner review of the model design (D-021/022)
 + sanity evidence. All choices config-driven + revertable. Next after sign-off =
 Phase 5 (multi-seed × β/λ sweep) — **decide seed count (5 vs ≥6) at that gate.**
+
+## 2026-07-09/10 - Session 7 (full repo audit; resumed after interruption)
+
+Owner asked for a full repo audit before the Phase-4 gate review. The first audit
+session made its fixes but was interrupted BEFORE documenting them (D-023..D-028
+existed only as code-comment tags); this session verified the tree, finished the
+audit, fixed what the interruption left broken, and wrote the documentation.
+
+**Audit changes inherited from the interrupted session (verified this session):**
+- Six seeds (D-023), multi-task downstream eval for B: churned + next_category on
+  the same frozen representation; multiclass metrics (top-k acc, macro-OVR AUC).
+- raw reference ceiling (excluded from the bar) + PCA-at-matched-capacity baseline
+  + eval.methods subsetting (D-024).
+- Tie-aware precision@k - deterministic, row-order invariant (D-025).
+- NEW eval/interpretability.py: MIG / SAP / per-axis alignment with quantile-bin
+  MI estimation + ground-truth-recovery tests (D-026). 6 tests.
+- Bit-reproducibility (D-028): threadpool_limits(1) on representation-feeding
+  sklearn fits; DEC distance via matmul expansion (cdist CUDA backward is
+  nondeterministic); CPU randperm; user_id-sorted table; vocab name tiebreak.
+
+**Broken state found on resume + fixed:**
+- ecommerce.py next-category aggregation used filter() inside sort_by() keys ->
+  polars STREAMING engine rejects it ("matching group lengths");
+  test_B_label_window_purchase_excluded_from_features failed. Rewrote as ONE
+  sorted column (when/otherwise NULL-mask -> sort_by(ts, product_id) ->
+  drop_nulls().first()). Note: the tempting fix (sort values and mask separately)
+  is WRONG - two multithreaded sorts need not agree on tied keys. Leakage suite
+  8/8 green after fix.
+- ruff E501 in _next_cat_codes signature.
+
+**Audit continuation (previously un-audited modules):**
+- models/cadvae.py + models/ae.py: loss/KL algebra verified correct (ELBO-scaled,
+  per-dim KL, beta on free block only); seeded loaders OK. FOUND: silent CPU
+  fallback in both trainers (contradicts CLAUDE.md hardware section + the config
+  comment). Fixed via utils.device.resolve_device -> raises CudaUnavailableError
+  (D-027). DEC inherits the AE device (covered).
+- data/constructs.py, eval/run_cadvae_sanity.py, utils/{seeding,device,
+  run_logging}.py, configs/*: audited, no defects. r2_rfm_mean's names[:3]==R/F/M
+  assumption holds for both datasets (construct name order is fixed).
+- eval/interpretability.py adversarial read: MIG normalization/gap correct
+  (top1-top2)/H(v); SAP = squared Pearson (continuous form); degenerate factors
+  NaN + excluded; deterministic (no RNG). Tests assert disentangled > Helmert-
+  rotated code, exact axis recovery, bounds, JSON determinism.
+- Known gap (expected, NOT a defect): stability metrics (ARI/NMI across seeds,
+  bootstrap persistence) are Phase-5/6 work and do not exist yet. Nothing in
+  src/ claims otherwise.
+
+**Cheap checks (CLAUDE.md 4), full tree:** pytest 45 passed; ruff clean;
+mypy clean (21 files). (uv trampoline briefly broke mid-session; checks were run
+via .venv\Scripts\python.exe -m ... directly - environment quirk, not repo state.)
+
+**Documentation debt cleared:** DECISIONS.md D-023..D-028 written (D-025/D-027
+numbered at write-up; noted as such); CHECKLIST.md updated with the audit section.
+
+**CONSEQUENTIAL - flagged for owner (blocks Phase 5):** the recorded Phase-3 bars
+(A: AE gbt PR-AUC 0.532; B: RFM gbt 0.195) were produced under the OLD protocol -
+5 seeds, non-tie-aware precision@k, nondeterministic DEC, no raw/pca methods, no
+multi-task records. The audit changes the protocol (D-023/024/025/028), so the
+bars are STALE and Phase 3 must be re-run (~1 min for A, ~30 min for B on the
+4050) before any Phase-5 sweep. Re-run NOT launched autonomously: refreshing the
+bar is gate-fixing evidence (owner sign-off pending at gates 1.8/2.5/3.8/4.8).
+
+## 2026-07-10 - Session 7 (cont.): Phase-3 bar refresh under the audited protocol
+
+Owner asked for a success-odds / publishing-angle assessment. The load-bearing
+unknown is whether multi-task rescues the B story, so the stale bars are being
+refreshed under the audited protocol (required before Phase 5 anyway). Old result
+dirs preserved at results/phase3/*_baselines_5seed_preaudit.
+
+**Dataset A re-run (6 seeds, raw+pca added, tie-aware prec@k):**
+- Integrity check PASSED: per-seed PR-AUC for seeds 0-4 is bit-identical to the
+  pre-audit run for AE and RFM (protocol changes did not perturb existing
+  evidence); DEC differs slightly, exactly as expected from the D-028 rewrite.
+- ERRATUM: the session-5 notebook entry quoted "AE gbt 0.532 +/- 0.006"; the
+  true 5-seed std was +/- 0.061 (transcription slip; summary.json was correct).
+- NEW BAR (gbt, pr_auc, 6 seeds): **pca = 0.5677 +/- 0.0729**, beating AE
+  0.5156 +/- 0.0682 with paired-t p=0.0019 AND Wilcoxon p=0.03125 (both families
+  significant at 6 seeds - D-023 vindicated). raw ceiling 0.6066; pca vs raw NOT
+  significant (t p=0.19) -> at n=2,240 linear compression loses nothing; the
+  neural AE is significantly WORSE than PCA. Honest finding, logged: the "hard
+  neural baseline" is not the bar on A; PCA is. This RAISES the bar for CA-DVAE
+  on A from 0.532 to 0.568.
+
+**B re-run, attempt 1 (FAILED after 2.2h) + fix.** First relaunch omitted the
+D-020 CLI overrides (eval.train_subsample=200000 model.max_epochs=40 - they live
+in the run command, not the config), so it ran the FULL 1.53M train rows at 200
+epochs. Crash exposed a REAL latent bug: >10k multiclass samples flip HistGBT
+early_stopping='auto' ON, and its internal STRATIFIED validation split raises on
+1-member classes (tail categories have them). Fix: early_stopping=False on the
+multiclass head ONLY - at the D-020 subsample (~6.5k purchaser rows) auto is off
+anyway, so the canonical protocol run is unchanged; binary heads untouched
+(comparability). Regression test added (singleton class above the threshold).
+Suite 46 passed, ruff+mypy clean. Lesson recorded: B runtime under D-028
+single-threaded fits is ~5x the multithreaded 2026-07-09 runs - acceptable
+one-off for Phase 3 (sweep does not refit baselines). Attempt 2 launched WITH
+the D-020 overrides.
+
+**B re-run, attempt 2 (SUCCESS, ~70 min, 6 seeds, D-020 overrides).** Integrity:
+per-seed rfm/ae shift only +/-0.002 vs pre-audit - expected and explained: the
+rebuilt cache is user_id-sorted (D-028), so the positional 200k subsample
+differs; directionally identical. NEW BAR (primary, gbt): **rfm = 0.1953 +/-
+0.0035**; every method below it with BOTH families significant (Wilcoxon 0.03125,
+t<=1.5e-5); raw ceiling 0.2038 significantly ABOVE rfm -> non-RFM features carry
+signal no learned rep currently captures.
+
+**Multi-task results (the audit's D-023 payoff - CLAUDE.md tasks now all run):**
+- churned (gbt pr_auc): ae 0.8620 best-of-methods, > rfm 0.8498 EVERY seed
+  (t p=1.7e-8); raw 0.8676 slightly above ae (honest note).
+- next_category: ae_kmeans acc@1 0.5550 stable across all 6 seeds, significantly
+  > rfm 0.4070 (p=0.017), > raw 0.4520 (p=0.021), > pca (p=0.020). RFM collapses
+  exactly as predicted (no category info). macro-OVR AUC: ae-family 0.63-0.66 vs
+  rfm 0.52.
+- SKEPTICAL FINDING (gold for the stability axis): plain AE embedding is BIMODAL
+  on next_category across seeds (macroAUC 0.73/0.74/0.73 seeds 0-2 vs
+  0.54/0.52/0.52 seeds 3-5; acc@1 0.58 vs 0.41-0.47) - the unregularized AE
+  sometimes fails to allocate latent capacity to category shares. Direct,
+  logged motivation for construct-anchored latents; Phase-6 ARI/NMI will
+  quantify it. Also noted: several methods acc@1 < base_rate 0.5053 (heads
+  optimize log-loss, not top-1; base_rate reported alongside).
+- n_classes shows 12.67 in the summary = mean of per-seed integer class counts
+  (aggregation artifact, records are exact).
+
+**Phase-3 bars under the audited protocol are now FIXED: A = pca 0.5677 (gbt);
+B = rfm 0.1953 (gbt).** Both runs: 6 seeds, tie-aware prec@k, deterministic
+protocol, multi-task records logged. Old evidence preserved in
+*_5seed_preaudit dirs.

@@ -80,6 +80,8 @@ class PreparedSplit:
     ids: dict[str, np.ndarray]  # split -> customer ID array (traceability)
     # fitted, train-only transforms (kept for persona-card inverse mapping, Phase 6)
     fitted: dict = field(default_factory=dict)
+    # extra downstream tasks (interface parity with ecommerce; A has only Response)
+    labels: dict = field(default_factory=dict)
 
 
 def _stratified_indices(y: np.ndarray, cfg: DictConfig, seed: int):

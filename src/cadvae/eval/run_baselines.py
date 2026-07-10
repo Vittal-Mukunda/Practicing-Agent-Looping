@@ -32,12 +32,26 @@ def _prepare(cfg: DictConfig, seed: int):
     raise ValueError(f"unknown dataset {d.name}")
 
 
+def _tasks(ps, cfg: DictConfig) -> dict:
+    """Extra downstream tasks from the prepared split (D-016/D-023: B gets churned +
+    next_category on the same frozen representation). Empty for Dataset A."""
+    out: dict = {}
+    for name, t in ps.labels.items():
+        spec = {"type": t["type"], "train": t["train"], "test": t["test"]}
+        if t["type"] == "multiclass":
+            top_k = cfg.data.get("labels", {}).get("next_category", {}).get("top_k")
+            spec["top_ks"] = tuple(top_k) if top_k else (1, 3, 5)
+        out[name] = spec
+    return out
+
+
 def run_dataset(cfg: DictConfig) -> dict:
     device = cfg.device
     records: list[dict] = []
     for seed in cfg.eval.seeds:
         ps, ks = _prepare(cfg, int(seed))
-        records.extend(evaluate_baselines(ps, ks, cfg, int(seed), device=device))
+        records.extend(evaluate_baselines(ps, ks, cfg, int(seed), device=device,
+                                          tasks=_tasks(ps, cfg)))
     summary = aggregate(records)
     sig = significance_vs_best(records, metric=cfg.eval.primary_metric, head="gbt")
     return {"records": records, "summary": summary, "significance": sig}
@@ -45,15 +59,24 @@ def run_dataset(cfg: DictConfig) -> dict:
 
 def _print_bar(cfg: DictConfig, out: dict) -> None:
     pm = cfg.eval.primary_metric
-    rows = sorted(out["summary"], key=lambda r: (r["head"], -r[f"{pm}_mean"]))
-    print(f"\n=== {cfg.data.name}: baseline downstream lift ({pm}, mean±std over "
-          f"{len(cfg.eval.seeds)} seeds) ===")
+    prim = [r for r in out["summary"] if r["task"] == "primary"]
+    rows = sorted(prim, key=lambda r: (r["head"], -r[f"{pm}_mean"]))
+    print(f"\n=== {cfg.data.name}: baseline downstream lift ({pm}, mean+/-std over "
+          f"{len(cfg.eval.seeds)} seeds, task=primary) ===")
     for r in rows:
         print(f"  {r['head']:6s} {r['method']:12s} "
-              f"roc={r['roc_auc_mean']:.4f}±{r['roc_auc_std']:.4f}  "
-              f"pr={r['pr_auc_mean']:.4f}±{r['pr_auc_std']:.4f}")
+              f"roc={r['roc_auc_mean']:.4f}+/-{r['roc_auc_std']:.4f}  "
+              f"pr={r['pr_auc_mean']:.4f}+/-{r['pr_auc_std']:.4f}")
+    extra = sorted({r["task"] for r in out["summary"]} - {"primary"})
+    for task in extra:
+        print(f"  --- task={task} (gbt) ---")
+        trs = [r for r in out["summary"] if r["task"] == task and r["head"] == "gbt"]
+        for r in sorted(trs, key=lambda r: r["method"]):
+            mets = [k for k in r if k.endswith("_mean")]
+            body = "  ".join(f"{k[:-5]}={r[k]:.4f}" for k in sorted(mets))
+            print(f"    {r['method']:12s} {body}")
     w = out["significance"]
-    print(f"BAR TO BEAT ({pm}, gbt head): {w['best_method']} = {w['best_mean']:.4f}")
+    print(f"BAR TO BEAT ({pm}, gbt head, raw excluded): {w['best_method']} = {w['best_mean']:.4f}")
 
 
 @hydra.main(version_base="1.3", config_path="../../../configs", config_name="config")

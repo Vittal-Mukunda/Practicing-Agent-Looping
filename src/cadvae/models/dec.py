@@ -15,6 +15,7 @@ from __future__ import annotations
 import numpy as np
 import torch
 from sklearn.cluster import KMeans
+from threadpoolctl import threadpool_limits
 from torch import nn
 
 from cadvae.models.ae import Autoencoder, encode
@@ -22,7 +23,14 @@ from cadvae.utils.seeding import seed_everything
 
 
 def _soft_assign(z: torch.Tensor, centroids: torch.Tensor) -> torch.Tensor:
-    dist2 = torch.cdist(z, centroids) ** 2          # (N, K)
+    # ||z-mu||^2 via the matmul expansion, NOT torch.cdist: cdist's CUDA backward uses
+    # nondeterministic atomicAdd (pytorch.org/docs/stable/notes/randomness.html), which
+    # made DEC the single non-reproducible baseline (caught by an identity re-run;
+    # every other method was bit-identical). Matmuls are deterministic under
+    # CUBLAS_WORKSPACE_CONFIG (set by seed_everything).
+    dist2 = (z * z).sum(1, keepdim=True) + (centroids * centroids).sum(1) \
+        - 2.0 * (z @ centroids.t())                 # (N, K)
+    dist2 = dist2.clamp_min(0.0)                    # guard tiny negative rounding
     q = 1.0 / (1.0 + dist2)
     return q / q.sum(dim=1, keepdim=True)
 
@@ -40,7 +48,15 @@ def train_dec(ae: Autoencoder, X: np.ndarray, model_cfg, n_clusters: int, seed: 
     encoder = ae.encoder
 
     z0 = encode(ae, X, device=device)
-    km = KMeans(n_clusters=n_clusters, random_state=seed, n_init=10).fit(z0)
+    # Single-threaded fit: multithreaded-BLAS reductions make sklearn's
+    # cluster_centers_ wobble by ~1e-7 across bit-identical inputs (measured on this
+    # repo's env: two OpenBLAS builds, 16 threads). Discrete baselines absorb that ulp
+    # noise, but DEC uses the centers as CONTINUOUS init and training amplifies it
+    # chaotically — DEC was the single non-reproducible baseline (caught by identity
+    # re-runs). threadpool_limits(1) makes the reduction order, hence the fit,
+    # bit-reproducible; the fit is tiny relative to DEC training itself. (D-028)
+    with threadpool_limits(limits=1):
+        km = KMeans(n_clusters=n_clusters, random_state=seed, n_init=10).fit(z0)
     centroids = nn.Parameter(torch.tensor(km.cluster_centers_, dtype=torch.float32, device=dev))
 
     opt = torch.optim.Adam([*encoder.parameters(), centroids], lr=float(model_cfg.lr))
@@ -52,8 +68,10 @@ def train_dec(ae: Autoencoder, X: np.ndarray, model_cfg, n_clusters: int, seed: 
             with torch.no_grad():
                 q_all = _soft_assign(encoder(Xt), centroids)
                 p_all = _target_distribution(q_all).detach()
-        gen = torch.Generator(device=dev).manual_seed(seed + it)
-        perm = torch.randperm(len(Xt), generator=gen, device=dev)
+        # permute on CPU (deterministic), then move: CUDA randperm is another
+        # nondeterminism source under warn-only deterministic mode
+        gen = torch.Generator().manual_seed(seed + it)
+        perm = torch.randperm(len(Xt), generator=gen).to(dev)
         for i in range(0, len(Xt), bs):
             idx = perm[i:i + bs]
             q = _soft_assign(encoder(Xt[idx]), centroids)

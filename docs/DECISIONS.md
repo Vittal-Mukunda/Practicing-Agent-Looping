@@ -314,3 +314,91 @@ predictive signal clustering discards vs the raw embedding.
   is the "two independently ablatable components" requirement satisfied by one model class.
 - **β, λ are the Phase-5 swept variables** that generate the interpretability–performance
   trade-off curve. *Status: provisional (gate-reviewable).*
+
+---
+*The following entries (D-023…D-028) were implemented during the full-repo audit
+(2026-07-09/10). The audit session was interrupted before writing them down; they
+were reconstructed from the code and completed on 2026-07-10. D-025 and D-027 were
+numbered at write-up time.*
+
+**D-023 (2026-07-10) — six seeds + multi-task downstream evaluation.**
+- **`eval.seeds = [0..5]` (6 seeds).** Resolves the open D-019 recommendation: the
+  two-sided Wilcoxon p-floor 2^-(n-1) becomes 0.03125 < 0.05, so BOTH paired test
+  families (Wilcoxon + t) can carry a headline significance claim.
+- **Multi-task frozen-rep protocol (implements CLAUDE.md "Tasks" fully).** Each
+  method's representation is learned ONCE per seed; only the downstream heads are
+  refit per task. Records carry a `task` field (`primary` = the dataset's main
+  label). Dataset B extra tasks (labels engineered in D-016): **churned** (binary
+  dormancy proxy = no label-window event) and **next_category** (multiclass =
+  top-level category of the FIRST label-window purchase, time order with product_id
+  tiebreak). Dataset A has only `Response` (its `labels` dict is empty — interface
+  parity).
+- **next_category class space** = the feature-window category vocabulary
+  (+ `other` for label-window categories outside it, + `unknown` for undecodable) —
+  temporally safe: no label/test information defines the classes. The label is
+  decoded via a static product-taxonomy lookup (`category_id → top_cat`, recovering
+  the 31.84%-null `category_code` events); the lookup feeds ONLY the label, never a
+  feature, so no temporal restriction applies.
+- **Multiclass metrics:** top-k accuracy (k = 1/3/5, config `data.labels.next_category.top_k`)
+  + macro one-vs-rest ROC-AUC over classes present in test. *Status: provisional
+  (gate-reviewable).*
+
+**D-024 (2026-07-10) — reference ceiling, PCA baseline, method subsetting.**
+- **`raw`** (full standardized feature vector, no representation learning) is run
+  through the same heads as a **reference ceiling**: it answers the reviewer question
+  "do you even need a representation?". It is **excluded from bar/best-baseline
+  selection** (`exclude_from_best=("raw",)` in `significance_vs_best`) but is still
+  compared against the bar like every other method.
+- **`pca`** at matched capacity (d = `model.latent_dim`, full SVD) joins the baseline
+  set — the classical linear-compression comparison the reviewer will ask for.
+- **`eval.methods`** (null = all) selects a subset of baselines for partial runs;
+  unknown names raise. DEC mutates the shared AE encoder in place, so it always runs
+  LAST within the AE family. *Status: provisional (gate-reviewable).*
+
+**D-025 (2026-07-10) — tie-aware precision@k.**
+- Tree heads and cluster one-hot representations emit piecewise-constant scores, so
+  exact ties at the top-k boundary are common; naive argsort top-k then depends on
+  on-disk row order (silently arbitrary, not reproducible). `precision_at_k` now
+  scores boundary ties by their **expected positive rate for the remaining slots**
+  (the average over all tie-breaking orders) — deterministic, row-order invariant,
+  and equal to plain top-k precision whenever there are no boundary ties.
+  *Status: provisional (gate-reviewable — it is a metric-definition change).*
+
+**D-026 (2026-07-10) — interpretability estimator conventions (MIG/SAP/alignment).**
+- `eval/interpretability.py`: **MIG** (Chen et al., NeurIPS 2018, eq. 6), **SAP**
+  (Kumar et al., ICLR 2018, continuous-factor form = squared Pearson), and the
+  per-construct **axis-alignment score** (best single-dim R² + winning dim — the
+  persona-card pointer). Ground-truth factors = the Phase-2 standardized construct
+  targets (that IS the claim under test).
+- Estimator conventions follow Locatello et al. (ICML 2019) / disentanglement_lib:
+  MI on discretized variables, 20 bins. **Documented deviation:** our factors are
+  continuous, so BOTH latents and factors use **quantile (equal-mass) bins** —
+  robust to the heavy tails of monetary/count features (equal-width bins are not).
+  (Near-)zero-entropy factors are reported NaN and excluded from means. Everything
+  is deterministic (no RNG). Ground-truth-recovery unit tests: a disentangled code
+  must outscore a Helmert-rotated (entangled) code of identical information content.
+  *Status: provisional (gate-reviewable).*
+
+**D-027 (2026-07-10) — no silent CPU fallback in trainers.**
+- `train_autoencoder` and `train_cadvae` previously substituted CPU when CUDA was
+  requested but unavailable — exactly the silent fallback CLAUDE.md's hardware
+  section forbids. Both now use `utils.device.resolve_device`, which raises
+  `CudaUnavailableError`; CPU must be requested explicitly (`device=cpu`, as the
+  tests do). DEC inherits the AE's device, so it is covered transitively.
+
+**D-028 (2026-07-10) — bit-reproducibility policy (sklearn fits + DEC).**
+- Identity re-runs (same seed, same config, twice) exposed DEC as the single
+  non-bit-reproducible baseline. Three root causes, all fixed:
+  (1) **multithreaded-BLAS reduction order** makes sklearn fits wobble ~1e-7 across
+  bit-identical inputs — absorbed by discrete outputs, but DEC uses KMeans centers
+  as CONTINUOUS init and training amplifies the wobble chaotically. Every sklearn
+  fit that feeds a representation (KMeans/GMM/PCA) now runs under
+  `threadpool_limits(1)`; heads stay multithreaded (measured bit-identical).
+  (2) **`torch.cdist` CUDA backward** uses nondeterministic atomicAdd → DEC's
+  soft-assign distance is now the matmul expansion (deterministic under
+  `CUBLAS_WORKSPACE_CONFIG`), clamped at 0.
+  (3) **CUDA `randperm`** under warn-only deterministic mode → batch permutations
+  are drawn on CPU and moved.
+- **Deterministic row order everywhere positional operations happen:** the Dataset-B
+  user table is sorted by `user_id` at build AND at load (streaming `group_by` emits
+  arbitrary order), and the category vocabulary breaks frequency ties by name.

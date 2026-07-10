@@ -46,18 +46,35 @@ def _scan(cfg: DictConfig) -> pl.LazyFrame:
 
 def _category_vocab(cfg: DictConfig, fs: datetime, ls: datetime) -> list[str]:
     """Top-N top-level categories by FEATURE-WINDOW frequency (temporally safe:
-    no label-window information enters the feature vocabulary)."""
+    no label-window information enters the feature vocabulary). Name tiebreak makes
+    the vocabulary (→ feature column order) fully deterministic."""
     n = int(cfg.features.top_n_categories)
     vocab = (
         _scan(cfg)
         .filter((pl.col("ts") >= fs) & (pl.col("ts") < ls) & pl.col("top_cat").is_not_null())
         .group_by("top_cat")
         .agg(pl.len().alias("n"))
-        .sort("n", descending=True)
+        .sort(["n", "top_cat"], descending=[True, False])
         .head(n)
         .collect(engine="streaming")
     )
     return vocab["top_cat"].to_list()
+
+
+def _category_lookup(cfg: DictConfig) -> pl.DataFrame:
+    """category_id → top-level category, from all non-null category_code rows (D-016).
+
+    Recovers the 31.84% of events with a null category_code but a valid category_id.
+    This is static product-taxonomy metadata, used ONLY to decode the next-category
+    LABEL — never as a feature — so no temporal restriction applies. ``min()`` makes
+    the (in practice unique) mapping deterministic."""
+    return (
+        _scan(cfg)
+        .filter(pl.col("top_cat").is_not_null())
+        .group_by("category_id")
+        .agg(pl.col("top_cat").min().alias("top_cat_lookup"))
+        .collect(engine="streaming")
+    )
 
 
 def build_user_table(cfg: DictConfig) -> pl.DataFrame:
@@ -76,6 +93,7 @@ def build_user_table(cfg: DictConfig) -> pl.DataFrame:
     )
 
     _purch_price = pl.col("price").filter(pl.col("in_feat") & pl.col("is_purch"))
+    _lab_purch = pl.col("in_label") & pl.col("is_purch")
     aggs = [
         pl.col("in_feat").sum().alias("n_events"),
         (pl.col("in_feat") & pl.col("is_view")).sum().alias("n_views"),
@@ -89,9 +107,17 @@ def build_user_table(cfg: DictConfig) -> pl.DataFrame:
         _purch_price.max().alias("max_purch_value"),
         pl.col("price").filter(pl.col("in_feat") & pl.col("is_view")).mean()
         .alias("mean_view_price"),
-        # labels (label window)
-        (pl.col("in_label") & pl.col("is_purch")).any().alias("label_purchase"),
+        # labels (label window) — D-016
+        _lab_purch.any().alias("label_purchase"),
         pl.col("in_label").any().alias("label_any_event"),
+        # next-category label: category_id of the FIRST label-window purchase
+        # (time order, product_id tiebreak → deterministic); decoded post-agg.
+        # Written as ONE sorted column (mask applied elementwise BEFORE the sort):
+        # filter() inside sort_by() keys is rejected by the streaming engine, and
+        # sorting values and mask separately could mis-align on tied keys.
+        pl.when(_lab_purch).then(pl.col("category_id")).otherwise(None)
+        .sort_by("ts", "product_id")
+        .drop_nulls().first().alias("__label_next_cat_id"),
     ]
     # per-category feature-window event counts (raw; converted to shares below)
     for c in vocab:
@@ -135,13 +161,27 @@ def build_user_table(cfg: DictConfig) -> pl.DataFrame:
         pl.col("mean_view_price").fill_null(0.0),
     )
 
+    # --- decode the next-category label via the taxonomy lookup (D-016) ---
+    lookup = _category_lookup(cfg)
+    tbl = tbl.join(lookup, left_on="__label_next_cat_id", right_on="category_id",
+                   how="left").with_columns(
+        pl.when(pl.col("label_purchase"))
+        .then(pl.coalesce([pl.col("top_cat_lookup"), pl.lit("unknown")]))
+        .otherwise(None)                      # non-purchasers: task undefined (masked)
+        .alias("label_next_cat"),
+        (~pl.col("label_any_event")).alias("label_churned"),   # dormancy proxy (D-016)
+    )
+
     base = [
         "recency_days", "n_events", "n_views", "n_carts", "n_purch",
         "n_sessions", "n_active_days", "total_purch_value", "mean_purch_value",
         "max_purch_value", "mean_view_price", "cart_abandon_rate", "conversion",
     ]
-    keep = ["user_id", *base, *share_names, "label_purchase", "label_any_event"]
-    return tbl.select(keep)
+    keep = ["user_id", *base, *share_names,
+            "label_purchase", "label_any_event", "label_churned", "label_next_cat"]
+    # deterministic row order: streaming group_by emits rows in arbitrary order, and
+    # downstream positional operations (train subsampling) must not depend on it (D-028)
+    return tbl.select(keep).sort("user_id")
 
 
 def cache_user_table(cfg: DictConfig) -> Path:
@@ -163,6 +203,8 @@ class PreparedSplit:
     feature_names: list[str]
     ids: dict[str, np.ndarray]
     fitted: dict = field(default_factory=dict)
+    # extra downstream tasks (D-016/D-023): task -> {"train"/"val"/"test": (y, mask), ...}
+    labels: dict = field(default_factory=dict)
 
 
 def _assign_split(user_id: pl.Series, seed: int, cfg: DictConfig) -> np.ndarray:
@@ -174,14 +216,37 @@ def _assign_split(user_id: pl.Series, seed: int, cfg: DictConfig) -> np.ndarray:
     return out
 
 
+def _next_cat_codes(table: pl.DataFrame,
+                    feat_cols: list[str]) -> tuple[np.ndarray, np.ndarray, list[str]]:
+    """Encode label_next_cat as int codes over the FEATURE-WINDOW category vocabulary.
+
+    The class space = the cat_share_* feature vocabulary (+ "other" for label-window
+    categories outside it, + "unknown" for undecodable ones) — temporally safe: no
+    label/test information defines the classes. Mask = label defined (purchasers)."""
+    vocab = sorted(c.removeprefix(CATEGORY_PREFIX) for c in feat_cols
+                   if c.startswith(CATEGORY_PREFIX)
+                   and c not in (f"{CATEGORY_PREFIX}unknown", f"{CATEGORY_PREFIX}other"))
+    classes = [*vocab, "other", "unknown"]
+    pos = {c: i for i, c in enumerate(classes)}
+    raw = table["label_next_cat"].to_numpy()
+    mask = np.array([v is not None for v in raw])
+    codes = np.array([pos.get(v, pos["other"]) if v is not None else -1 for v in raw],
+                     dtype=np.int64)
+    return codes, mask, classes
+
+
 def prepare(cfg: DictConfig, seed: int, table: pl.DataFrame | None = None,
             label: str = "label_purchase") -> PreparedSplit:
     """Load cached user table, user-disjoint split, TRAIN-ONLY standardization."""
     if table is None:
         table = pl.read_parquet(Path(cfg.processed_dir) / "user_table.parquet")
+    # deterministic row order regardless of how the cache was written (D-028)
+    table = table.sort("user_id")
 
+    # prefix-based exclusion: NOTHING named label_* may enter the features (guarded
+    # by a leakage test) — future label columns cannot silently leak
     feat_cols = [c for c in table.columns
-                 if c not in ("user_id", "label_purchase", "label_any_event")]
+                 if c != "user_id" and not c.startswith("label_")]
     X = table.select(feat_cols).to_numpy().astype(np.float64)
     y = table[label].cast(pl.Int64).to_numpy()
     uid = table["user_id"].to_numpy()
@@ -191,10 +256,27 @@ def prepare(cfg: DictConfig, seed: int, table: pl.DataFrame | None = None,
     scaler = StandardScaler().fit(X[tr])
     Xz = scaler.transform(X)
 
+    # extra downstream tasks (D-016/D-023), aligned to the same split
+    labels: dict = {}
+    if "label_churned" in table.columns:
+        yc = table["label_churned"].cast(pl.Int64).to_numpy()
+        all_mask = np.ones(len(yc), dtype=bool)
+        labels["churned"] = {"type": "binary",
+                             "train": (yc[tr], all_mask[tr]),
+                             "val": (yc[va], all_mask[va]),
+                             "test": (yc[te], all_mask[te])}
+    if "label_next_cat" in table.columns:
+        codes, mask, classes = _next_cat_codes(table, feat_cols)
+        labels["next_category"] = {"type": "multiclass", "classes": classes,
+                                   "train": (codes[tr], mask[tr]),
+                                   "val": (codes[va], mask[va]),
+                                   "test": (codes[te], mask[te])}
+
     return PreparedSplit(
         X_train=Xz[tr], X_val=Xz[va], X_test=Xz[te],
         y_train=y[tr], y_val=y[va], y_test=y[te],
         feature_names=feat_cols,
         ids={"train": uid[tr], "val": uid[va], "test": uid[te]},
         fitted={"scaler": scaler},
+        labels=labels,
     )
