@@ -16,10 +16,15 @@ Pick ONE platform. Each subfolder has its own README with exact steps.
 
 ```
 cloud/
-  kaggle/        # Recommended: free P100, data already there
-  colab/         # Free T4, easy setup
-  huggingface/   # Paid GPU Spaces, Docker-based
+  kaggle/        # VERIFIED against the repo code — use this one
+  colab/         # UNVERIFIED sketch (known issues: wrong raw paths, no cache build)
+  huggingface/   # UNVERIFIED sketch (same issues + missing 2019-Nov.csv download)
 ```
+
+**Only the Kaggle path has been verified against the actual configs and code**
+(processed-cache requirement, raw path layout, polars-hash split determinism).
+The colab/ and huggingface/ folders are early sketches kept for reference; fix
+them against `kaggle/kaggle_cells.py` before using.
 
 ## What gets run
 
