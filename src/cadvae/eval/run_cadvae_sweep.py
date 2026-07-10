@@ -36,9 +36,12 @@ import hydra
 import numpy as np
 import torch
 from omegaconf import DictConfig, OmegaConf
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import r2_score
 
 from cadvae.eval.interpretability import interpretability_summary
+from cadvae.eval.metrics import downstream_metrics
 from cadvae.eval.protocol import _fit_eval_heads, _fit_eval_heads_multiclass, _subsample
 from cadvae.eval.run_baselines import _prepare, _tasks
 from cadvae.models.cadvae import align_predict, encode, resolve_aligned_dims, train_cadvae
@@ -47,6 +50,25 @@ from cadvae.utils.run_logging import RunLogger
 
 def _run_tag(seed: int, beta: float, lam: float) -> str:
     return f"s{seed}_b{beta:g}_l{lam:g}"
+
+
+def _heads_val_and_test(R_tr, y_tr, R_va, y_va, R_te, y_te, seed: int) -> tuple[dict, dict]:
+    """The SAME two heads as ``protocol._fit_eval_heads`` (estimator spec pinned by a
+    drift-guard test), fit ONCE and evaluated on BOTH val and test.
+
+    Validation metrics exist so the Phase-6 sweet spot is selected on VAL and
+    reported on TEST (D-033) — selecting the (beta, lambda) hyperparameters on the
+    test metric would be tuning on test, the classic reviewer kill."""
+    val, test = {}, {}
+    logreg = LogisticRegression(max_iter=2000, C=1.0, random_state=seed)
+    logreg.fit(R_tr, y_tr)
+    val["logreg"] = downstream_metrics(y_va, logreg.predict_proba(R_va)[:, 1])
+    test["logreg"] = downstream_metrics(y_te, logreg.predict_proba(R_te)[:, 1])
+    gbt = HistGradientBoostingClassifier(random_state=seed)
+    gbt.fit(R_tr, y_tr)
+    val["gbt"] = downstream_metrics(y_va, gbt.predict_proba(R_va)[:, 1])
+    test["gbt"] = downstream_metrics(y_te, gbt.predict_proba(R_te)[:, 1])
+    return val, test
 
 
 def _task_heads(R_tr, R_te, tasks: dict, tr: np.ndarray, seed: int) -> dict:
@@ -82,14 +104,16 @@ def run_point(ps, ks, tasks: dict, cfg: DictConfig, seed: int,
                                   n_constructs=n_constructs)
 
     Etr = encode(model, Xtr, device=device).astype(np.float64)
+    Eva = encode(model, ps.X_val, device=device).astype(np.float64)
     Ete = encode(model, Xte, device=device).astype(np.float64)
 
+    primary_val, primary_test = _heads_val_and_test(Etr, ytr, Eva, ps.y_val, Ete, yte, seed)
     record: dict = {
         "dataset": cfg.data.name, "seed": seed, "beta": beta, "lambda_align": lam,
         "aligned_dims": aligned,
         "loss_final": history[-1], "loss_history": history,
-        "downstream": {"primary": _fit_eval_heads(Etr, ytr, Ete, yte, seed),
-                       **_task_heads(Etr, Ete, tasks, tr, seed)},
+        "downstream": {"primary": primary_test, **_task_heads(Etr, Ete, tasks, tr, seed)},
+        "downstream_val": {"primary": primary_val},   # model-selection metrics (D-033)
         "interpretability": interpretability_summary(Ete, ks.C_test, list(ks.names)),
     }
     pred_te = align_predict(model, Xte, device=device)
@@ -139,7 +163,12 @@ def run_sweep(cfg: DictConfig) -> Path:
                 record, state = run_point(ps, ks, tasks, cfg, seed, beta, lam,
                                           device=cfg.device)
                 torch.save(state, models_dir / f"{tag}.pt")
-                out_json.write_text(json.dumps(record, indent=1))
+                # atomic: a crash mid-write must not leave a corrupt file that
+                # resume would count as done (the record marks the run complete,
+                # so it is written LAST, after the model file)
+                tmp = out_json.with_suffix(".json.tmp")
+                tmp.write_text(json.dumps(record, indent=1))
+                tmp.replace(out_json)
                 n_done += 1
                 mig = record["interpretability"]["mig"]
                 pr = record["downstream"]["primary"]["gbt"]["pr_auc"]

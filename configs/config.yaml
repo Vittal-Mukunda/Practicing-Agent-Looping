@@ -35,6 +35,7 @@ sweep:
 phase6:
   head: gbt                   # downstream head used for curve/tables
   x_metric: mig_mean          # trade-off x-axis (r2 variant is always emitted too)
+  select_on: val_pr_auc       # sweet spot selected on VALIDATION, reported on test (D-033)
   y_slack: null               # null -> the best point's own seed-std (D-031)
   stability_users: 50000      # fixed seed-independent user sample (D-030); A uses all
   stability_seed: 20260710    # RNG for the user sample — NOT a model seed

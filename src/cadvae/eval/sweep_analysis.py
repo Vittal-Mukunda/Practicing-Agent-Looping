@@ -40,7 +40,15 @@ def load_sweep_records(sweep_dir: str | Path) -> list[dict]:
         raise FileNotFoundError(
             f"no sweep records in {runs_dir} — run Phase 5 first "
             f"(python -m cadvae.eval.run_cadvae_sweep data=...)")
-    return [json.loads(f.read_text()) for f in files]
+    out = []
+    for f in files:
+        try:
+            out.append(json.loads(f.read_text()))
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"corrupt sweep record {f}: {e} — delete that file and relaunch the "
+                f"sweep; resume will regenerate just that run") from e
+    return out
 
 
 def flatten_record(rec: dict, head: str = "gbt") -> dict:
@@ -53,6 +61,10 @@ def flatten_record(rec: dict, head: str = "gbt") -> dict:
         for m, v in heads[head].items():
             if isinstance(v, (int, float)):
                 row[f"{prefix}{m}"] = float(v)
+    # validation metrics for model selection (D-033); absent in pre-D-033 records
+    for m, v in rec.get("downstream_val", {}).get("primary", {}).get(head, {}).items():
+        if isinstance(v, (int, float)):
+            row[f"val_{m}"] = float(v)
     row["mig"] = float(rec["interpretability"]["mig"])
     row["sap"] = float(rec["interpretability"]["sap"])
     align = rec.get("alignment")
@@ -131,6 +143,28 @@ def baseline_per_seed(records_path: str | Path, method: str, metric: str = "pr_a
     return {int(r["seed"]): float(r[metric]) for r in recs
             if r["method"] == method and r["head"] == head
             and r.get("task", "primary") == task and metric in r}
+
+
+def best_baseline_for_task(records_path: str | Path, task: str, metric: str,
+                           head: str = "gbt",
+                           exclude: tuple[str, ...] = ("raw",)) -> dict | None:
+    """Strongest baseline for ONE task by mean metric (raw excluded, D-024).
+
+    The multi-task claim must beat the best PER-TASK incumbent, not just the
+    primary-bar method — on next-category the strongest baseline differs from the
+    primary bar, and comparing against the wrong one is a straw man."""
+    recs = json.loads(Path(records_path).read_text())
+    sel = [r for r in recs if r["head"] == head and r.get("task", "primary") == task
+           and metric in r and r["method"] not in exclude]
+    if not sel:
+        return None
+    means: dict[str, list[float]] = defaultdict(list)
+    for r in sel:
+        means[r["method"]].append(float(r[metric]))
+    best = max(means, key=lambda m: float(np.mean(means[m])))
+    return {"method": best, "mean": float(np.mean(means[best])),
+            "by_seed": {int(r["seed"]): float(r[metric]) for r in sel
+                        if r["method"] == best}}
 
 
 def paired_tests(a_by_seed: dict[int, float], b_by_seed: dict[int, float]) -> dict:

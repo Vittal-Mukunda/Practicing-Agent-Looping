@@ -515,3 +515,33 @@ to be tuned then (owner pre-authorized).
 **Hygiene note for Phase 7:** `threadpoolctl` is imported directly but is only a
 transitive dep (via scikit-learn) in pyproject - add as direct dependency at the
 next `uv lock` (needs network; deferred deliberately).
+
+## 2026-07-10 - Session 7 (cont.): pre-compute audit of Phases 5/6/7 (D-033)
+
+Owner asked for a Phase-5/6/7 audit before starting compute, with
+publication-improving changes allowed. Five findings, all fixed and tested:
+
+1. **CRITICAL - sweet spot was selected on TEST** (sweep recorded no val
+   metrics). Now: val metrics per run, selection on val, reporting on test
+   (D-033), drift-guard test pins the dual-eval heads to the Phase-3 spec.
+   Caught BEFORE the sweep - records would otherwise have needed regeneration.
+2. Per-task significance used the primary-bar method (rfm) for every task -
+   straw man on next_category where ae_kmeans is the real bar. Now: best
+   PER-TASK baseline + a multitask.md comparison table (the blessed claim''s
+   table).
+3. Clustering metrics (CLAUDE.md protocol) were never computed for CA-DVAE.
+   Now: silhouette/DB/CH per stability config (mean over seeds).
+4. Sweep record writes were not atomic -> a power cut could leave a corrupt
+   file that resume counts as DONE and Phase 6 crashes on. Now: tmp+replace;
+   corrupt records raise naming the file + recovery step.
+5. Phase-6 stability re-ran prepare() per config x seed (18 B-parquet loads)
+   and embedded before checking model files. Now: per-seed universe memoization
+   + file pre-check.
+
+Checks: full suite **68 passed** (4 new tests: dual-head drift guard, per-task
+baseline winner, corrupt-record naming, e2e assertions for val-selection +
+clustering + multitask table); ruff + mypy clean. B sweep cost +~10-15 s/run
+(val eval) -> ~8 h overnight; A unchanged ~2 h. Launch commands unchanged
+(README). Publication posture: strictly improved - the two most likely
+methodology objections (test-set tuning, straw-man baselines) are now dead
+before any compute is spent.

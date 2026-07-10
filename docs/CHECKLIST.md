@@ -89,6 +89,7 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 |---|------|--------|
 | 5.1 | Sweep grid + runner design (D-029): 6β×4λ×6 seeds, resume-skip, saved state_dicts | **Completed 2026-07-10** — `eval/run_cadvae_sweep.py`; suite 49 passed |
 | 5.2 | Dry runs (A + B real caches) + protocol-scale timing anchor (B run = 179.5 s) | **Completed 2026-07-10** — resume verified; B sweep ≈7.5 h, A ≈2 h |
+| 5.2b | Pre-compute audit (D-033): val-based selection metrics per run, atomic record writes | **Completed 2026-07-10** — suite 68 passed; B sweep ≈8 h with val eval |
 | 5.3 | Overnight sweep, Dataset B (144 runs) | **Pending — owner launches** (commands in NOTEBOOK) |
 | 5.4 | Overnight sweep, Dataset A (144 runs) | **Pending — owner launches** |
 | 5.5 | GATE: owner reviews raw sweep results | Pending 5.3/5.4 |
@@ -100,6 +101,7 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 6.2 | Sweep analysis (aggregate, Pareto, sweet-spot rule, paired tests) — D-031 | **Code completed 2026-07-10** — `eval/sweep_analysis.py` |
 | 6.3 | Figures: trade-off curve, stability bars, persona cards, tables — D-032 | **Code completed 2026-07-10** — `viz/figures.py` |
 | 6.4 | Orchestrator (`eval/run_phase6.py`) — analysis.json + figures + tables | **Code completed 2026-07-10** — e2e-tested on faked sweep artifacts |
+| 6.4b | Pre-compute audit (D-033): sweet spot selected on VAL not test; per-task best-baseline significance + multitask table; clustering metrics; universe memoization | **Completed 2026-07-10** |
 | 6.5 | Run Phase 6 on real sweep output (A + B) | **Blocked on 5.3/5.4** — first real run = integration test; D-030..032 may be tuned then (owner pre-authorized) |
 | 6.6 | GATE: owner reviews figures + tables | Pending 6.5 |
 

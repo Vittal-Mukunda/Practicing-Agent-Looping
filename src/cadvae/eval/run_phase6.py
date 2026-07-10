@@ -31,6 +31,7 @@ import hydra
 import numpy as np
 from omegaconf import DictConfig
 
+from cadvae.eval.metrics import clustering_metrics
 from cadvae.eval.run_baselines import _prepare
 from cadvae.eval.run_cadvae_sweep import _run_tag
 from cadvae.eval.stability import (
@@ -44,7 +45,7 @@ from cadvae.eval.stability import (
 )
 from cadvae.eval.sweep_analysis import (
     aggregate_sweep,
-    baseline_per_seed,
+    best_baseline_for_task,
     load_sweep_records,
     paired_tests,
     per_seed_values,
@@ -88,23 +89,31 @@ def _axis_labels_from_record(rec: dict) -> dict[int, str]:
 
 
 def _stability_for_config(cfg: DictConfig, models_dir: Path, beta: float, lam: float,
-                          warnings: list[str]) -> dict | None:
-    """Cross-seed ARI/NMI + bootstrap persistence for one grid point (D-030)."""
+                          warnings: list[str],
+                          universes: dict[int, tuple[np.ndarray, np.ndarray]]) -> dict | None:
+    """Cross-seed ARI/NMI + bootstrap persistence + clustering quality for one grid
+    point (D-030). ``universes`` memoizes per-seed (uid, X) across configs — the
+    prepare() reload is the dominant Phase-6 cost on Dataset B."""
+    seeds = [int(s) for s in cfg.eval.seeds]
+    missing = [f"{_run_tag(s, beta, lam)}.pt" for s in seeds
+               if not (models_dir / f"{_run_tag(s, beta, lam)}.pt").exists()]
+    if missing:                                # pre-check BEFORE any embedding work
+        warnings.append(f"stability: config (beta={beta:g}, lambda={lam:g}) skipped — "
+                        f"missing models: {missing}")
+        return None
     k = int(cfg.eval.n_clusters)
     cap = int(cfg.phase6.stability_users)
     sample_seed = int(cfg.phase6.stability_seed)
     assignments: dict[int, np.ndarray] = {}
     ref_uid = None
     boot = None
-    for seed in [int(s) for s in cfg.eval.seeds]:
-        mp = models_dir / f"{_run_tag(seed, beta, lam)}.pt"
-        if not mp.exists():
-            warnings.append(f"stability: missing model {mp.name} — config "
-                            f"(beta={beta:g}, lambda={lam:g}) skipped")
-            return None
-        model = rebuild_cadvae(load_model_state(mp))
-        ps, _ = _prepare(cfg, seed)
-        uid, X = universe_matrix(ps)
+    clu: list[dict] = []
+    for seed in seeds:
+        model = rebuild_cadvae(load_model_state(models_dir / f"{_run_tag(seed, beta, lam)}.pt"))
+        if seed not in universes:
+            ps, _ = _prepare(cfg, seed)
+            universes[seed] = universe_matrix(ps)
+        uid, X = universes[seed]
         if ref_uid is None:
             ref_uid = uid
             idx = stability_sample(len(uid), cap, sample_seed)
@@ -112,11 +121,16 @@ def _stability_for_config(cfg: DictConfig, models_dir: Path, beta: float, lam: f
             raise AssertionError("user universes differ across seeds — split logic broken")
         Z = encode(model, X[idx]).astype(np.float64)
         assignments[seed] = kmeans_assign(Z, k, seed)
+        # clustering quality on the SAME embedding/partition (CLAUDE.md protocol)
+        clu.append(clustering_metrics(Z, assignments[seed], seed=seed))
         if boot is None:                       # bootstrap on the first seed's embedding
             boot = bootstrap_persistence(Z, k, n_boot=int(cfg.phase6.n_boot), seed=seed)
     out = pairwise_stability(assignments)
     out["bootstrap"] = boot
     out["n_users"] = int(len(next(iter(assignments.values()))))
+    out["clustering"] = {
+        m: float(np.nanmean([c[m] for c in clu]))
+        for m in ("silhouette", "davies_bouldin", "calinski_harabasz")}
     return out
 
 
@@ -145,27 +159,39 @@ def analyze(cfg: DictConfig) -> dict:
                 and r.get("task", "primary") == "primary"]
     ceiling = {"name": "raw", "value": float(raw_rows[0][y])} if raw_rows else None
 
-    sweet_sel = select_sweet_spot(agg, x=str(cfg.phase6.x_metric), y=y,
+    # model selection on VALIDATION metrics, reporting on test (D-033): selecting
+    # (beta, lambda) by the test metric would be tuning on test
+    y_sel = f"{cfg.phase6.get('select_on', 'val_' + pm)}_mean"
+    if not any(np.isfinite(p.get(y_sel, np.nan)) for p in agg):
+        warnings.append(f"selection metric '{y_sel}' absent from sweep records — "
+                        f"falling back to TEST metric '{y}' (pre-D-033 sweep?)")
+        y_sel = y
+    sweet_sel = select_sweet_spot(agg, x=str(cfg.phase6.x_metric), y=y_sel,
                                   y_slack=cfg.phase6.get("y_slack"))
     sweet = sweet_sel["point"]
     sb, sl = float(sweet["beta"]), float(sweet["lambda_align"])
 
-    # paired significance: sweet-spot CA-DVAE vs the bar method, per shared seed
-    bar_seed = baseline_per_seed(phase3_dir / "records.json", sig3["best_method"],
-                                 metric=pm, head=head)
-    significance = {"primary": paired_tests(
-        per_seed_values(records, sb, sl, metric=pm, head=head), bar_seed)}
-    for task, metric in (("churned", "churned_pr_auc"), ("next_category",
-                                                         "next_category_acc_at_1")):
+    # paired significance per task: sweet-spot CA-DVAE (TEST metrics) vs the best
+    # PER-TASK baseline — beating only the primary-bar method on a task where a
+    # different baseline is stronger would be a straw-man comparison
+    significance: dict[str, dict] = {}
+    task_specs = [("primary", pm, pm),
+                  ("churned", "pr_auc", "churned_pr_auc"),
+                  ("next_category", "acc_at_1", "next_category_acc_at_1"),
+                  ("next_category", "macro_ovr_auc", "next_category_macro_ovr_auc")]
+    for task, base_metric, flat_metric in task_specs:
         try:
-            a = per_seed_values(records, sb, sl, metric=metric, head=head)
-            b = baseline_per_seed(phase3_dir / "records.json", sig3["best_method"],
-                                  metric=metric.removeprefix(f"{task}_"), head=head,
-                                  task=task)
-            if a and b:
-                significance[task] = paired_tests(a, b)
+            a = per_seed_values(records, sb, sl, metric=flat_metric, head=head)
         except KeyError:
-            pass                                   # dataset without this task (A)
+            continue                               # dataset without this task (A)
+        bb = best_baseline_for_task(phase3_dir / "records.json", task=task,
+                                    metric=base_metric, head=head)
+        if not a or bb is None:
+            continue
+        key = "primary" if task == "primary" else f"{task}/{base_metric}"
+        significance[key] = {"task": task, "metric": base_metric,
+                             "baseline": bb["method"],
+                             **paired_tests(a, bb["by_seed"])}
 
     # figures + tables
     files: dict[str, str] = {}
@@ -180,7 +206,22 @@ def analyze(cfg: DictConfig) -> dict:
     except ValueError as e:                        # e.g. only lambda=0 runs exist
         warnings.append(f"tradeoff_r2 skipped: {e}")
 
-    abl = ablation_points(agg, sweet, y)
+    # multi-task comparison table — the blessed multi-task claim, one row per task
+    mt_rows = []
+    for sig in significance.values():
+        cad = sig["mean_a"]
+        mt_rows.append({"task": sig["task"], "metric": sig["metric"],
+                        "best_baseline": sig["baseline"], "baseline_mean": sig["mean_b"],
+                        "cadvae_mean": cad, "delta": cad - sig["mean_b"],
+                        "wilcoxon_p": sig.get("wilcoxon_p", float("nan")),
+                        "ttest_p": sig.get("ttest_p", float("nan"))})
+    if mt_rows:
+        files["multitask_table"] = str(markdown_table(
+            mt_rows, tab_dir / "multitask.md",
+            title=f"{name}: CA-DVAE sweet spot vs best PER-TASK baseline "
+                  f"({head} head, test set, paired over seeds)"))
+
+    abl = ablation_points(agg, sweet, y_sel)       # same selection metric as the sweet spot
     abl_rows = []
     for label, pt in abl.items():
         if pt is None:
@@ -199,13 +240,14 @@ def analyze(cfg: DictConfig) -> dict:
 
     stability: dict[str, dict] = {}
     models_dir = sweep_dir / "models"
+    universes: dict[int, tuple[np.ndarray, np.ndarray]] = {}   # per-seed cache
     for label, pt in abl.items():
         if pt is None:
             continue
-        s = _stability_for_config(cfg, models_dir, float(pt["beta"]),
-                                  float(pt["lambda_align"]), warnings)
-        if s is not None:
-            stability[label] = s
+        stab = _stability_for_config(cfg, models_dir, float(pt["beta"]),
+                                     float(pt["lambda_align"]), warnings, universes)
+        if stab is not None:
+            stability[label] = stab
     if stability:
         files["stability"] = str(stability_bars(
             {k: v for k, v in stability.items()}, fig_dir / "stability.png",

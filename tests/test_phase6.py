@@ -49,12 +49,17 @@ def _fake_record(seed, beta, lam, pr, mig, with_next=True):
         mc = {"acc_at_1": 0.5, "acc_at_3": 0.8, "acc_at_5": 0.9,
               "macro_ovr_auc": 0.6, "base_rate": 0.5, "n_classes": 12}
         downstream["next_category"] = {"logreg": dict(mc), "gbt": dict(mc)}
+    val_heads = {"logreg": {"roc_auc": 0.69, "pr_auc": pr - 0.012, "prec_at_10pct": 0.3,
+                            "base_rate": 0.15},
+                 "gbt": {"roc_auc": 0.71, "pr_auc": pr - 0.003, "prec_at_10pct": 0.31,
+                         "base_rate": 0.15}}
     rec = {"dataset": "fake", "seed": seed, "beta": beta, "lambda_align": lam,
            "aligned_dims": 3 if lam > 0 else 0,
            "loss_final": {"total": 30.0, "recon": 25.0, "kl_free": 0.5,
                           "kl_aligned": 2.0, "align": 3.0},
            "loss_history": [],
            "downstream": downstream,
+           "downstream_val": {"primary": val_heads},
            "interpretability": {"mig": mig, "sap": mig / 2,
                                 "mig_per_factor": {"c0": mig},
                                 "sap_per_factor": {"c0": mig / 2},
@@ -82,7 +87,8 @@ def test_flatten_and_aggregate_nan_aware():
     recs = _fake_sweep()
     flat = flatten_record(recs[0])
     assert {"pr_auc", "churned_pr_auc", "next_category_acc_at_1", "mig",
-            "r2_mean", "kl_free"} <= set(flat)
+            "r2_mean", "kl_free", "val_pr_auc"} <= set(flat)
+    assert flat["val_pr_auc"] != flat["pr_auc"]     # val metrics are their own numbers
     agg = aggregate_sweep(recs)
     assert len(agg) == 4 and all(a["n_seeds"] == 3 for a in agg)
     lam0 = [a for a in agg if a["lambda_align"] == 0.0]
@@ -231,6 +237,43 @@ def test_stability_bars_and_table(tmp_path):
     assert "| config | pr_auc | mig |" in text and "0.5123" in text
 
 
+def test_best_baseline_for_task_picks_per_task_winner(tmp_path):
+    import json
+
+    from cadvae.eval.sweep_analysis import best_baseline_for_task
+    recs = []
+    for s in (0, 1):
+        recs += [{"method": "rfm", "head": "gbt", "seed": s, "task": "primary",
+                  "pr_auc": 0.45},
+                 {"method": "ae", "head": "gbt", "seed": s, "task": "primary",
+                  "pr_auc": 0.40},
+                 {"method": "rfm", "head": "gbt", "seed": s, "task": "churned",
+                  "pr_auc": 0.80},
+                 {"method": "ae", "head": "gbt", "seed": s, "task": "churned",
+                  "pr_auc": 0.86},
+                 {"method": "raw", "head": "gbt", "seed": s, "task": "churned",
+                  "pr_auc": 0.99}]
+    p = tmp_path / "records.json"
+    p.write_text(json.dumps(recs))
+    assert best_baseline_for_task(p, "primary", "pr_auc")["method"] == "rfm"
+    churn = best_baseline_for_task(p, "churned", "pr_auc")
+    assert churn["method"] == "ae"                 # per-task winner, raw excluded
+    assert set(churn["by_seed"]) == {0, 1}
+    assert best_baseline_for_task(p, "nope", "pr_auc") is None
+
+
+def test_load_sweep_records_names_corrupt_file(tmp_path):
+    import json
+
+    from cadvae.eval.sweep_analysis import load_sweep_records
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    (runs / "s0_b1_l1.json").write_text(json.dumps({"ok": 1}))
+    (runs / "s1_b1_l1.json").write_text('{"beta": 1.0, "lam')   # truncated mid-write
+    with pytest.raises(ValueError, match="s1_b1_l1"):
+        load_sweep_records(tmp_path)
+
+
 # ----------------------------------------------- orchestrator end-to-end (faked)
 def test_run_phase6_end_to_end_on_faked_artifacts(tmp_path, monkeypatch):
     """Full analyze() against a synthetic sweep dir + phase-3 dir: the exact glue
@@ -276,6 +319,8 @@ def test_run_phase6_end_to_end_on_faked_artifacts(tmp_path, monkeypatch):
              "roc_auc": 0.75, "pr_auc": 0.52},
             {"method": "rfm", "head": "gbt", "seed": s, "task": "churned",
              "roc_auc": 0.6, "pr_auc": 0.80},
+            {"method": "ae", "head": "gbt", "seed": s, "task": "churned",
+             "roc_auc": 0.65, "pr_auc": 0.86 + 0.001 * s},   # per-task winner != rfm
             {"method": "rfm", "head": "gbt", "seed": s, "task": "next_category",
              "acc_at_1": 0.40, "macro_ovr_auc": 0.52},
         ]
@@ -316,8 +361,9 @@ def test_run_phase6_end_to_end_on_faked_artifacts(tmp_path, monkeypatch):
         "data": {"name": "fake"},
         "eval": {"seeds": list(seeds), "n_clusters": 3, "train_subsample": None,
                  "k_frac": 0.10, "primary_metric": "pr_auc", "methods": None},
-        "phase6": {"head": "gbt", "x_metric": "mig_mean", "y_slack": None,
-                   "stability_users": 50, "stability_seed": 20260710, "n_boot": 3,
+        "phase6": {"head": "gbt", "x_metric": "mig_mean", "select_on": "val_pr_auc",
+                   "y_slack": None, "stability_users": 50,
+                   "stability_seed": 20260710, "n_boot": 3,
                    "traversal_span": 2.0, "card_top_features": 5},
     })
     analysis = p6.analyze(cfg)
@@ -326,13 +372,20 @@ def test_run_phase6_end_to_end_on_faked_artifacts(tmp_path, monkeypatch):
     assert (out / "analysis.json").exists()
     json.dumps(analysis)                                    # fully serializable
     assert analysis["bar"] == {"name": "rfm", "value": 0.4510}
-    assert "primary" in analysis["significance_vs_bar"]
-    assert {"churned", "next_category"} <= set(analysis["significance_vs_bar"])
+    # sweet spot selected on VALIDATION (D-033), never on the test metric
+    assert analysis["sweet_spot"]["rule"]["y"] == "val_pr_auc_mean"
+    sig = analysis["significance_vs_bar"]
+    assert {"primary", "churned/pr_auc", "next_category/acc_at_1",
+            "next_category/macro_ovr_auc"} <= set(sig)
+    assert sig["churned/pr_auc"]["baseline"] == "ae"        # best PER-TASK baseline
+    assert sig["primary"]["baseline"] == "rfm"
     assert analysis["stability"], "stability must cover at least one config"
     for v in analysis["stability"].values():
         assert -1.0 <= v["ari_mean"] <= 1.0 and v["n_users"] == 50
+        assert np.isfinite(v["clustering"]["silhouette"])   # CLAUDE.md protocol
     assert (out / "figures" / "tradeoff_mig.png").exists()
     assert (out / "tables" / "ablations.md").exists()
+    assert (out / "tables" / "multitask.md").exists()
     # persona cards render unless the sweet spot landed on lambda=0
     sl = analysis["sweet_spot"]["point"]["lambda_align"]
     if sl > 0:

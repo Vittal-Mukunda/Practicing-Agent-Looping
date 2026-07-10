@@ -459,3 +459,26 @@ numbered at write-up time.*
   sweet-spot model at the lowest seed.
 - Figures: matplotlib Agg only, PNG 200 dpi, error bars = seed std, no style
   packages (reviewer reproducibility). *Status: provisional (gate-reviewable).*
+
+**D-033 (2026-07-10) — validation-based sweet-spot selection (pre-compute audit).**
+- **Finding (audit of Phases 5-7 before the sweep):** the sweep recorded only
+  TEST-set downstream metrics, so the Phase-6 sweet spot — a (beta, lambda)
+  hyperparameter choice — would have been selected on test: the classic
+  "tuned on test" reviewer kill on the headline claim.
+- **Fix:** every sweep run now also records primary-task metrics on the
+  VALIDATION split (heads fit once, evaluated on both val and test — the val
+  evaluation adds ~10-15 s/run on B, sweep ~7.5h -> ~8h). Phase 6 selects the
+  sweet spot on `phase6.select_on` (default `val_pr_auc`) and reports/stars TEST
+  numbers. The sweep''s dual-eval helper is pinned to the canonical Phase-3 head
+  spec by an exact-equality drift-guard test. Pre-D-033 records (no val block)
+  fall back to test selection WITH a logged warning.
+- **Same audit, also fixed:** (a) per-task significance now compares CA-DVAE
+  against the best PER-TASK baseline (`best_baseline_for_task`, raw excluded) —
+  comparing next-category against the primary-bar method would be a straw man —
+  and a multi-task comparison table is emitted; (b) clustering quality
+  (silhouette/DB/CH, CLAUDE.md protocol) is now computed for CA-DVAE configs in
+  the stability step; (c) sweep record writes are ATOMIC (tmp+replace) so a
+  power cut cannot leave a corrupt "completed" run, and corrupt records are
+  named with the recovery command; (d) Phase-6 stability memoizes per-seed
+  universes (18 -> 6 parquet loads on B) and pre-checks model files before any
+  embedding work.

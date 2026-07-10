@@ -62,9 +62,25 @@ def test_run_point_full_model_record_complete_and_serializable():
     assert rec["aligned_dims"] == 3                       # min(3 constructs, 6-2 free)
     assert {"primary", "churned"} <= set(rec["downstream"])
     assert 0.0 <= rec["downstream"]["primary"]["gbt"]["pr_auc"] <= 1.0
+    # validation metrics recorded for model selection (D-033)
+    assert 0.0 <= rec["downstream_val"]["primary"]["gbt"]["pr_auc"] <= 1.0
     assert np.isfinite(rec["interpretability"]["mig"])
     assert "r2_mean" in rec["alignment"]
     assert state["aligned_dims"] == 3 and "state_dict" in state
+
+
+def test_dual_eval_heads_match_canonical_protocol_heads_exactly():
+    """Drift guard (D-033): the sweep's fit-once/eval-val-and-test heads must
+    produce test metrics IDENTICAL to protocol._fit_eval_heads — same estimators,
+    same seeds, so any spec drift shows up as an exact-equality failure."""
+    from cadvae.eval.protocol import _fit_eval_heads
+    from cadvae.eval.run_cadvae_sweep import _heads_val_and_test
+    rng = np.random.default_rng(3)
+    R_tr, R_va, R_te = (rng.standard_normal((n, 5)) for n in (300, 80, 80))
+    y_tr, y_va, y_te = ((rng.random(n) < 0.3).astype(np.int64) for n in (300, 80, 80))
+    _, test = _heads_val_and_test(R_tr, y_tr, R_va, y_va, R_te, y_te, seed=4)
+    canonical = _fit_eval_heads(R_tr, y_tr, R_te, y_te, seed=4)
+    assert test == canonical
 
 
 def test_run_point_beta_vae_ablation_lambda_zero():
