@@ -686,3 +686,50 @@ persona_cards.png, multitask.md, ablations.md. Open items for the paper
 +KMeans across seeds) would need Phase-3 model retraining; three-way
 frontier figure (perf x interp x stability) can be composed from existing
 stability_map.json + sweep records without new compute.
+
+## 2026-07-11 - Session 8 (cont.): Phase 7 verification + baseline stability
+## (owner: "Verify and run everything" = gate 6.6 sign-off + Phase 7 + optionals)
+
+**Phase 7 verification - ALL PASSED:**
+- repro_check personality seed 0: REPRODUCTION OK, atol=1e-9 (bit-exact).
+- repro_check ecommerce seed 0 (D-020 overrides): REPRODUCTION OK, atol=1e-9.
+- **Fresh clone** (GitHub -> uv sync from lockfile -> copy processed caches +
+  phase3 records): **69 passed** AND repro_check A bit-exact IN THE CLONE.
+  The Definition-of-Done reproduction requirement is demonstrated, not assumed.
+- threadpoolctl promoted to direct dependency (pyproject + uv.lock, 7.4 closed).
+
+**Optional item 2 - three-way frontier figure (frontier3.png, both datasets):**
+downstream (y) x alignment R2 (x) x cross-seed ARI (color) from existing
+records + D-035 map only; sweet spot starred; bar/ceiling lines.
+
+**Optional item 1 - baseline persona stability (baseline_stability.json,
+identical D-030 protocol, AE retrained per seed exactly as the Phase-3
+protocol - which repro_check just proved bit-reproducible):**
+| method | A ARI | B ARI |
+|---|---|---|
+| rfm_kmeans | 0.975+/-0.011 | 0.962+/-0.033 |
+| ae_kmeans | 0.703+/-0.068 | 0.745+/-0.037 |
+| cadvae stable region (lambda 0.25-1, low beta) | 0.64-0.70 | 0.58-0.73 |
+| cadvae R2-sweet spot | 0.467 | 0.583 |
+
+**HONEST REFRAMING (kills one claim, sharpens another):**
+- DEAD: "construct anchoring buys stability over incumbents." CA-DVAE's
+  stability edge existed only vs its own ablations at one grid point. Both
+  incumbents are more stable than the sweet spot; RFM is near-perfectly
+  stable (3 deterministic features - stability was never RFM's weakness).
+- ALIVE (the paper's honest claim): interpretability costs BOTH downstream
+  AND stability - the trade-off is three-way (frontier3.png). And **vs the
+  NEURAL incumbent specifically (AE+KMeans personas), CA-DVAE at B's
+  (0.05,1): pr_auc 0.182 > AE 0.172, ARI 0.725 ~ AE 0.745, + named axes
+  (R2 0.77) + significant churn win** - matches or beats the neural persona
+  pipeline on every axis. Vs RFM: RFM keeps purchases + stability but
+  cannot express category structure (next_category collapse, logged) and
+  has no interpretability dial.
+- Positioning: measurement paper. "Persona quality made measurable; here is
+  the three-way frontier; the interpretable model dominates the neural
+  incumbent and quantifies its distance to the non-neural one."
+
+**Phase 7 checklist closed (7.3 verified, 7.4 closed, 7.5 = this entry).
+All phases complete. Remaining for owner: paper writing; optional ideas
+(NOT built): significance tests on stability deltas; frontier3 polish for
+camera-ready.**

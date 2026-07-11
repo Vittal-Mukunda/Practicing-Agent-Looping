@@ -113,7 +113,11 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 |---|------|--------|
 | 7.1 | `eval/repro_check.py` — re-run pinned seed, diff vs recorded records (exit 1 on mismatch) | **Code completed 2026-07-10** — comparator unit-tested |
 | 7.2 | README rewritten as reproduction guide (all commands, evidence table) | **Completed 2026-07-10** |
-| 7.3 | Run repro_check on both datasets; fresh-clone walkthrough | **Blocked on Phase 5/6 runs** |
-| 7.4 | Hygiene: add `threadpoolctl` as direct dep at next `uv lock` (network) | Pending |
-| 7.5 | Finalize DECISIONS + NOTEBOOK; final commit | Pending 7.3 |
+| 7.3 | Run repro_check on both datasets; fresh-clone walkthrough | **Completed 2026-07-11** — A + B REPRODUCTION OK at atol=1e-9 (bit-exact); fresh GitHub clone + lockfile sync: 69 tests pass + repro_check A bit-exact IN the clone |
+| 7.4 | Hygiene: add `threadpoolctl` as direct dep at next `uv lock` (network) | **Completed 2026-07-11** — pyproject + uv.lock committed |
+| 7.5 | Finalize DECISIONS + NOTEBOOK; final commit | **Completed 2026-07-11** — incl. optional items: baseline persona stability (rfm 0.96-0.98, ae 0.70-0.75 — honest reframing recorded) + frontier3.png both datasets |
+
+**ALL PHASES COMPLETE 2026-07-11.** Gate 6.6 signed off (owner: "Verify and run
+everything"). Remaining work is the paper itself (owner) — see NOTEBOOK Session 8
+final entry for the honest claim structure.
 
