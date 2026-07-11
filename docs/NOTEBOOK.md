@@ -733,3 +733,54 @@ protocol - which repro_check just proved bit-reproducible):**
 All phases complete. Remaining for owner: paper writing; optional ideas
 (NOT built): significance tests on stability deltas; frontier3 polish for
 camera-ready.**
+
+## 2026-07-11 - Session 8 (cont.): pre-writing defense pack (owner-approved,
+## inexpensive items only; 10-seed extension deliberately SKIPPED - optional
+## stopping after observed significance is a worse attack surface than it closes)
+
+All artifacts under results/phase6/{ds}_analysis/. Evidence:
+
+**(1) Attribution across named vs free axes (attribution.json) - the
+anti-circularity result:**
+- A sweet spot (0.25,4): full 0.5127 | aligned-10d 0.4429 | free-6d 0.4456 -
+  blocks complementary; the NAMED block alone beats raw RFM (0.394).
+- B sweet spot (0.1,1): full 0.1798 | aligned-12d **0.1722** | free-4d 0.1447 -
+  **the 12 named axes ALONE equal the neural incumbent's full unnamed
+  embedding (ae 0.1724)**. The paper's key anti-circularity sentence.
+- Sanity: full-block heads reproduce the sweep records - B bit-exact
+  (2.8e-17); A dev 5.3e-3 = cross-hardware encode noise (sweep embeddings
+  from Kaggle T4/torch 2.10, re-encoded on 4050/torch 2.6) amplified by A's
+  448-row test set; B's 509k-row binned pipeline absorbs it. Documented
+  hardware caveat, now with a measured magnitude.
+
+**(2) SMP - Stability at Matched Performance (smp.json), named metric:**
+max cross-seed ARI among configs within D-031 slack of best VAL downstream
+(excludes trivially-stable collapsed configs by construction). Both datasets
+select (0.05,1): A 0.697 vs ae 0.703; B 0.725 vs ae 0.745 -> **at matched
+performance, aligned personas are as stable as the neural incumbent's.**
+
+**(4) Selection sensitivity (selection_sensitivity.json):** R2-selection is
+slack-invariant on A ((0.25,4) at 0.5x/1x/2x) and moves gracefully along the
+frontier on B ((0.05,1)->(0.1,1)->(0.5,4), always aligned). MIG-selection
+picks the degenerate lambda=0 point at EVERY slack on B - D-034 is robust,
+not a slack artifact.
+
+**(5) Dormancy win in business units (churn_business.json):** prec@10%
+0.9312 vs ae 0.9300 -> **+12 extra dormant users per 10k targeted**
+(wilcoxon 0.0312, t 7.8e-3). Real but modest; to be reported exactly so.
+
+**(7) K-sensitivity (stability_k_sensitivity.json), K in {5,8,12}, now incl.
+PCA personas:** ordering "linear incumbents (rfm/pca 0.73-0.99) >> neural
+methods (ae/cadvae 0.41-0.78)" holds at every K on both datasets ->
+**stability tracks model simplicity**, generalizing the collapse confound
+and motivating SMP. cadvae_smp ~ ae within the neural band at K=8 (both
+datasets); wobbles at other K are within-band.
+
+**(8) AE mini-sweep, A (ae_minisweep.json, 6 configs x 6 seeds):** official
+gbt bar DEFENDED - best AE gbt 0.5519 < pca 0.5677. Transparency: a tuned
+latent-32 AE (2x CA-DVAE capacity) reaches PARITY on the logreg head
+(0.5731; NOT significant vs pca in either family, wilcoxon 0.22/0.44,
+t 0.17/0.86 - paired tests run, not assumed). Pre-hoc bar (gbt, D-019)
+unchanged; raw ceiling 0.615 still above everything.
+
+**Defense pack complete. Next: paper writing (owner + assistant).**
