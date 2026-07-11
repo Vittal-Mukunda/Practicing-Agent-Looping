@@ -90,9 +90,9 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 5.1 | Sweep grid + runner design (D-029): 6β×4λ×6 seeds, resume-skip, saved state_dicts | **Completed 2026-07-10** — `eval/run_cadvae_sweep.py`; suite 49 passed |
 | 5.2 | Dry runs (A + B real caches) + protocol-scale timing anchor (B run = 179.5 s) | **Completed 2026-07-10** — resume verified; B sweep ≈7.5 h, A ≈2 h |
 | 5.2b | Pre-compute audit (D-033): val-based selection metrics per run, atomic record writes | **Completed 2026-07-10** — suite 68 passed; B sweep ≈8 h with val eval |
-| 5.3 | Overnight sweep, Dataset B (144 runs) | **Pending — owner launches** (commands in NOTEBOOK) |
-| 5.4 | Overnight sweep, Dataset A (144 runs) | **Pending — owner launches** |
-| 5.5 | GATE: owner reviews raw sweep results | Pending 5.3/5.4 |
+| 5.3 | Overnight sweep, Dataset B (144 runs) | **Completed 2026-07-11** — Kaggle T4 (owner decision), commit d867713 git_dirty=false, ~190 s/run ≈7.7 h; all 144 records parse + complete |
+| 5.4 | Overnight sweep, Dataset A (144 runs) | **Completed 2026-07-10** — same Kaggle session, ~8 s/run ≈20 min; all 144 records parse + complete |
+| 5.5 | GATE: owner reviews raw sweep results | **AT THE GATE 2026-07-11** — results pulled to results/phase5 (from GitHub branch kaggle-results); preview summary in NOTEBOOK Session 8 |
 ## Phase 6 — Analysis + figures  → GATE: owner reviews figures + tables
 
 | # | Task | Status |

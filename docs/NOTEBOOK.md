@@ -545,3 +545,57 @@ clustering + multitask table); ruff + mypy clean. B sweep cost +~10-15 s/run
 (README). Publication posture: strictly improved - the two most likely
 methodology objections (test-set tuning, straw-man baselines) are now dead
 before any compute is spent.
+
+## 2026-07-10/11 - Session 8 (Phase 5 sweep EXECUTED on Kaggle; results pulled)
+
+Owner chose cloud compute (weak local availability). Kaggle chosen over
+HF Spaces/Colab (free GPU; caches uploadable as private dataset). Setup in
+cloud/kaggle/ (README + kaggle_cells.py), verified against the repo code
+before launch. Key portability decisions:
+
+- **No raw data on Kaggle**: local data/processed parquets uploaded as a
+  PRIVATE Kaggle dataset (B license is copyright-authors) -> caches
+  bit-identical to those the Phase-3 bars used; no rebuild risk.
+- **polars pinned 1.42.1** (B split = seed-salted polars hash of user_id;
+  hash NOT stable across versions -> unpinned = silent split drift vs the
+  local baselines); **sklearn pinned 1.9.0** (identical heads).
+- **P100 trap found live**: Kaggle torch (2.10.0+cu128) dropped sm_60;
+  is_available()=True but kernels crash. Switched to T4; cell 1 now does a
+  real GPU matmul, not just is_available().
+- **Persistence**: Save & Run All (committed version output) + autopush of
+  results/phase5 to GitHub branch `kaggle-results` every 15 min + restore-
+  from-branch on session start (sweep resume-skip continues across rounds).
+
+**Run (single Kaggle batch session, T4, torch 2.10.0+cu128):** A = 144/144 in
+~20 min (~8 s/run); B = 144/144 in ~7.7 h (~190 s/run, matching the 179.5 s
+local anchor). Provenance: commit d867713, git_dirty=false, config hashes
+973131b7/0a53edc0. Pulled to results/phase5 via `git archive origin/kaggle-
+results`; integrity verified: 288/288 records parse with all key metrics,
+manifests complete, 288 model state_dicts present.
+
+**Preview (val-selected, descriptive only - Phase 6 does the official
+analysis + significance):**
+- **A**: val-best full model beta=0.25 lambda=4 -> test gbt pr_auc 0.513 +/-
+  0.060 vs pca bar 0.5677 (-0.055) with **R2_rfm 0.968**; weak-alignment
+  point (0.5,0.25) ~at bar 0.5647 with R2_rfm 0.35. Clean interpretability-
+  performance frontier; MIG low everywhere on A (0.02-0.05) -> use the R2
+  x-axis variant for A's curve. High beta (1,2) worst rows - posterior-
+  collapse lead confirmed (beta down = better).
+- **B primary**: best 0.1827 +/- 0.0018 (beta=0.1, lambda=0) vs rfm bar
+  0.1953 (-0.013; tiny stds -> likely significant). RFM remains king -
+  honest negative holds at sweep scale.
+- **B churn**: 0.8648 +/- 0.0007 vs ae bar 0.8620 (+0.003, between ae and
+  raw ceiling 0.8676) - small but every-seed-tight potential WIN.
+- **B next_category**: 0.45-0.50 acc@1, below ae_kmeans bar 0.5550; macroAUC
+  instability persists at the val-selected point (per-seed 0.51-0.75) - the
+  head-level bimodality is NOT cured; assignment-level stability (ARI/NMI)
+  is Phase 6's question.
+- **B interpretability**: R2_rfm up to 0.88 (lambda=4); NOTE MIG is highest
+  at lambda=0 (0.26-0.35) and DROPS with alignment (0.07-0.10 at lambda=4) -
+  aligning 12 dims to 17 correlated constructs shares info across latents,
+  which MIG penalizes. Trade-off curve on MIG will look inverted vs lambda;
+  R2 variant essential. lambda=0.25 is too weak on B (R2_rfm ~0).
+
+**Phase 5 is AT THE GATE (5.5): owner to review raw results. Next after
+sign-off = Phase 6 on real sweep output (first real integration test of
+run_phase6; D-030..032 tuning pre-authorized).**
