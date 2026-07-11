@@ -648,3 +648,41 @@ for ALL 24 grid points x both datasets under the IDENTICAL D-030 protocol
 (same fixed sample, single-thread KMeans; bootstrap only at selected
 configs). Emits stability_map.json + stability_map.png per dataset. Purpose:
 report stability as a surface, not a cherry-pickable point.
+
+## 2026-07-11 - Session 8 (cont.): D-035 map complete; persona cards polished
+
+**D-035 stability map complete (24 grid points x both datasets,
+stability_map.{json,png} in each analysis dir).** Verified readings:
+- **Regularization-stability confound (report in paper):** the most stable
+  grid points are the most-collapsed ones - A beta=1/lambda=0 ARI 0.775 and
+  B beta=2/lambda=0 ARI 0.834, both at the grid's WORST downstream pr_auc.
+  Near-collapsed latents are trivially stable (constant assignment has
+  ARI 1). Stability therefore must be reported JOINTLY with downstream
+  performance, never alone.
+- **lambda=4 destabilizes consistently** on A (0.46-0.55 across all beta);
+  on B it is erratic (0.29-0.75 with huge stds at low beta). Moderate
+  alignment (lambda 0.25-1) at low beta is the stable-AND-performant region.
+- B sweet spot (0.1, 1): ARI 0.583+/-0.097; nearby (0.05, 1): ARI 0.725 with
+  2nd-best val pr_auc - candidate footnote for the paper.
+
+**Persona cards, 2 polish iterations (D-032, presentation-only):**
+1. Ranking was on raw-unit deltas -> Income (~1e4 scale) topped EVERY axis,
+   hiding the per-axis story. -> rank on standardized deltas.
+2. Raw-unit bars on a shared axis still let Income squash all geometry ->
+   bars now standardized deltas (comparable), raw-unit change annotated per
+   bar; constrained layout kills title collisions.
+Verified by inspection, BOTH datasets: A price_sensitivity axis moves
++deals/+kidhome/+recency vs -income/-premium spend (deal-reliance semantics
+exactly); every B affinity axis moves its own cat_share_* as the dominant
+feature (furniture/kids/auto/electronics; electronics also +mean_view_price,
+plausible). The named-axes claim is now visually verifiable, not just an R2.
+Suite 69 passed; ruff clean. Cards re-rendered via scratch script from the
+same sweet-spot models/records run_phase6 used.
+
+**Phase 6 deliverables are COMPLETE; at the GATE (6.6):** per dataset -
+analysis.json, tradeoff_mig/r2.png, stability.png, stability_map.{json,png},
+persona_cards.png, multitask.md, ablations.md. Open items for the paper
+(flagged, not built - scope): baseline-persona stability comparison (AE/RFM
++KMeans across seeds) would need Phase-3 model retraining; three-way
+frontier figure (perf x interp x stability) can be composed from existing
+stability_map.json + sweep records without new compute.

@@ -124,7 +124,7 @@ def persona_cards(state: dict, scaler, feature_names: list[str], out_path: str |
         dims = list(range(int(state["aligned_dims"])))
     axis_labels = axis_labels or {}
     fig, axes = plt.subplots(len(dims), 1, figsize=(7.0, 1.9 * len(dims) + 0.8),
-                             squeeze=False)
+                             squeeze=False, layout="constrained")
     with torch.no_grad():
         for row, dim in enumerate(dims):
             z = torch.zeros(2, int(state["latent_dim"]))
@@ -138,16 +138,31 @@ def persona_cards(state: dict, scaler, feature_names: list[str], out_path: str |
             raw = xh.copy()
             raw[:, :n_sc] = scaler.inverse_transform(xh[:, :n_sc])
             delta = raw[1] - raw[0]
-            top = np.argsort(np.abs(delta))[::-1][:top_n]
+            # Bars are STANDARDIZED deltas (scale-free — comparable across
+            # features; raw units would let A's Income, ~1e4, dwarf every bar),
+            # annotated with the raw-unit change so the card still reads as a
+            # customer. Ranking likewise on standardized magnitude.
+            zd = xh[1] - xh[0]
+            top = np.argsort(np.abs(zd))[::-1][:top_n]
+            vals = zd[top][::-1]
+            raws = delta[top][::-1]
             ax = axes[row, 0]
-            ax.barh(range(len(top)), delta[top][::-1],
-                    color=["#3465a4" if d > 0 else "#a40000" for d in delta[top][::-1]])
+            ax.barh(range(len(top)), vals,
+                    color=["#3465a4" if d > 0 else "#a40000" for d in vals])
+            for i, (v, rv) in enumerate(zip(vals, raws, strict=True)):
+                ax.annotate(f"{rv:+,.3g}", xy=(v, i),
+                            xytext=(3 if v >= 0 else -3, 0),
+                            textcoords="offset points",
+                            ha="left" if v >= 0 else "right", va="center",
+                            fontsize=6, color="0.25")
             ax.set_yticks(range(len(top)), [feature_names[i] for i in top][::-1], fontsize=7)
             ax.axvline(0, color="0.3", lw=0.8)
+            ax.margins(x=0.15)                     # room for the annotations
             label = axis_labels.get(dim, "unaligned")
             ax.set_title(f"axis z[{dim}] — {label}  (decode at ±{span:g})", fontsize=9)
             ax.tick_params(axis="x", labelsize=7)
-    fig.suptitle("Persona cards: per-axis latent traversals", y=0.995)
+    fig.suptitle("Persona cards: per-axis latent traversals "
+                 "(bars: standardized Δ; labels: raw-unit Δ)")
     return _save(fig, out_path)
 
 

@@ -103,8 +103,9 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 | 6.4 | Orchestrator (`eval/run_phase6.py`) — analysis.json + figures + tables | **Code completed 2026-07-10** — e2e-tested on faked sweep artifacts |
 | 6.4b | Pre-compute audit (D-033): sweet spot selected on VAL not test; per-task best-baseline significance + multitask table; clustering metrics; universe memoization | **Completed 2026-07-10** |
 | 6.5 | Run Phase 6 on real sweep output (A + B) | **Completed 2026-07-11** — run 1 exposed 2 defects (D-034: MIG-selection degeneracy picked lambda=0 as B's sweet spot; persona-card scaler broadcast crash on A); both fixed + regression-tested (suite 69); run 2 clean, zero warnings, all figures/tables/cards emitted for both datasets |
-| 6.5b | Stability robustness map (D-035): cross-seed ARI/NMI for ALL 24 grid points per dataset | **In Progress 2026-07-11** — stability ranking flips between moderate (lambda=0.25, ARI 0.644) and strong (lambda=4, ARI 0.467) alignment on A; map quantifies it under the identical D-030 protocol |
-| 6.6 | GATE: owner reviews figures + tables | Pending 6.5b |
+| 6.5b | Stability robustness map (D-035): cross-seed ARI/NMI for ALL 24 grid points per dataset | **Completed 2026-07-11** — stability_map.{json,png} both datasets; key finding: stability must be read jointly with downstream (high-beta near-collapsed models are trivially stable: A beta=1/lambda=0 ARI 0.775 at the grid's WORST pr_auc; B beta=2/lambda=0 ARI 0.834 ditto); lambda=4 destabilizes consistently |
+| 6.5c | Persona-card polish (D-032): rank/plot standardized deltas, annotate raw units, constrained layout | **Completed 2026-07-11** — cards for both datasets verified legible; axes visually validate constructs (A price_sensitivity: +deals/+kids/−income/−premium; B affinity axes each move their own category share) |
+| 6.6 | GATE: owner reviews figures + tables | **AT THE GATE 2026-07-11** — all artifacts under results/phase6/{personality,ecommerce}_analysis/ |
 
 ## Phase 7 — Reproduction package  → verify fresh-clone reproduction
 
