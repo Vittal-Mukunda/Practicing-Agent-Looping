@@ -40,6 +40,7 @@ dependencies = [
     { name = "pyarrow" },
     { name = "scikit-learn" },
     { name = "scipy" },
+    { name = "threadpoolctl" },
     { name = "torch" },
 ]
 
@@ -61,6 +62,7 @@ requires-dist = [
     { name = "pyarrow", specifier = ">=19" },
     { name = "scikit-learn", specifier = ">=1.6,<2" },
     { name = "scipy", specifier = ">=1.15,<2" },
+    { name = "threadpoolctl", specifier = ">=3,<4" },
     { name = "torch", specifier = "==2.6.0", index = "https://download.pytorch.org/whl/cu124" },
 ]
 

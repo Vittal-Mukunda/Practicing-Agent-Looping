@@ -17,6 +17,8 @@ dependencies = [
     "omegaconf>=2.3,<2.4",
     "matplotlib>=3.10,<4",
     "scipy>=1.15,<2",
+    # imported directly (D-028 single-thread fits); was only transitive via sklearn
+    "threadpoolctl>=3,<4",
 ]
 
 [dependency-groups]
