@@ -193,22 +193,37 @@ def test_model_state_roundtrip_and_rebuild(tmp_path):
 
 
 class _FakeScaler:
+    """Mimics a fitted StandardScaler over the LEADING n features (Dataset A's
+    scaler covers only the numeric block; one-hots follow unscaled — D-034)."""
+    def __init__(self, n_features: int):
+        self.n_features_in_ = n_features
+
     def inverse_transform(self, X):
+        assert X.shape[1] == self.n_features_in_, "must receive only the scaled block"
         return X * 2.0 + 1.0
 
 
 def test_persona_cards_render(tmp_path):
     state = load_model_state(_tiny_state(tmp_path))
-    out = persona_cards(state, _FakeScaler(), [f"feat{i}" for i in range(7)],
+    out = persona_cards(state, _FakeScaler(7), [f"feat{i}" for i in range(7)],
                         tmp_path / "cards.png", axis_labels={0: "rfm_R (R2=0.90)"},
                         top_n=5)
+    assert out.exists() and out.stat().st_size > 0
+
+
+def test_persona_cards_partial_scaler(tmp_path):
+    """Regression (D-034): scaler narrower than the decode (A: 23 numeric of 34
+    features) must inverse-transform only its block, not crash on broadcast."""
+    state = load_model_state(_tiny_state(tmp_path))
+    out = persona_cards(state, _FakeScaler(4), [f"feat{i}" for i in range(7)],
+                        tmp_path / "cards_partial.png", top_n=5)
     assert out.exists() and out.stat().st_size > 0
 
 
 def test_persona_cards_reject_pure_beta_vae(tmp_path):
     state = load_model_state(_tiny_state(tmp_path, aligned=0))
     with pytest.raises(ValueError, match="no aligned dims"):
-        persona_cards(state, _FakeScaler(), [f"f{i}" for i in range(7)],
+        persona_cards(state, _FakeScaler(7), [f"f{i}" for i in range(7)],
                       tmp_path / "x.png")
 
 

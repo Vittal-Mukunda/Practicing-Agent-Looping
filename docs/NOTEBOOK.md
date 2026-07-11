@@ -599,3 +599,52 @@ analysis + significance):**
 **Phase 5 is AT THE GATE (5.5): owner to review raw results. Next after
 sign-off = Phase 6 on real sweep output (first real integration test of
 run_phase6; D-030..032 tuning pre-authorized).**
+
+## 2026-07-11 - Session 8 (cont.): Phase 6 on real data; D-034; stability map
+
+Owner sign-off at gate 5.5 ("launch and start now") + blanket delegation
+("Run everything, no need to ask").
+
+**Phase 6, run 1 (x_metric=mig_mean) - two defects found, exactly the
+pre-authorized D-030..032 tuning:**
+1. **MIG-selection degeneracy (D-034, CONSEQUENTIAL, owner-delegated):** B's
+   sweet spot selected as beta=0.1 **lambda=0** - a pure beta-VAE. MIG is
+   highest at lambda=0 on B (0.26-0.35) and DROPS with alignment (0.07-0.10
+   at lambda=4): aligning 12 latents to 17 CORRELATED constructs shares
+   construct info across latents, which MIG's top1-top2 gap penalizes.
+   Consequences observed: cadvae_sweet == beta_vae in the ablation/stability
+   tables (identical rows) and no persona cards (no aligned dims). Fix:
+   `phase6.x_metric: r2_mean_mean`; lambda=0 (NaN R2) is excluded from the
+   frontier by construction but still anchors the slack. Both curves still
+   emitted; inversion to be REPORTED in the paper, not hidden.
+2. **Persona cards crash on A (D-032 bug):** cards inverse-transformed the
+   full 34-dim decode with the 23-numeric-only scaler -> broadcast error.
+   Fix: inverse-transform only scaler.n_features_in_ leading columns (A's
+   layout = numerics then one-hots; one-hot deltas read as probability
+   shifts). Dataset B (all-features scaler) unaffected. Regression test
+   added (narrow fake scaler with in-shape assert). Suite **69 passed**,
+   ruff + mypy clean.
+
+**Phase 6, run 2 (post-D-034): CLEAN - zero warnings, all artifacts emitted
+for both datasets** (tradeoff_mig/r2, stability bars, persona cards,
+multitask + ablation tables, analysis.json).
+- **A sweet spot beta=0.25 lambda=4**: test pr_auc 0.5130+/-0.0597 vs pca
+  bar 0.5677, significantly below (W 0.0312, t 3.0e-3); r2_mean 0.854,
+  r2_rfm 0.968. The interpretability cost is real, quantified, significant.
+- **B sweet spot beta=0.1 lambda=1**: test pr_auc 0.1798+/-0.0051 vs rfm
+  0.1953 (W 0.0312, t 3.4e-5) - primary negative confirmed. **churned WIN
+  significant in BOTH families at the sweet spot: 0.8632 vs ae 0.8620
+  (W 0.0312, t 3.6e-4)**. next_category below ae_kmeans (t significant,
+  Wilcoxon 0.0625 at floor+1) - report as loss, not parity.
+- **HONEST FINDING (drives D-035):** stability ranking flips with the
+  selected point. A at lambda=0.25 (run-1 sweet): ARI 0.644 > beta_vae
+  0.541; A at lambda=4 (run-2 sweet): ARI 0.467 < beta_vae 0.541. Moderate
+  alignment STABILIZES personas; strong alignment destabilizes them ->
+  three-way performance/interpretability/stability trade-off. Single-point
+  stability claims would be reviewer-fragile either way.
+
+**D-035 stability robustness map (running):** pairwise cross-seed ARI/NMI
+for ALL 24 grid points x both datasets under the IDENTICAL D-030 protocol
+(same fixed sample, single-thread KMeans; bootstrap only at selected
+configs). Emits stability_map.json + stability_map.png per dataset. Purpose:
+report stability as a surface, not a cherry-pickable point.

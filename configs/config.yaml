@@ -34,7 +34,14 @@ sweep:
 # Phase-6 analysis (D-030 stability protocol, D-031 sweet-spot rule, D-032 cards).
 phase6:
   head: gbt                   # downstream head used for curve/tables
-  x_metric: mig_mean          # trade-off x-axis (r2 variant is always emitted too)
+  # D-034: sweet spot selected on alignment R2, not MIG. MIG is degenerate for
+  # selection here: with many CORRELATED constructs (B: 17, incl. 13 category
+  # shares) alignment makes latents share construct info, which MIG penalizes —
+  # so mig_mean selects the lambda=0 ablation as the "sweet spot" (no named
+  # axes, no cards, ablation table degenerate). Both curve variants are still
+  # emitted (tradeoff_mig.png + tradeoff_r2.png); lambda=0 points (NaN R2) stay
+  # in the grid and still anchor the selection slack via best-downstream.
+  x_metric: r2_mean_mean      # trade-off x-axis used for sweet-spot selection
   select_on: val_pr_auc       # sweet spot selected on VALIDATION, reported on test (D-033)
   y_slack: null               # null -> the best point's own seed-std (D-031)
   stability_users: 50000      # fixed seed-independent user sample (D-030); A uses all

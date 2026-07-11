@@ -482,3 +482,27 @@ numbered at write-up time.*
   named with the recovery command; (d) Phase-6 stability memoizes per-seed
   universes (18 -> 6 parquet loads on B) and pre-checks model files before any
   embedding work.
+
+**D-034 (2026-07-11) — sweet spot selected on alignment R2, not MIG (owner-delegated "run everything").**
+- **Finding (first real Phase-6 run on the completed sweep):** with
+  `x_metric: mig_mean` the D-031 rule selected **lambda=0** as Dataset B's
+  "sweet spot" — a pure beta-VAE with NO alignment. Root cause: MIG is
+  DEGENERATE for selection under many correlated constructs (B: 17, incl.
+  13 category shares). Aligning 12 latents to 17 correlated targets makes
+  latents share construct information, which MIG's top1-top2 gap penalizes —
+  so MIG is *highest at lambda=0* (0.26-0.35) and *drops* with alignment
+  (0.07-0.10 at lambda=4). Selecting on it yields a sweet spot with no named
+  axes, no persona cards, and an ablation table where cadvae_sweet ==
+  beta_vae (observed: identical stability rows on B).
+- **Fix:** `phase6.x_metric: r2_mean_mean` — selection on mean alignment R2.
+  lambda=0 points (NaN R2) are excluded from the Pareto frontier by
+  construction but still anchor the selection slack through the
+  best-downstream point, so the rule still cannot pick a point downstream-
+  dominated beyond the slack. BOTH trade-off curves (MIG + R2) remain
+  emitted; the MIG-vs-lambda inversion is reported in the paper as a metric
+  finding, not hidden.
+- **Also fixed in the same pass (D-032 tuning, pre-authorized):**
+  `persona_cards` inverse-transformed the FULL decoded vector with Dataset
+  A's numeric-only scaler (23 features vs 34 -> broadcast crash). Cards now
+  inverse-transform only the scaler's leading block; one-hot deltas read as
+  probability shifts. Dataset B (all-features scaler) unchanged.

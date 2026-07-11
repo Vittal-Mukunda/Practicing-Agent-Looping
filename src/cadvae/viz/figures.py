@@ -130,8 +130,13 @@ def persona_cards(state: dict, scaler, feature_names: list[str], out_path: str |
             z = torch.zeros(2, int(state["latent_dim"]))
             z[0, dim], z[1, dim] = -span, span
             xh = model.decoder(z).numpy()
-        # inverse to raw units so the card reads as a customer, not a z-score
-            raw = scaler.inverse_transform(xh)
+            # Inverse to raw units so the card reads as a customer, not a z-score.
+            # The scaler may cover only a LEADING block of the feature vector
+            # (Dataset A: 23 scaled numerics then 11 unscaled one-hots); the
+            # remainder stays in decoded units (one-hot deltas = probability shifts).
+            n_sc = int(scaler.n_features_in_)
+            raw = xh.copy()
+            raw[:, :n_sc] = scaler.inverse_transform(xh[:, :n_sc])
             delta = raw[1] - raw[0]
             top = np.argsort(np.abs(delta))[::-1][:top_n]
             ax = axes[row, 0]
