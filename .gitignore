@@ -21,3 +21,9 @@ multirun/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json
+
+# Built manuscript artifacts (regenerate from README.md)
+docs/CA-DVAE-paper.html
