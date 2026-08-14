@@ -215,3 +215,122 @@ CONCEPT: persona quality
    segment-retention and predictive-segmentation work there may pre-empt the framing.
 3. No search was run for "persona stability across seeds", so the stability axis's
    novelty is unassessed.
+
+---
+
+# Dedicated novelty search — 2026-08-14, second pass
+
+Scope as specified: papers ~2018–2026 evaluating customer/buyer persona or segmentation
+*representations* by (a) downstream predictive performance, (b) interpretability /
+construct alignment, and/or (c) stability across seeds or resampling. Extended beyond
+the ML venues of pass 1 into marketing and information-systems literature, which pass 1
+did not search and flagged as residual risk #2.
+
+### L-012 [V] — the stability axis has direct marketing prior art
+Cite:    S. Dolnicar and F. Leisch, "Evaluation of structure and reproducibility of
+         cluster solutions using the bootstrap", *Marketing Letters*, vol. 21, no. 1,
+         pp. 83–101, 2010 (online 2009). DOI 10.1007/s11002-009-9083-4
+URL:     https://api.openalex.org/works/doi:10.1007/s11002-009-9083-4 (metadata verified)
+Method:  Repeated segmentation on **bootstrap samples**, partition agreement measured by
+         the **Rand index adjusted for chance**, used to decide whether data contain
+         natural segments, mere structure, or no structure, and how many segments to
+         extract. Distinguishes natural / reproducible / constructive segmentation.
+SUPPORTING: Makes the stability axis legible to a marketing audience and supplies a
+         standard, marketing-native instrument for it.
+DISCONFIRMING: **Bootstrap + adjusted Rand for segmentation stability is established
+         marketing methodology, not a contribution of this work.** The manuscript cites
+         only von Luxburg [11] for stability and presents cross-seed ARI as though the
+         instrument were being imported from ML. It must be cited, and the stability
+         axis reframed as *applying an established marketing criterion to learned
+         representations* rather than proposing one.
+Related [S]: "Stability of market segmentation with cluster analysis – A methodological
+         approach" (2014); "Improving the stability of market segmentation analysis",
+         IJCHM (2019); "Segmenting markets by bagged clustering". A sustained stream,
+         which strengthens the "recurring, independently documented" reading.
+
+### L-013 [S content / V bibliographic] — nearest neighbour on contribution (1)
+Cite:    P.-F. Hsu, Y.-H. Lu, S.-C. Chen, P.-Y. Kuo, "Creating and validating predictive
+         personas for target marketing", *IJHCS*, vol. 181, art. 103147, 2023.
+Status:  Full text and publisher abstract remain unreachable (ScienceDirect, ACM DL,
+         Consensus and ResearchGate all 403; Semantic Scholar holds no abstract).
+         The characterization below is assembled from consistent abstract snippets across
+         several independent aggregators — **[S], not [V]**. 16 citations (S2).
+Content (per snippets, consistent across sources): proposes the **"PP method"**, a
+         guideline for building personas with **data-mining predictive algorithms**;
+         validates them by **accuracy in predicting target customers**; **benchmarks
+         predictive personas against traditional quantitative (cluster-analysis) personas
+         using predictive accuracy as "one unified metric"**; discusses when qualitative /
+         traditional-quantitative / predictive personas each apply.
+DISCONFIRMING: **Contribution (1) as originally worded is substantially anticipated.**
+         "Persona quality should be measured by predictive accuracy, and that lets you
+         compare persona schemes" is their claim. The manuscript must concede this.
+SUPPORTING (what survives, and it is sharper for the concession):
+         1. They optimize *one* unified metric; this work's thesis is that a single metric
+            is the problem — three axes, and the *trade-off between them*, is the object of
+            study. A frontier cannot exist in a one-axis framing.
+         2. Their unit is a persona *set* built by a pipeline; ours is a *representation*
+            evaluated by frozen transfer to labels it never saw.
+         3. No evidence of leakage auditing, temporal splits, multi-seed statistics or
+            significance testing appears in the snippets.
+         Residual risk: (3) is an argument from absence in snippets. **Still must be
+         confirmed against the full text before submission.**
+
+### L-014 [V] — closest published "performance vs interpretability" segmentation paper
+Cite:    I. Boussebough, K. Zarour, C. Aouabdia, D. S. Boutina, "Multi-View Customer
+         Segmentation in the Digital Economy: Balancing Performance and Interpretability
+         for Actionable Insights", *J. Telecommunications and the Digital Economy*,
+         vol. 14, no. 2, pp. 58–83, 2026. DOI 10.18080/jtde.v14n2.1462
+Method:  K-Means / AHC / DBSCAN over four views; PCA reduction; **internal validation
+         indices** benchmarked against strategic KPIs (AOV, conversion) with comparisons
+         of means; resolves the trade-off with a "context-driven decision matrix".
+SUPPORTING: **Strong evidence for the evaluation gap.** The nearest paper that names the
+         performance–interpretability trade-off in customer segmentation resolves it with
+         a qualitative decision matrix and internal indices — it does not measure a
+         frontier, uses no held-out downstream prediction, and reports no seed stability.
+DISCONFIRMING: The *framing* "balance performance and interpretability in customer
+         segmentation" is occupied. Novelty must rest on *quantifying* the frontier under
+         held-out prediction, not on naming the tension.
+
+### L-015 [V] — frozen-transfer evaluation of customer embeddings is established practice
+Cite:    J. H. Bertrand, D. B. Hoffmann, J. P. Gargano, L. Mombaerts, J. Taws,
+         "Autoencoder-based General Purpose Representation Learning for Customer
+         Embedding", arXiv:2402.18164, 2024.
+Method:  DEEPCAE, multi-layer contractive autoencoders for tabular entity embeddings;
+         13 datasets; embeddings produced as reusable inputs to downstream models.
+DISCONFIRMING: Evaluating customer embeddings by downstream task performance is normal
+         practice in the industry/ML literature. The manuscript should not imply the
+         frozen protocol is itself novel — the novelty is applying it to *persona*
+         representations against *incumbent marketing* baselines with a leakage audit.
+
+### Unresolved
+- "An Automated Machine Learning Framework for Interpretable Customer Segmentation in
+  Financial Services", *Int. J. Financial Studies*, 13(4):243. Snippets describe
+  "RFM-based interpretability benchmarks" and "interpretability alignment measures" —
+  potentially very close to the construct-alignment idea. **MDPI returned 403; unread.
+  Highest-priority remaining check after L-013.**
+
+## Searches run (pass 2)
+- Dolnicar Leisch bootstrap reproducibility cluster solutions → L-012 (Layer 4, marketing)
+- market segmentation stability reproducibility repeated clustering → L-012 corroboration
+- OpenAlex title search "persona predictive" (44 works) → only L-013 relevant (Layer 3)
+- "predictive personas" PP method accuracy credibility → L-013 content (Layer 3)
+- deep learning customer segmentation predictive validity holdout 2023–2024 → L-014 (Layer 2)
+- interpretability performance trade-off customer segmentation frontier → L-014, IJFS (Layer 4)
+- autoencoder embedding customer segmentation frozen representation → L-015 (Layer 4)
+
+**Saturation:** pass-2 queries using new vocabulary (marketing-native terms: "segment
+reproducibility", "bagged clustering", "predictive validity", "internal validation
+indices") returned ≥80% already-seen work by the final two queries. Layer 4 is saturated
+for the vocabularies searched. Layer 3 is NOT closed while L-013's full text is unread.
+
+## Net effect on the novelty argument
+
+| Claim as written | Status after pass 2 |
+|---|---|
+| Persona quality reformulated as predictive lift | **Anticipated** (L-013) — concede and narrow |
+| Three-axis reformulation + measured trade-off | **Survives** — no paper found measuring a frontier over lift + interpretability + stability |
+| Frozen-representation protocol | **Not novel as a technique** (L-015); novel in this application, with the leakage audit |
+| Stability via cross-seed ARI / bootstrap | **Instrument is marketing prior art** (L-012) — cite, reframe as applying it |
+| Naming the interpretability/performance tension in segmentation | **Occupied** (L-014); quantifying it is not |
+| MIG degeneracy under correlated constructs | **No prior report found** in the sources searched — the cleanest surviving novelty |
+| Collapse–stability confound | **No prior report found** in this application area; L-012's "constructive segmentation" is adjacent and should be cited alongside |

@@ -143,8 +143,10 @@ degenerate as a selection criterion under correlated constructs.
 The contributions of this work are as follows:
 
 - A reformulation of persona quality as three measurable, falsifiable properties, with a
-  concrete instrument for each, and pre-registered bars fixed before any proposed-model
-  run.
+  concrete instrument for each and pre-registered bars fixed before any proposed-model
+  run. Measuring persona quality by predictive accuracy is not new [17], nor is assessing
+  segmentation stability by resampling agreement [28]; what is claimed is holding all
+  three properties as co-equal criteria and measuring what each costs the others.
 - A leakage-audited evaluation harness — frozen-representation protocol, temporal and
   user-disjoint splits, train-only construct fitting, six seeds per number, paired
   significance tests from two families with familywise correction, and validation-based
@@ -172,14 +174,31 @@ Section X reproducibility, and Section XI limitations and residual risk.
 Data-driven persona development is surveyed comprehensively by Salminen *et al.* [16],
 who review 77 articles from 2005–2020 and identify evaluation methods as an open gap —
 the premise this work builds on, and the reason the claim here is "evaluation is
-underdeveloped", not "personas are never evaluated". Hsu *et al.* [17] are the nearest
-neighbour on the measurement axis: they construct personas by predictive analytics and
-validate them by predictive accuracy for target marketing. **The distinction.** Their
-unit of validation is a persona *set* and its accuracy on new customers; ours is a
-persona *representation*, evaluated by frozen transfer to labels the representation never
-saw, across multiple seeds and downstream tasks, with a leakage audit, and jointly with
-interpretability and stability rather than accuracy alone. This is a difference of
-protocol and scope, not a claim that predictive validation of personas is new here.
+underdeveloped", not "personas are never evaluated". Hsu *et al.* [17] are the nearest neighbour on the measurement axis, and the overlap is
+substantial enough to state plainly rather than minimize: their PP method builds personas
+with predictive data-mining algorithms and validates them by accuracy in predicting target
+customers, benchmarking predictive personas against traditional cluster-analysis personas
+using predictive accuracy as a single unified metric. **We therefore do not claim that
+measuring persona quality by predictive accuracy is new.** It is theirs.
+
+**What remains, and why the difference is not cosmetic.** [17] resolves persona quality
+onto *one* metric. This paper's thesis is that a single metric is the problem: persona
+representations are chosen for interpretability and relied on for stability, and a
+one-axis criterion cannot express what is given up to obtain either. Three axes, and the
+measured trade-off between them, is the object of study — a frontier cannot exist in a
+one-axis framing. Secondarily, the unit of validation differs: [17] validates a persona
+*set* produced by a pipeline, whereas this work validates a *representation* by frozen
+transfer to labels it never saw, across seeds and multiple downstream tasks, under a
+leakage audit. The evaluation of embeddings by downstream transfer is itself routine in
+representation learning, including for customer embeddings specifically [29]; the novelty
+claimed here is its application to persona representations against incumbent *marketing*
+baselines, with leakage guards and multi-seed statistics.
+
+Naming the tension is also not new. Boussebough *et al.* [30] balance performance against
+interpretability in multi-view customer segmentation, resolving it with a context-driven
+decision matrix over internal validation indices and business KPIs. They do not measure a
+frontier: there is no held-out downstream prediction and no stability analysis. The
+contribution claimed here is quantifying the trade-off, not observing that one exists.
 
 ### B. Concept Supervision and Named Latent Axes
 
@@ -243,13 +262,25 @@ beating a trained autoencoder is the *predicted* outcome — this work contribut
 demonstration that the prediction extends to representation learning for segmentation
 under a frozen-transfer protocol.
 
-### E. Stability of Clusterings
+### E. Stability of Segmentation Solutions
 
-ARI [9] and NMI [10] are permutation-invariant partition-agreement measures; von
-Luxburg [11] frames bootstrap stability as a model-selection criterion for clustering. We
-apply both across training seeds and bootstrap resamples, and report in Section VI-D a
-confound that this framing makes easy to miss: a degenerate representation is perfectly
-stable, so stability alone cannot select a model.
+The stability axis is **not** a criterion this paper proposes; it is an established
+marketing criterion applied here to learned representations. Dolnicar and Leisch [28]
+assess segmentation solutions by repeating the analysis on bootstrap samples and
+measuring partition agreement with the Rand index adjusted for chance, using
+reproducibility to decide whether data contain natural segments, structure without
+segments, or no structure at all — and distinguishing *natural*, *reproducible*, and
+*constructive* segmentation accordingly. That is the instrument used here, with training
+seeds added to bootstrap resamples as a second source of variation, since a learned
+representation can be unstable for reasons a fixed clustering algorithm cannot be. ARI [9]
+and NMI [10] are the underlying partition-agreement measures, and von Luxburg [11] frames
+bootstrap stability as a model-selection criterion in the clustering literature.
+
+Section VI-D reports a confound that this framing makes easy to miss and that bears
+directly on [28]'s taxonomy: a degenerate, near-collapsed representation is *trivially*
+reproducible, so high stability can indicate an absence of structure rather than the
+presence of natural segments. Stability alone therefore cannot select a model, which is
+why Section V-D defines stability at matched performance.
 
 ## III. Proposed Method: CA-DVAE
 
@@ -827,14 +858,32 @@ label is a short-horizon dormancy proxy on a two-month log. Dataset B training u
 200k-user subsample per seed (evaluation always uses the full test split). Section VIII
 states the validity threats in full.
 
-**Residual novelty risk, stated plainly.** The aligned/free latent partition is prior
-art [20], and this paper does not claim it. The measurement framing's nearest neighbour
-is [17], whose full text is paywalled and was not read for this manuscript; if it already
-reports a frozen, held-out, multi-seed persona evaluation, contribution (1) narrows to a
-replication and extension. This is the highest single risk to the positioning and should
-be resolved before submission. The marketing and information-systems venues were not
-searched, and no search was run for prior work on persona stability across seeds, so that
-axis's novelty is unassessed.
+**Residual novelty risk, stated plainly.** A dedicated novelty search covering
+2018–2026 and extending into the marketing and information-systems literature was run
+before submission; the audit trail is in `research/ledger.md`. Its results are already
+folded into Section II, and they cost this paper two claims:
+
+- The aligned/free latent partition is prior art [20], and no novelty is claimed for it.
+- Measuring persona quality by predictive accuracy is prior art [17], and no novelty is
+  claimed for it.
+- The stability instrument — bootstrap resampling with the adjusted Rand index — is
+  established marketing methodology [28], applied here rather than proposed.
+- Naming the interpretability/performance tension in segmentation is prior art [30].
+
+What survives, on the evidence searched, is the three-axis reformulation with a measured
+frontier, the leakage-audited multi-seed protocol applied to persona representations, and
+two methodological findings for which no prior report was found: MIG's inversion under
+correlated constructs, and the collapse–stability confound.
+
+Two checks remain open and should be closed before submission. First, **[17]'s full text
+could not be obtained** — the publisher page, ACM DL, and every aggregator tried returned
+403, so its characterization above rests on abstract snippets that were consistent across
+independent sources but are not the paper itself. If it turns out to report a frozen,
+held-out, multi-seed evaluation, the protocol delta narrows further. Second, an automated
+framework for interpretable customer segmentation in financial services (*Int. J.
+Financial Studies* 13(4):243) is described in secondary sources as using "RFM-based
+interpretability benchmarks" and "interpretability alignment measures"; it could not be
+retrieved and may be closer to the construct-alignment idea than anything cited here.
 
 **Future work, in priority order.** (1) Run the two pre-registered analyses of Section V-F
 — the named-axis baselines are the strip test this paper most needs, since a
@@ -930,6 +979,12 @@ configurations and seeds; none were generated by a language model.
 [26] L. Grinsztajn, E. Oyallon, and G. Varoquaux, "Why do tree-based models still outperform deep learning on tabular data?", in *Proc. Adv. Neural Inf. Process. Syst. (NeurIPS) Datasets and Benchmarks Track*, 2022.
 
 [27] S. Holm, "A simple sequentially rejective multiple test procedure," *Scandinavian J. Statistics*, vol. 6, no. 2, pp. 65–70, 1979.
+
+[28] S. Dolnicar and F. Leisch, "Evaluation of structure and reproducibility of cluster solutions using the bootstrap," *Marketing Letters*, vol. 21, no. 1, pp. 83–101, 2010, doi: 10.1007/s11002-009-9083-4.
+
+[29] J. H. Bertrand, D. B. Hoffmann, J. P. Gargano, L. Mombaerts, and J. Taws, "Autoencoder-based general purpose representation learning for customer embedding," 2024. [Online]. Available: https://arxiv.org/abs/2402.18164
+
+[30] I. Boussebough, K. Zarour, C. Aouabdia, and D. S. Boutina, "Multi-view customer segmentation in the digital economy: Balancing performance and interpretability for actionable insights," *J. Telecommunications and the Digital Economy*, vol. 14, no. 2, pp. 58–83, 2026, doi: 10.18080/jtde.v14n2.1462.
 
 ---
 
