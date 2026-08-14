@@ -121,3 +121,26 @@ as D-entries, config-driven and revertable. Owner reviews at the Phase 1 gate.
 everything"). Remaining work is the paper itself (owner) — see NOTEBOOK Session 8
 final entry for the honest claim structure.
 
+
+## Phase 8 — Manuscript (post-completion)  → GATE: owner reviews the rewritten paper
+
+| # | Task | Status |
+|---|------|--------|
+| 8.1 | Literature audit of the manuscript's positioning (11 sources verified, ledger with [V]/[S] tags + disconfirming columns) | **Completed 2026-08-14** — `research/ledger.md` |
+| 8.2 | Red team of the manuscript (12 attack surfaces + novelty audit); findings classified Fatal/Fixable/Acknowledge | **Completed 2026-08-14** — `research/candidates.md`, 12 findings + killed-change register |
+| 8.3 | README rewritten around the recorded Phase 5–7 evidence (was ~1 month stale, claimed the sweep had not run) | **Completed 2026-08-14** — D-039 |
+| 8.4 | Novelty positioning: CBM family + persona-evaluation literature cited and distinguished | **Completed 2026-08-14** — refs [16]–[27] |
+| 8.5 | Named-axis baselines (`constructs`, `construct_pca`) — the strip test for the alignment head | **Code completed 2026-08-14 (D-036); NOT RUN** — needs data + one Phase-3 re-run |
+| 8.6 | Concept-leakage diagnostic (axis purity + free-block recoverability) | **Code completed 2026-08-14 (D-037); NOT RUN** — needs sweet-spot embeddings |
+| 8.7 | Multiplicity correction + effect sizes + test-row bootstrap CIs | **Completed 2026-08-14 (D-038)** — additive to `significance_vs_best` |
+| 8.8 | New tests for 8.5–8.7 | **Completed 2026-08-14** — 19 tests, verified passing; ruff clean on `src` + `tests` |
+| 8.9 | Run 8.5 + 8.6 and fold the results into §VI | **Pending** — requires the datasets and a GPU; currently pre-registered in §V-F |
+| 8.10 | Resolve the residual novelty risk: read Hsu et al. 2023 (IJHCS 181:103147) in full | **Pending (owner)** — paywalled; highest single risk to the positioning |
+| 8.11 | GATE: owner reviews the rewritten manuscript | **AT THE GATE 2026-08-14** |
+
+**Note on 8.8.** The full 69-test suite could not be executed in the review session
+(no `.venv`, no datasets, no torch). The 19 new tests were verified in an isolated
+numpy/scipy/scikit-learn environment against `src/`, together with the 6 pre-existing
+interpretability tests as a regression check on the `interpretability_summary` change.
+The torch- and data-dependent suites remain unrun since the edits — **run
+`pytest` before the next commit.**

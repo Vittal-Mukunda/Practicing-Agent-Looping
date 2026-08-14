@@ -784,3 +784,57 @@ t 0.17/0.86 - paired tests run, not assumed). Pre-hoc bar (gbt, D-019)
 unchanged; raw ceiling 0.615 still above everything.
 
 **Defense pack complete. Next: paper writing (owner + assistant).**
+
+## 2026-08-14 - Session 9: manuscript audit + rewrite (no new compute)
+
+Task: "what changes would make the paper better - then implement them." Ran the
+research-discovery skill's already-have-an-idea path: problematize -> kill round ->
+red team (12 attack surfaces) -> novelty audit. No experiments run; no numbers
+generated. Audit trail in `research/{ledger,candidates,decisions}.md`.
+
+**The finding that dominated everything else.** README asserted the Phase-5 sweep
+"has not yet run" and that Phase-6 numbers "do not exist yet", while CHECKLIST and
+this notebook record ALL PHASES COMPLETE 2026-07-11. The paper was a protocol
+proposal sitting on top of a finished study. Rewrote SS VI-XII from the recorded
+evidence in this file: the frontier (A (0.25,4) 0.5130 vs pca 0.5677; B (0.1,1)
+0.1798 vs rfm 0.1953), the MIG inversion (D-034), the collapse-stability confound
+and SMP (D-035 + defence pack), attribution, churn business units, AE mini-sweep.
+
+**Second finding: a live claim the project's own evidence had already killed.** The
+introduction still presented stability as something construct anchoring buys.
+Session 8's HONEST REFRAMING says the opposite (rfm_kmeans 0.975/0.962 vs cadvae
+sweet 0.467/0.583). Paper now states stability as a cost axis; the surviving
+positive is SMP parity against the NEURAL incumbent, stated at that scope only.
+
+**Third finding: novelty exposure.** The aligned/free latent partition is published
+prior art - CBM-AUC (Sawada & Nakamura 2022) is supervised concepts + additional
+unsupervised concepts in one bottleneck, i.e. this architecture. Concept bottleneck
+models, concept whitening, and Mancisidor et al.'s customer-VAE latent steering were
+all uncited. Also: the "personas are evaluated by nothing" premise is false -
+Salminen et al. 2021 survey 77 papers and name evaluation as an open gap (better
+evidence, weaker claim), and Hsu et al. 2023 already validate personas by predictive
+accuracy. Refs [16]-[27] added; distinction stated in one sentence each. **Open
+risk: Hsu et al. is paywalled and unread - if it already does frozen multi-seed
+held-out persona evaluation, contribution (1) narrows to replication + extension.**
+
+**Code added (all NOT RUN - no data, no GPU, no torch in this session):**
+- D-036 `eval/representations.py::construct_residual_pca` + `constructs` /
+  `construct_pca` in ALL_METHODS. The strip test: constructs are deterministic
+  functions of the features, so [C | PCA(residual)] has alignment R2 = 1 with zero
+  training. Nothing in the study answered "why do you need a VAE for named axes?"
+- D-037 `eval/interpretability.py::leakage_diagnostic` - axis purity (on-target
+  minus off-target R2) + construct recoverability from the FREE block. The paper's
+  R2 = 0.968 is a matrix diagonal; concept leakage is exactly what inflates one.
+- D-038 `eval/stats.py` - `holm_bonferroni`, `paired_effect_size`, `bootstrap_ci`;
+  `significance_vs_best` returns them (additive keys only). Every Wilcoxon result in
+  this project sits at the n=6 floor of 0.03125; two of them already fail Holm.
+
+**Verification actually performed (and its limits).** 19 new tests + the 6 existing
+interpretability tests pass in an isolated numpy/scipy/sklearn environment against
+`src/`; `ruff check src tests` clean. The full 69-test suite, mypy, and anything
+touching torch/polars/data were NOT run - this session had no `.venv` and no
+datasets. **Run `pytest` + `mypy` before committing.** Holm smoke output, showing
+the reason D-038 exists: two floor-valued Wilcoxons -> adjusted 0.0625 each, both
+rejected at alpha=0.05.
+
+**Next (owner):** run 8.5/8.6 and fold into SS VI; read Hsu et al. 2023; then submit.

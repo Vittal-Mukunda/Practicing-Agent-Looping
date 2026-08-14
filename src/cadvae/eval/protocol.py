@@ -13,6 +13,14 @@ Methods (``eval.methods`` selects a subset; default = all):
                    excluded from bar/best-baseline selection.
 * ``pca``        — classical linear compression at the same capacity (d = latent_dim).
 * ``rfm`` / ``rfm_kmeans`` — incumbent floor (continuous / segmented).
+* ``constructs`` / ``construct_pca`` — THE NAMED-AXIS BASELINES (D-036). The construct
+                   targets are deterministic functions of the features, so using them
+                   as coordinates gives alignment R² = 1 with no training;
+                   ``construct_pca`` adds a free block from PCA of the construct
+                   residual, mirroring CA-DVAE's aligned/free split in closed form.
+                   These are the strip test for the alignment mechanism: they are
+                   eligible for the bar, because a persona representation that is
+                   interpretable, stable and untrained is a legitimate competitor.
 * ``ae`` / ``ae_kmeans`` / ``gmm_ae`` — the hard neural baseline + clusterings.
 * ``dec``        — Deep Embedded Clustering.
 
@@ -43,10 +51,12 @@ from sklearn.mixture import GaussianMixture
 from threadpoolctl import threadpool_limits
 
 from cadvae.eval.metrics import clustering_metrics, downstream_metrics, multiclass_metrics
+from cadvae.eval.representations import construct_residual_pca
 from cadvae.models.ae import encode, train_autoencoder
 from cadvae.models.dec import dec_assign, train_dec
 
-ALL_METHODS = ("raw", "pca", "rfm", "rfm_kmeans", "ae", "ae_kmeans", "gmm_ae", "dec")
+ALL_METHODS = ("raw", "pca", "rfm", "rfm_kmeans", "constructs", "construct_pca",
+               "ae", "ae_kmeans", "gmm_ae", "dec")
 
 
 def _onehot(labels: np.ndarray, k: int) -> np.ndarray:
@@ -154,6 +164,14 @@ def evaluate_baselines(ps, ks, cfg, seed: int, device: str = "cuda",
         emit("rfm_kmeans",
              _onehot(km_rfm.predict(rfm_tr), k), _onehot(km_rfm.predict(rfm_te), k),
              clustering_metrics(rfm_te, km_rfm.predict(rfm_te), seed=seed))
+
+    # --- named-axis baselines: the constructs themselves as coordinates (D-036).
+    #     The strip test for CA-DVAE's alignment head — same named axes, no training.
+    emit("constructs", ks.C_train[tr], ks.C_test)
+    if "construct_pca" in methods:
+        R_tr, R_te = construct_residual_pca(ks.C_train[tr], Xtr, ks.C_test, Xte,
+                                            int(cfg.model.latent_dim), seed)
+        emit("construct_pca", R_tr, R_te)
 
     # --- AE embedding (the hard baseline) + AE-based clustering ---
     if methods & {"ae", "ae_kmeans", "gmm_ae", "dec"}:

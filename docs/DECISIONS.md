@@ -506,3 +506,130 @@ numbered at write-up time.*
   A's numeric-only scaler (23 features vs 34 -> broadcast crash). Cards now
   inverse-transform only the scaler's leading block; one-hot deltas read as
   probability shifts. Dataset B (all-features scaler) unchanged.
+
+**D-036 (2026-08-14) — named-axis baselines added (`constructs`, `construct_pca`).**
+- **Why (reviewer attack the repo could not answer):** the construct targets are
+  deterministic functions of the engineered features (`data/constructs.py`:
+  recency, column sums, spend shares). So `[C(x) | PCA(X - X̂(C))]` is a
+  representation with per-axis alignment R2 = 1 BY CONSTRUCTION, zero training,
+  and the same aligned/free structure CA-DVAE learns. `ALL_METHODS` had no such
+  baseline, so nothing in the study answered "why do you need a VAE to get named
+  axes at all?" This is the strip test for Component 1 (references/design-and-
+  redteam.md): if it matches CA-DVAE, the alignment machinery is decoration.
+- **Implementation:** `eval/representations.py::construct_residual_pca` — OLS of X
+  on [1|C] fit on TRAIN only, PCA of the train residual, both applied to eval
+  without refitting; `threadpool_limits(1)` per D-028. Torch-free module so the
+  geometry is unit-testable without GPU/data (6 ground-truth tests, incl. an OLS-
+  orthogonality check and a perturbation leakage proof).
+- **Deliberately conservative:** when n_constructs >= latent_dim (B: 17 vs 16) the
+  representation keeps ALL named axes rather than truncating to the latent budget.
+  Truncation would drop named axes to satisfy a budget the baseline never asked
+  for. A baseline given the benefit of the doubt is what makes beating it mean
+  something.
+- **Eligible for the bar** (unlike `raw`): an interpretable, stable, untrained
+  persona representation is a legitimate competitor, not a ceiling.
+- **STATUS: implemented + tested, NOT RUN** (no data/GPU in the review session).
+  Reported in the paper as pre-registered protocol (§V-F), never as a result.
+
+**D-037 (2026-08-14) — concept-leakage diagnostic for the interpretability claim.**
+- **Finding:** the design is a concept bottleneck with an unsupervised side channel,
+  and two independent groups document that exactly this configuration leaks —
+  concept representations encode information beyond the named concepts (Mahinpei
+  et al. 2021, arXiv:2106.13314; Margeloiu et al. 2021, arXiv:2105.04289). Two
+  groups => structural, not a footnote.
+- **Why it matters here:** the paper's headline interpretability evidence (axis R2
+  up to 0.968) is the DIAGONAL of the alignment matrix. Leakage is precisely what
+  inflates a diagonal. A high on-target R2 is necessary but not sufficient for
+  "this axis IS recency".
+- **Implementation:** `eval/interpretability.py::leakage_diagnostic` — per construct:
+  off-target R2 of the winning axis (purity = on - off) and the construct's
+  multivariate R2 from the FREE block alone; summary `axis_purity_mean`,
+  `free_block_r2_mean`, `leakage_ratio`. Opt-in via
+  `interpretability_summary(..., aligned_dims=a)` so already-recorded sweep
+  artifacts keep their exact key set.
+- **Ground truth (5 tests):** a clean and a leaky latent space with IDENTICAL
+  on-target R2 must be separated by the diagnostic — that test is the whole point.
+- **Relation to the existing attribution result:** `attribution.json` shows the
+  aligned block is INFORMATIVE (B: 12 named axes alone = 0.1722 ~ ae full 0.1724).
+  That answers circularity; it does NOT answer leakage. Different claims.
+- **STATUS: implemented + tested, NOT RUN.** Paper §V-F, not §VI.
+
+**D-038 (2026-08-14) — multiplicity correction + interval estimates.**
+- **Finding:** the comparison family is up to 8 challengers x 2 heads x 3 tasks,
+  plus per-grid-point sweep comparisons, while the two-sided Wilcoxon p-floor at
+  n=6 is 0.03125. EVERY Wilcoxon "win" in this project sits AT the floor. Two
+  floor-valued comparisons already give a Holm-adjusted 0.0625 => nothing survives
+  familywise correction at alpha=0.05 on the Wilcoxon alone.
+- **Decision:** do NOT drop the Wilcoxon and do NOT add seeds (extending seeds after
+  observing p-values is optional stopping — already rejected in Session 8, and it
+  opens a worse attack surface than it closes). Instead: declare the family, report
+  Holm-adjusted values alongside raw ones, and let the paired t + effect size +
+  per-seed consistency carry claims that the Wilcoxon cannot.
+- **Implementation:** `eval/stats.py::holm_bonferroni` (step-down, monotone, NaN-safe
+  family sizing), `paired_effect_size` (mean diff + Cohen's d_z), `bootstrap_ci`
+  (percentile CI over TEST ROWS). `significance_vs_best` now also returns
+  `holm_wilcoxon`, `holm_ttest`, `effect_size` — additive keys, existing consumers
+  unaffected.
+- **Seeds != sampling units (stated in the paper, not fixed in code):** on Dataset A
+  the split is redrawn per seed, so the paired test pairs across DIFFERENT test
+  sets and seed spread mixes init variance with split variance. `bootstrap_ci`
+  measures the other thing (test-sample variability); the paper never conflates
+  them. A's 448-row / ~67-positive test split is why this matters.
+- 8 ground-truth tests, incl. the textbook Holm worked example and an explicit test
+  that the n=6 Wilcoxon floor stops being significant as the family grows.
+
+**D-039 (2026-08-14) — manuscript repositioning (README).**
+- **The README was ~1 month stale**: it stated the Phase-5 sweep "has not yet run"
+  and that the Phase-6 numbers "do not exist yet", while CHECKLIST/NOTEBOOK record
+  ALL PHASES COMPLETE 2026-07-11 (288/288 sweep runs, Phase 6 clean, Phase 7 repro
+  bit-exact in a fresh clone, plus the defence pack). Rewrote §VI–§XII around the
+  recorded evidence in docs/NOTEBOOK.md.
+- **Killed the stale claim** that construct anchoring buys stability (Session 8's own
+  "HONEST REFRAMING"): incumbents are MORE stable than the selected model
+  (rfm_kmeans 0.975/0.962 vs cadvae 0.467/0.583). Stability is now presented as a
+  cost axis; the defensible positive is SMP parity vs the NEURAL incumbent.
+- **Novelty positioning (was absent, would have drawn a novelty rejection):** the
+  aligned/free partition is prior art — CBM-AUC (Sawada & Nakamura 2022) places
+  supervised + additional unsupervised concepts in one bottleneck; concept
+  bottleneck models (Koh et al. 2020) and concept whitening (Chen, Bei & Rudin
+  2020) are the mechanism's ancestors; Mancisidor et al. 2019 is the prior
+  customer-VAE latent-steering work CLAUDE.md alluded to but never cited. All now
+  cited with the distinction stated in one sentence (CBMs route the task label
+  through the concepts; CA-DVAE routes nothing through them).
+- **Premise narrowed:** "personas are evaluated by nothing" was false. Salminen et
+  al. 2021 (IJHCI 37(18):1685-1708) names evaluation as an open gap across 77
+  papers — better evidence AND a weaker, defensible claim. Hsu et al. 2023 (IJHCS
+  181:103147) already validate personas by predictive accuracy; logged as the
+  highest residual novelty risk (paywalled, full text unread).
+- **Pre-registered hypotheses table (H1-H4) added** with outcomes: 3 of 4 falsified,
+  including H3 which the project's own design expected to hold. H4's direction was
+  predicted in advance from Nai et al. AAAI 2024 (informativeness > disentanglement
+  downstream).
+- New sections: Threats to Validity, Ethics and Responsible Use (price-
+  discrimination risk of a named price-sensitivity axis; >=5-event universe as a
+  selection effect), computational cost (<9 GPU-hours total), Result Artifacts
+  appendix. Uncalibrated phrasing ("a curve this area does not currently plot")
+  removed throughout.
+- **Full audit trail:** `research/ledger.md` (11 verified sources, [V]/[S] tagged,
+  with disconfirming columns), `research/candidates.md` (12 classified findings +
+  killed-change register), `research/decisions.md`.
+
+**D-040 (2026-08-14) — Table III corrected: two numbers had no evidence behind them.**
+- The committed README's Table III reported `next_category` best baseline as
+  **AE acc@1 0.6097 +/- 0.0020** with "RFM collapses to **0.5058** (near base rate
+  0.5053)". Neither 0.6097 nor 0.5058 appears anywhere in NOTEBOOK.md.
+- Recorded evidence (Session 7, Phase-3 bar refresh under the audited protocol):
+  next_category best baseline is **ae_kmeans acc@1 0.5550**, stable across all six
+  seeds, significantly above rfm **0.4070** (p=0.017), raw 0.4520 (p=0.021) and pca
+  (p=0.020); macro-OVR AUC ae-family 0.63-0.66 vs rfm 0.52; base rate 0.5053, and
+  several methods (rfm included) land BELOW it because the heads optimize log-loss,
+  not top-1.
+- The error mattered: it named the wrong bar. NOTEBOOK line ~529 explicitly records
+  that using the plain AE here was "a straw man on next_category where ae_kmeans is
+  the real bar", and the Phase-6 comparison correctly used ae_kmeans 0.5550. The
+  README table had not been updated to match.
+- Corrected in the manuscript, with RFM restated as collapsing BELOW the base rate
+  rather than "near" it. **Owner action: confirm against `results/phase3/` when the
+  results tree is regenerated** — this correction is sourced from NOTEBOOK.md, which
+  is the canonical record, but the raw records are gitignored and were not present
+  in the review clone.

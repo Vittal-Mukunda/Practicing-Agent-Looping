@@ -23,6 +23,10 @@ Implemented metrics (each with the standard citation for the methods section):
 * **Per-axis alignment score** (ours, D-026): for each construct, the best
   single-dim R² and which dim wins — the direct "is there a dim you can point at
   and name?" number used on persona cards.
+* **Concept-leakage diagnostic** (D-037): axis purity (on-target minus off-target
+  R² for the winning axis) and construct recoverability from the FREE block alone.
+  A high alignment R² is necessary but NOT sufficient for the interpretability
+  claim — see ``leakage_diagnostic`` for the two papers that establish why.
 
 Estimator conventions follow Locatello et al., "Challenging Common Assumptions in
 the Unsupervised Learning of Disentangled Representations", ICML 2019
@@ -129,12 +133,113 @@ def axis_alignment(Z: np.ndarray, V: np.ndarray, names: list[str]) -> dict:
     }
 
 
+def _block_r2(Z_block: np.ndarray, v: np.ndarray) -> float:
+    """R² of the least-squares linear prediction of factor ``v`` from a latent block.
+
+    Multivariate (whole block, with intercept), unlike ``sap``'s single-dim scores.
+    Returns 0.0 for an empty block and NaN for a constant factor.
+    """
+    if Z_block.shape[1] == 0:
+        return 0.0
+    ss_tot = float(((v - v.mean()) ** 2).sum())
+    if ss_tot < 1e-12:
+        return float("nan")
+    A = np.column_stack([np.ones(len(Z_block)), Z_block])
+    coef, *_ = np.linalg.lstsq(A, v, rcond=None)
+    ss_res = float(((v - A @ coef) ** 2).sum())
+    return float(1.0 - ss_res / ss_tot)
+
+
+def leakage_diagnostic(Z: np.ndarray, V: np.ndarray, names: list[str],
+                       aligned_dims: int) -> dict:
+    """Concept-leakage / axis-purity check on the aligned–free latent partition.
+
+    A high alignment R² on a named axis does NOT establish that the axis carries
+    *only* that construct. Two independent groups document exactly this failure for
+    concept-supervised models with an unsupervised side channel — which is precisely
+    this architecture: Mahinpei, Clark, Lage, Doshi-Velez, Pan, "Promises and
+    Pitfalls of Black-Box Concept Learning Models", 2021 (concept representations
+    "encode information beyond the pre-defined concepts"), and Margeloiu, Ashman,
+    Bhatt, Chen, Jamnik, Weller, "Do Concept Bottleneck Models Learn as Intended?",
+    2021. The diagonal of the alignment matrix is therefore necessary evidence for
+    the interpretability claim but not sufficient; this function reports the two
+    quantities that complete it.
+
+    Per construct:
+
+    * ``on_target_r2`` / ``best_dim`` — the winning ALIGNED axis and its R² (the
+      number the paper already reports).
+    * ``off_target_r2`` — the largest R² that same axis has with a *different*
+      construct. A named axis that also explains its neighbours is not separated.
+    * ``purity`` = ``on_target_r2 - off_target_r2``. High = the axis earns its name.
+    * ``free_block_r2`` — R² of predicting the construct from the FREE block alone.
+      High = the construct is duplicated outside its named axes, so pointing at the
+      named axis misdescribes where the information lives (the leakage signature).
+    * ``aligned_block_r2`` — same, from the whole aligned block (reference).
+
+    Summary scalars are means over constructs with finite values. ``leakage_ratio``
+    = mean(free_block_r2) / mean(aligned_block_r2): ~0 means the naming is
+    exclusive, ~1 means the free block knows as much as the named block does.
+
+    Deterministic, no RNG. Z/V are the same matrices the other metrics take.
+    """
+    a = max(0, min(int(aligned_dims), Z.shape[1]))
+    S = sap(Z, V, names)["score_matrix"]                 # (d, K) single-dim R²
+    Z_aligned, Z_free = Z[:, :a], Z[:, a:]
+
+    per: dict[str, dict] = {}
+    for j, name in enumerate(names):
+        if a == 0:
+            best, on, off = -1, float("nan"), float("nan")
+        else:
+            best = int(np.argmax(S[:a, j]))
+            on = float(S[best, j])
+            others = np.delete(S[best, :], j)
+            off = float(others.max()) if others.size else float("nan")
+        per[name] = {
+            "best_dim": best,
+            "on_target_r2": on,
+            "off_target_r2": off,
+            "purity": float(on - off) if np.isfinite(on) and np.isfinite(off) else float("nan"),
+            "aligned_block_r2": _block_r2(Z_aligned, V[:, j]),
+            "free_block_r2": _block_r2(Z_free, V[:, j]),
+        }
+
+    def _mean(key: str) -> float:
+        vals = [p[key] for p in per.values() if np.isfinite(p[key])]
+        return float(np.mean(vals)) if vals else float("nan")
+
+    free_mean, aligned_mean = _mean("free_block_r2"), _mean("aligned_block_r2")
+    return {
+        "per_construct": per,
+        "axis_purity_mean": _mean("purity"),
+        "free_block_r2_mean": free_mean,
+        "aligned_block_r2_mean": aligned_mean,
+        "leakage_ratio": (float(free_mean / aligned_mean)
+                          if np.isfinite(free_mean) and np.isfinite(aligned_mean)
+                          and abs(aligned_mean) > 1e-12 else float("nan")),
+        "aligned_dims": a,
+        "free_dims": int(Z.shape[1] - a),
+    }
+
+
 def interpretability_summary(Z: np.ndarray, V: np.ndarray, names: list[str],
-                             n_bins: int = N_BINS_DEFAULT) -> dict:
-    """Everything the sweep logs per run (JSON-serializable, matrices excluded)."""
+                             n_bins: int = N_BINS_DEFAULT,
+                             aligned_dims: int | None = None) -> dict:
+    """Everything the sweep logs per run (JSON-serializable, matrices excluded).
+
+    ``aligned_dims`` (optional) adds the concept-leakage block; omitted keeps the
+    exact pre-existing key set, so already-recorded sweep artifacts stay comparable.
+    """
     m = mig(Z, V, names, n_bins)
     s = sap(Z, V, names)
     ax = axis_alignment(Z, V, names)
-    return {"mig": m["mig"], "sap": s["sap"],
-            "mig_per_factor": m["per_factor"], "sap_per_factor": s["per_factor"],
-            "axis_alignment": ax}
+    out = {"mig": m["mig"], "sap": s["sap"],
+           "mig_per_factor": m["per_factor"], "sap_per_factor": s["per_factor"],
+           "axis_alignment": ax}
+    if aligned_dims is not None:
+        lk = leakage_diagnostic(Z, V, names, aligned_dims)
+        out["leakage"] = lk
+        out["axis_purity_mean"] = lk["axis_purity_mean"]
+        out["leakage_ratio"] = lk["leakage_ratio"]
+    return out

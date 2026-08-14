@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Construct-Aligned Disentangled Variational Autoencoders for Interpretable Buyer Personas: A Measurement-First Evaluation Framework</h1>
+<h1>Construct-Aligned Disentangled Variational Autoencoders for Interpretable Buyer Personas: Measuring the Interpretability–Performance–Stability Frontier</h1>
 
 <p>
   <b>Vittal Muku</b><br>
@@ -13,21 +13,58 @@
   <img src="https://img.shields.io/badge/PyTorch-2.6.0%2Bcu124-ee4c2c" alt="PyTorch 2.6.0+cu124">
   <img src="https://img.shields.io/badge/Polars-streaming-1f6feb" alt="Polars streaming">
   <img src="https://img.shields.io/badge/config-Hydra%20%2B%20OmegaConf-89b4fa" alt="Hydra">
-  <img src="https://img.shields.io/badge/tests-68%20passed-brightgreen" alt="tests">
+  <img src="https://img.shields.io/badge/tests-88%20(69%20run%20%2B%2019%20new)-brightgreen" alt="tests">
   <img src="https://img.shields.io/badge/lint%20%2B%20types-ruff%20%7C%20mypy%20clean-brightgreen" alt="ruff mypy">
   <img src="https://img.shields.io/badge/seeds-6%20per%20result-8a2be2" alt="6 seeds">
-  <img src="https://img.shields.io/badge/status-Phase%205%20sweep%20pending-orange" alt="status">
+  <img src="https://img.shields.io/badge/sweep-288%2F288%20runs%20complete-brightgreen" alt="sweep complete">
+  <img src="https://img.shields.io/badge/repro-bit--exact%20in%20fresh%20clone-brightgreen" alt="repro">
 </p>
 
 </div>
 
-> **Project status (honest reporting).** All code for Phases 0–7 is implemented and tested. Every number below is recorded evidence from real runs (Phases 0–4: environment, data pipeline, constructs, baseline campaign, model sanity runs). The Phase-5 β×λ sweep (144 runs per dataset) and the Phase-6 analysis that depends on it (trade-off curve, stability, persona cards) have **not yet run**; those results are marked *pending* throughout. Nothing in this document is projected, estimated, or extrapolated.
+> **Provenance and honest reporting.** Phases 0–7 are complete. Every number below is
+> recorded evidence from executed runs: baselines and sanity runs on the reference
+> machine (RTX 4050), and the 288-run β×λ sweep on a Kaggle T4 at commit `d867713`
+> (`git_dirty=false`, config hashes `973131b7` / `0a53edc0`), analysed by
+> `run_phase6`. Reproduction was verified bit-exactly (`atol=1e-9`) on both datasets
+> and again inside a fresh clone. Canonical copies of every table live in
+> [docs/NOTEBOOK.md](docs/NOTEBOOK.md); the `results/` tree is gitignored and
+> regenerable from the committed configs and seeds. Nothing here is projected,
+> estimated, or extrapolated. Analyses that are **implemented but not yet run** are
+> labelled *pre-registered* and appear only in Section V-F — never as results.
 
 ---
 
-**_Abstract_ — Buyer personas drive substantial marketing expenditure, yet in practice they are neither measured nor measurable: practitioners cannot say whether one persona scheme is better than another. This project reformulates persona quality as three falsifiable properties: downstream predictive lift on real behavioral labels, interpretability of latent axes with respect to named marketing constructs, and stability across random seeds and resamples. We implement a Construct-Aligned Disentangled Variational Autoencoder (CA-DVAE) whose latent space is split into a designated block trained by a linear auxiliary head to predict named constructs (recency-frequency-monetary value, price sensitivity, category affinity) and a free block regularized by a β-weighted Kullback-Leibler term. The architecture is deliberately unremarkable; the contribution is the measurement reformulation, the alignment mechanism, and a leakage-audited, multi-seed, multi-task evaluation harness spanning two public datasets (2,240 customers; 2.55 million users aggregated from 110 million events). Baselines fixed before any proposed-model run set demanding bars: PCA attains test PR-AUC 0.5677 ± 0.0729 on campaign response, and a three-feature RFM representation attains 0.1953 ± 0.0035 on future-purchase prediction, exceeding a trained autoencoder. Sanity runs confirm the alignment mechanism works (RFM axis R² = 0.90). The β×λ sweep that will trace the interpretability-performance trade-off curve is in progress.**
+**_Abstract_ — Buyer personas guide substantial marketing expenditure, yet the field's own
+survey of fifteen years of data-driven persona development names evaluation as an open
+problem. We reformulate persona quality as three separately measurable and separately
+falsifiable properties — downstream predictive lift on real behavioural labels,
+interpretability of latent axes with respect to named marketing constructs, and stability
+of persona assignments across seeds — and then measure what it costs to hold them at once.
+The instrument is a Construct-Aligned Disentangled Variational Autoencoder (CA-DVAE) whose
+latent vector is partitioned into a block trained by a linear auxiliary head to predict
+named constructs (recency-frequency-monetary value, price sensitivity, category affinity)
+and a free block carrying a β-weighted Kullback-Leibler term. Neither the architecture nor
+the aligned/free partition is claimed as novel; the contribution is the measurement
+reformulation, a leakage-audited evaluation harness, and the resulting frontier. Across two
+public datasets (2,240 customers; 2.55 million users aggregated from 110 million events),
+288 sweep runs and six seeds per point, the findings are largely negative and specific.
+Non-neural incumbents set the bars: PCA reaches test PR-AUC 0.5677 ± 0.0729 on campaign
+response and three raw RFM features reach 0.1953 ± 0.0035 on future purchase, both beating
+a trained autoencoder. At its validation-selected operating point CA-DVAE reaches named-axis
+alignment R² up to 0.968 but sits significantly below both bars (0.5130 ± 0.0597 and
+0.1798 ± 0.0051), and its personas are markedly less stable than incumbent personas
+(ARI 0.467 / 0.583 versus 0.975 / 0.962 for RFM+K-means). Three results survive as positive:
+against the *neural* incumbent the aligned model matches stability at matched performance
+and wins dormancy prediction in both test families; on the behavioural dataset the twelve
+named axes alone carry as much downstream signal as the autoencoder's full unnamed embedding;
+and the Mutual Information Gap is shown to be degenerate for model selection under correlated
+constructs, inverting with alignment strength. Interpretability in this setting is a purchase,
+not a free lunch, and this work prices it.**
 
-**_Index Terms_ — Buyer personas, customer segmentation, disentangled representation learning, interpretability, variational autoencoders.**
+**_Index Terms_ — Buyer personas, concept bottleneck models, customer segmentation,
+disentangled representation learning, evaluation methodology, interpretability,
+variational autoencoders.**
 
 ---
 
@@ -38,79 +75,253 @@
 - [III. Proposed Method: CA-DVAE](#iii-proposed-method-ca-dvae)
 - [IV. Datasets and Construct Targets](#iv-datasets-and-construct-targets)
 - [V. Evaluation Protocol](#v-evaluation-protocol)
-- [VI. Recorded Results](#vi-recorded-results)
+- [VI. Results](#vi-results)
 - [VII. Discussion](#vii-discussion)
-- [VIII. Reproducibility and Engineering Rigor](#viii-reproducibility-and-engineering-rigor)
-- [IX. Conclusion and Roadmap](#ix-conclusion-and-roadmap)
+- [VIII. Threats to Validity](#viii-threats-to-validity)
+- [IX. Ethics and Responsible Use](#ix-ethics-and-responsible-use)
+- [X. Reproducibility and Engineering Rigor](#x-reproducibility-and-engineering-rigor)
+- [XI. Limitations and Future Work](#xi-limitations-and-future-work)
+- [XII. Conclusion](#xii-conclusion)
 - [Acknowledgment](#acknowledgment)
 - [References](#references)
 - [Appendix A: Reproduction Guide](#appendix-a-reproduction-guide)
 - [Appendix B: Repository Layout](#appendix-b-repository-layout)
+- [Appendix C: Result Artifacts](#appendix-c-result-artifacts)
 
 ---
 
 ## I. Introduction
 
-Customer segmentation into "buyer personas" is a standard instrument of marketing practice, yet the instrument itself has no accepted measurement. Two persona schemes for the same customer base cannot be compared on any agreed scale; a persona deck survives or dies on narrative appeal. This is an unusual situation for a quantitative field: the representation at the center of targeting decisions is evaluated by nothing.
+Customer segmentation into "buyer personas" is a standard instrument of marketing
+practice. Data-driven persona development has an active research literature of its own,
+but that literature's most comprehensive survey — 77 articles spanning 2005–2020 —
+lists **evaluation methods** among the field's persistent open gaps, alongside shared
+resources, standardization, and inclusivity [16]. Work addressing the gap exists:
+predictive personas have been created and validated by predictive accuracy on new
+customers [17]. What remains scarce is a protocol under which two persona
+*representations* can be compared on held-out future behaviour with the representation
+provably blind to the labels, repeated across seeds, and reported with the
+interpretability and stability those representations are actually chosen for.
 
-We treat this as a measurement problem rather than an architecture problem. A persona representation is *good*, we argue, exactly to the extent that it satisfies three properties, each of which can be measured and each of which can fail:
+We treat this as a measurement problem rather than an architecture problem. A persona
+representation is *good*, we argue, exactly to the extent that it satisfies three
+properties, each measurable and each able to fail independently:
 
-1. **Downstream predictive lift (primary claim).** A frozen persona representation should predict real future behavior (campaign response, next purchase, churn) at least as well as incumbent representations, under a protocol that forbids the representation from ever seeing the labels.
-2. **Interpretability.** Latent axes should align with *named* marketing constructs: recency-frequency-monetary value (RFM), price sensitivity, and category affinity, quantified by per-axis alignment R², the Mutual Information Gap (MIG), and the Separated Attribute Predictability (SAP) score.
-3. **Stability.** Persona assignments should persist across random seeds and bootstrap resamples, quantified by the adjusted Rand index (ARI) and normalized mutual information (NMI).
+1. **Downstream predictive lift.** A frozen persona representation should predict real
+   future behaviour (campaign response, next purchase, dormancy) at least as well as
+   incumbent representations, under a protocol that forbids the representation from ever
+   seeing the labels.
+2. **Interpretability.** Latent axes should align with *named* marketing constructs:
+   recency-frequency-monetary value (RFM), price sensitivity, and category affinity,
+   quantified by per-axis alignment R², the Mutual Information Gap (MIG), and the
+   Separated Attribute Predictability (SAP) score.
+3. **Stability.** Persona assignments should persist across random seeds and bootstrap
+   resamples, quantified by the adjusted Rand index (ARI) and normalized mutual
+   information (NMI).
 
-The vehicle for testing whether all three can be held simultaneously is a Construct-Aligned Disentangled VAE (CA-DVAE): a dense VAE over tabular customer features whose latent vector is partitioned into an aligned block, trained by a linear auxiliary head to predict the named constructs, and a free block carrying a β-weighted KL penalty. The VAE itself is standard machinery and is not claimed as a contribution. What the alignment weight λ and disentanglement weight β buy, and what they cost in predictive lift, is precisely the empirical question; sweeping both traces an interpretability-performance trade-off curve that this application area does not currently plot.
+The instrument for testing whether all three can be held simultaneously is a
+Construct-Aligned Disentangled VAE (CA-DVAE): a dense VAE over tabular customer features
+whose latent vector is partitioned into an aligned block, trained by a linear auxiliary
+head to predict the named constructs, and a free block carrying a β-weighted KL penalty.
+Sweeping the alignment weight λ and the disentanglement weight β traces a frontier over
+the three properties.
+
+**What we found.** The result is largely negative, and the negative result is the
+contribution. Under leakage-safe evaluation the strongest baselines are the two
+representations the neural-segmentation literature most often treats as superseded: PCA
+on tabular survey data and three raw RFM features on behavioural data. At its
+validation-selected operating point CA-DVAE buys high named-axis alignment
+(R² up to 0.968) at a significant cost in predictive lift *and* a substantial cost in
+stability; incumbent personas are far more stable than aligned ones. Three findings run
+the other way and are reported with equal weight: against the *neural* incumbent
+specifically, the aligned model matches stability at matched performance and wins
+dormancy prediction in both test families; the twelve named axes alone carry as much
+downstream signal on the behavioural dataset as the autoencoder's full unnamed embedding,
+which rules out the "the names are decoration on a black box" reading; and MIG is
+degenerate as a selection criterion under correlated constructs.
 
 The contributions of this work are as follows:
 
-- A reformulation of persona quality as three measurable, falsifiable properties, with a concrete instrument for each.
-- A construct-alignment mechanism (designated latent block plus linear head) that makes multiple marketing constructs simultaneously nameable as latent directions, evaluated jointly with a β-VAE disentanglement term as two independently ablatable components.
-- A leakage-audited evaluation harness: frozen-representation protocol, temporal and user-disjoint splits, train-only construct fitting, six seeds per number, paired significance tests from two families, and validation-based hyperparameter selection, all enforced by unit tests rather than by convention.
-- Honest baseline findings that already complicate the standard neural-segmentation narrative (Section VI): on behavioral data, three raw RFM features beat a trained autoencoder; on tabular survey-style data, PCA beats it.
+- A reformulation of persona quality as three measurable, falsifiable properties, with a
+  concrete instrument for each, and pre-registered bars fixed before any proposed-model
+  run.
+- A leakage-audited evaluation harness — frozen-representation protocol, temporal and
+  user-disjoint splits, train-only construct fitting, six seeds per number, paired
+  significance tests from two families with familywise correction, and validation-based
+  hyperparameter selection — enforced by unit tests rather than by convention.
+- An empirical interpretability–performance–stability frontier for construct-aligned
+  persona representations, with the cost of interpretability quantified on both axes and
+  the operating point selected on validation data only.
+- Four findings that hold regardless of how the proposed model fares: learned neural
+  embeddings do not automatically beat linear or heuristic incumbents under leakage-safe
+  future-behaviour evaluation; hard cluster personas discard most of their parent
+  embedding's predictive signal; stability tracks model simplicity and must never be read
+  apart from performance, because near-collapsed models are trivially stable; and MIG
+  inverts with alignment strength when constructs are correlated, making it unsafe for
+  model selection in this setting.
 
-The remainder of this document is organized as follows. Section II reviews related work. Section III specifies the model and loss. Section IV describes the datasets, splits, and construct targets. Section V defines the evaluation protocol. Section VI reports all recorded results to date. Section VII discusses findings and limitations, Section VIII documents the reproducibility engineering, and Section IX states the roadmap.
+Section II reviews related work and states what this work is not. Section III specifies
+the model, Section IV the data and constructs, Section V the protocol. Section VI reports
+results, Section VII discusses them, Sections VIII–IX cover validity threats and ethics,
+Section X reproducibility, and Section XI limitations and residual risk.
 
 ## II. Related Work
 
-**Disentangled representation learning.** The VAE [1] and its constrained variant β-VAE [2] form the base of most disentanglement work; FactorVAE [3] and the total-correlation decomposition of [4] penalize statistical dependence between latent dimensions directly. Kumar et al. [5] introduced the SAP score, and Chen et al. [4] the MIG metric adopted here. Locatello et al. [7] showed that unsupervised disentanglement is impossible without inductive bias or supervision; this project sidesteps that impossibility deliberately, since the marketing constructs provide explicit, named supervision for the aligned block, and disentanglement pressure is applied only to the residual free block.
+### A. Persona Construction and Evaluation
 
-**Neural customer segmentation.** Deep Embedded Clustering [6] and autoencoder-plus-K-means pipelines are the dominant neural approaches to customer segmentation. Published evaluations in this space typically report internal clustering indices (silhouette and relatives) on a single run; downstream predictive validation against the incumbent RFM representation [8] on held-out future behavior, with seeds and significance tests, is rare. That evaluation gap, rather than any architectural gap, is the target of this project.
+Data-driven persona development is surveyed comprehensively by Salminen *et al.* [16],
+who review 77 articles from 2005–2020 and identify evaluation methods as an open gap —
+the premise this work builds on, and the reason the claim here is "evaluation is
+underdeveloped", not "personas are never evaluated". Hsu *et al.* [17] are the nearest
+neighbour on the measurement axis: they construct personas by predictive analytics and
+validate them by predictive accuracy for target marketing. **The distinction.** Their
+unit of validation is a persona *set* and its accuracy on new customers; ours is a
+persona *representation*, evaluated by frozen transfer to labels the representation never
+saw, across multiple seeds and downstream tasks, with a leakage audit, and jointly with
+interpretability and stability rather than accuracy alone. This is a difference of
+protocol and scope, not a claim that predictive validation of personas is new here.
 
-**Stability of clusterings.** ARI [9] and NMI [10] are permutation-invariant partition-agreement measures; von Luxburg [11] frames bootstrap stability as a model-selection criterion for clustering. We apply both across training seeds and bootstrap resamples of the customer universe.
+### B. Concept Supervision and Named Latent Axes
+
+The construct-alignment head belongs to the concept-supervision family and is **not**
+claimed as a novel mechanism. Concept Bottleneck Models [18] predict human-specified
+concepts as an intermediate layer and then predict the label from those concepts alone.
+Concept whitening [19] modifies a normalization layer so that the axes of the latent
+space align with known concepts. Closest of all, CBM-AUC [20] places supervised concepts
+*and additional unsupervised concepts* in the same bottleneck, trained jointly — the same
+aligned/free partition used here. Partitioned supervised/unsupervised latent spaces recur
+across application fields, and the design should be read as conventional.
+
+**The distinction, in one sentence.** A concept bottleneck routes the *task label*
+through the concepts and is trained on that label; CA-DVAE routes nothing through them —
+it is an unsupervised generative representation whose axes happen to be named, which is
+then frozen and transferred to downstream labels it never saw, so the interpretability
+and the predictive claim are measured on separate footings.
+
+**The failure mode this design inherits.** Concept-supervised models with an unsupervised
+side channel are known to leak: learned concept representations encode information beyond
+the pre-defined concepts, and natural mitigations do not fully work [21]; concepts may not
+correspond to anything semantically meaningful in input space [22]. Two independent groups
+report this, which makes it a structural property of the design rather than a footnote.
+It bears directly on the headline interpretability evidence here: a high on-target
+alignment R² is the diagonal of a matrix whose off-diagonal must also be shown. Section
+V-F specifies the diagnostic we implemented in response, and Section VI-E reports the
+attribution evidence that bears on it.
+
+In the customer domain specifically, Mancisidor *et al.* [23] steer a VAE's latent space
+with Weight of Evidence so the induced clustering reflects creditworthiness — prior art
+for "steer a customer VAE with a business quantity". The delta here is multiple named
+constructs held simultaneously, with the alignment strength swept rather than fixed.
+
+### C. Disentangled Representation Learning
+
+The VAE [1] and β-VAE [2] form the base; FactorVAE [3] and the total-correlation
+decomposition of [4] penalize latent dependence directly. Kumar *et al.* [5] introduced
+SAP and Chen *et al.* [4] MIG, both adopted here. Locatello *et al.* [7] showed
+unsupervised disentanglement is impossible without inductive bias or supervision, and
+their follow-up [24] showed weak supervision suffices — so using explicit supervision, as
+here, is the field's standard escape rather than a differentiator. Importantly for this
+paper's hypothesis, Nai *et al.* [25] find that dimension-wise disentanglement is
+unnecessary for downstream performance and that *informativeness* is the better predictor,
+with prior positive findings explained by the correlation between the two. We use this to
+pre-state a directional hypothesis for the β sweep (Section V-E) rather than exploring
+blind.
+
+### D. Neural Customer Segmentation and Tabular Baselines
+
+Deep Embedded Clustering [6] and autoencoder-plus-K-means pipelines dominate neural
+customer segmentation. Published evaluations typically report internal clustering indices
+on a single run; downstream predictive validation against the incumbent RFM
+representation [8] on held-out future behaviour, with seeds and significance tests, is
+rare. That evaluation gap, rather than any architectural gap, is this project's target.
+Our baseline findings are also consistent with a broader result: Grinsztajn *et al.* [26]
+show that tree-based models remain state of the art on medium-sized tabular data
+(~10k samples) even under matched tuning budgets, attributing the gap to neural
+sensitivity to uninformative features, rotation non-invariance, and difficulty fitting
+irregular functions. Dataset A (n = 2,240) sits squarely in that regime, so PCA and RFM
+beating a trained autoencoder is the *predicted* outcome — this work contributes the
+demonstration that the prediction extends to representation learning for segmentation
+under a frozen-transfer protocol.
+
+### E. Stability of Clusterings
+
+ARI [9] and NMI [10] are permutation-invariant partition-agreement measures; von
+Luxburg [11] frames bootstrap stability as a model-selection criterion for clustering. We
+apply both across training seeds and bootstrap resamples, and report in Section VI-D a
+confound that this framing makes easy to miss: a degenerate representation is perfectly
+stable, so stability alone cannot select a model.
 
 ## III. Proposed Method: CA-DVAE
 
 ### A. Problem Formulation
 
-Each customer is a feature vector $x \in \mathbb{R}^{D}$ aggregated from raw records (Section IV). An encoder produces a posterior $q(z|x) = \mathcal{N}(\mu(x), \sigma^2(x))$ over $z \in \mathbb{R}^{d}$ with $d = 16$; a dense decoder reconstructs $\hat{x}(z)$. The latent vector is partitioned as
+Each customer is a feature vector $x \in \mathbb{R}^{D}$ aggregated from raw records
+(Section IV). An encoder produces a posterior
+$q(z|x) = \mathcal{N}(\mu(x), \sigma^2(x))$ over $z \in \mathbb{R}^{d}$ with $d = 16$; a
+dense decoder reconstructs $\hat{x}(z)$. The latent vector is partitioned as
 
 $$z = [\,z_{\text{aligned}} \in \mathbb{R}^{a} \;|\; z_{\text{free}} \in \mathbb{R}^{d-a}\,]$$
 
-where $a$ resolves by rule to $\min(n_{\text{constructs}},\, d - 4)$, keeping at least four free dimensions (Dataset A: $a = 10$; Dataset B: $a = 12$).
+where $a$ resolves by rule to $\min(n_{\text{constructs}},\, d - 4)$, keeping at least
+four free dimensions (Dataset A: $a = 10$; Dataset B: $a = 12$).
 
 ### B. Construct-Alignment Head
 
-A **linear** head $A: \mathbb{R}^{a} \to \mathbb{R}^{C}$ predicts the $C$ standardized construct targets from the aligned block; the alignment loss is summed mean-squared error. Linearity is a deliberate design constraint, not a simplification: it forces each construct to correspond to an interpretable *direction* in latent space, so the per-axis alignment score and latent-traversal persona cards are well defined. A nonlinear head would reintroduce the black box the project exists to remove.
+A **linear** head $A: \mathbb{R}^{a} \to \mathbb{R}^{C}$ predicts the $C$ standardized
+construct targets from the aligned block; the alignment loss is summed mean-squared
+error. Linearity is a deliberate design constraint, not a simplification: it forces each
+construct to correspond to an interpretable *direction* in latent space, so the per-axis
+alignment score and latent-traversal persona cards are well defined. A nonlinear head
+would reintroduce the black box the project exists to remove — and would also be the
+easiest way to close the lift gap reported in Section VI-B while hollowing out the claim,
+which is why it was rejected rather than left as future work.
 
 ### C. Loss and Ablation Structure
 
 $$\mathcal{L} = \underbrace{\|x - \hat{x}\|^2}_{\text{recon}} \;+\; \beta \cdot \mathrm{KL}_{\text{free}} \;+\; w_a \cdot \mathrm{KL}_{\text{aligned}} \;+\; \lambda \cdot \mathcal{L}_{\text{align}}$$
 
-with the standard ELBO reduction (sum over dimensions, mean over batch), so β and λ of order one are meaningful. β weights only the free-block KL; the aligned block keeps a unit-Gaussian prior at fixed weight $w_a = 1$ so it stays stochastic rather than collapsing under alignment pressure. The two components are independently ablatable as pure configuration points, with no separate code paths: λ = 0 recovers a pure β-VAE (the aligned block is then dissolved), and β = 1 recovers a VAE with alignment but no extra disentanglement pressure. The frozen embedding used downstream is the posterior mean μ over all $d$ dimensions, identical in treatment to the autoencoder baseline, so any lift difference is attributable to the objective rather than the read-out.
+with the standard ELBO reduction (sum over dimensions, mean over batch), so β and λ of
+order one are meaningful. β weights only the free-block KL; the aligned block keeps a
+unit-Gaussian prior at fixed weight $w_a = 1$ so it stays stochastic rather than
+collapsing under alignment pressure. The two components are independently ablatable as
+pure configuration points, with no separate code paths: λ = 0 recovers a pure β-VAE (the
+aligned block is then dissolved), and β = 1 recovers a VAE with alignment but no extra
+disentanglement pressure. The frozen embedding used downstream is the posterior mean μ
+over all $d$ dimensions, identical in treatment to the autoencoder baseline, so any lift
+difference is attributable to the objective rather than the read-out.
 
-The model is a small dense network trained comfortably within 6 GB of VRAM; no architectural novelty is claimed.
+The model is a small dense network trained comfortably within 6 GB of VRAM. No
+architectural novelty is claimed, and per Section II-B no novelty is claimed for the
+aligned/free partition either.
 
 ## IV. Datasets and Construct Targets
 
 ### A. Dataset A: Customer Personality Analysis
 
-2,240 customers × 29 columns of survey-style tabular data (Kaggle, CC0-1.0) [13]. Label: response to the final marketing campaign (positive rate 14.9%); the five earlier campaign flags are legitimate strictly-past features. Cleaning is fit on train only (median imputation, winsorization at train percentiles, junk-level collapse). Splits are stratified 60/20/20 on the label, redrawn per seed. Final matrix: 2,240 × 34.
+2,240 customers × 29 columns of survey-style tabular data (Kaggle, CC0-1.0) [13]. Label:
+response to the final marketing campaign (positive rate 14.9%); the five earlier campaign
+flags are legitimate strictly-past features. Cleaning is fit on train only (median
+imputation, winsorization at train percentiles, junk-level collapse). Splits are
+stratified 60/20/20 on the label, redrawn per seed; the test split is 448 rows
+(≈ 67 positives), which is small enough that Section V-C's interval estimates matter.
+Final matrix: 2,240 × 34.
 
 ### B. Dataset B: eCommerce Behavior (Multi-Category Store)
 
-109,950,743 raw events (October-November 2019) from the REES46 multi-category store [12], processed with Polars in streaming mode (the ~110M-row frame is never materialized; peak RAM stays bounded on a 16 GB machine). Users with ≥ 5 events in the feature window form the universe: **2.55 M users × 27 features**, cached to Parquet once (~200 s) and reused by every experiment.
+109,950,743 raw events (October–November 2019) from the REES46 multi-category store [12],
+processed with Polars in streaming mode (the ~110M-row frame is never materialized; peak
+RAM stays bounded on a 16 GB machine). Users with ≥ 5 events in the feature window form
+the universe: **2.55 M users × 27 features**, cached to Parquet once (~200 s) and reused
+by every experiment.
 
-Temporal separation is absolute: features aggregate the window [Oct 1, Nov 22); labels come from [Nov 22, Nov 30]; a unit test asserts every feature event precedes every label event. A skeptical-numbers pass corrected our own initial rationale here: the purchase surge in this data is Nov 16-17 (inside the feature window), not Black Friday, so the label window is a routine, promotion-unconfounded target. Train/val/test are user-disjoint (60/20/20 by seed-salted hash), blocking identity leakage. Three labels: `purchased` (primary, 3.3% positive), `churned` (dormancy proxy, 70.8% positive), and `next_category` (multiclass, first label-window purchase category).
+Temporal separation is absolute: features aggregate the window [Oct 1, Nov 22); labels
+come from [Nov 22, Nov 30]; a unit test asserts every feature event precedes every label
+event. A skeptical-numbers pass corrected our own initial rationale here: the purchase
+surge in this data is Nov 16–17 (inside the feature window), not Black Friday, so the
+label window is a routine, promotion-unconfounded target. Train/val/test are user-disjoint
+(60/20/20 by seed-salted hash), blocking identity leakage. Three labels: `purchased`
+(primary, 3.3% positive), `churned` (dormancy proxy, 70.8% positive), and `next_category`
+(multiclass, first label-window purchase category).
 
 ### C. Construct Targets (Alignment Supervision)
 
@@ -120,39 +331,146 @@ Temporal separation is absolute: features aggregate the window [Oct 1, Nov 22); 
 | Price sensitivity (1) | deal reliance = deals / purchases | −z(mean viewed price), a price-tier proxy* |
 | Category affinity | 6 spend shares (sum to 1) | 13 known top-level event shares |
 
-*Honest limitation, documented for the paper: the event log has no discount field, so B's price-sensitivity target measures the price tier a user browses, not discount responsiveness.
+*Honest limitation: the event log has no discount field, so B's price-sensitivity target
+measures the price tier a user browses, not discount responsiveness.
 
-All construct targets are computed from pre-standardization tables, split with the same per-seed partition as the features, and standardized on **train only**; a perturbation unit test proves val/test rows cannot move the fitted scaler.
+All construct targets are computed from pre-standardization tables, split with the same
+per-seed partition as the features, and standardized on **train only**; a perturbation
+unit test proves val/test rows cannot move the fitted scaler.
+
+**A property that shapes the whole evaluation.** The constructs are *deterministic
+functions of the engineered features* — recency, column sums, spend shares. The alignment
+head therefore predicts something already present in its own input. This matters twice:
+it means the alignment task carries no new information and can only shape the *geometry*
+of the latent space, and it means a representation with perfect named axes is available
+without any training at all, by using the constructs as coordinates. Section V-F
+pre-registers that baseline, and Section VI-E reports the attribution evidence that
+addresses the circularity directly.
 
 ## V. Evaluation Protocol
 
 ### A. Frozen-Representation Protocol
 
-Every method, baseline or proposed, yields a per-user representation fit on train only, which is then **frozen**. Two downstream heads (L2-regularized logistic regression and a histogram gradient-boosted tree classifier) are trained on frozen train features and evaluated on the held-out test set. Downstream labels never touch representation learning. Metrics: ROC-AUC, PR-AUC (primary; both binary labels are imbalanced), tie-aware precision@k (deterministic and row-order invariant), and for the multiclass task top-k accuracy plus macro one-vs-rest AUC.
+Every method, baseline or proposed, yields a per-user representation fit on train only,
+which is then **frozen**. Two downstream heads (L2-regularized logistic regression and a
+histogram gradient-boosted tree classifier) are trained on frozen train features and
+evaluated on the held-out test set. Downstream labels never touch representation
+learning. Metrics: ROC-AUC, PR-AUC (primary; both binary labels are imbalanced),
+tie-aware precision@k (deterministic and row-order invariant), and for the multiclass task
+top-k accuracy plus macro one-vs-rest AUC.
 
 ### B. Baselines (All Implemented, Bar Fixed Before Any Proposed-Model Run)
 
-RFM (continuous, 3 features), RFM + K-means, PCA at matched capacity (d = 16), autoencoder embedding (the designated hard baseline), AE + K-means, GMM on AE embeddings, and DEC [6]. The raw standardized feature vector is also run through the same heads as a reference **ceiling**, excluded from bar selection, answering the reviewer question "do you need a representation at all?".
+RFM (continuous, 3 features), RFM + K-means, PCA at matched capacity (d = 16),
+autoencoder embedding (the designated hard baseline), AE + K-means, GMM on AE embeddings,
+and DEC [6]. The raw standardized feature vector is also run through the same heads as a
+reference **ceiling**, excluded from bar selection, answering the reviewer question "do
+you need a representation at all?".
 
-### C. Statistical Rigor
+**Tuning parity.** The proposed model receives 24 configurations per seed from the sweep;
+a single-configuration autoencoder would be an unfairly weak comparison in the proposed
+model's favour. Section VI-H reports a dedicated AE mini-sweep run to close that gap.
 
-Every headline number is mean ± std over **six seeds**, with paired significance against the strongest baseline reported from **both** test families (Wilcoxon signed-rank and paired t). Six seeds is not arbitrary: the two-sided Wilcoxon p-floor is $2^{-(n-1)}$, which equals 0.0625 at five seeds and cannot reach 0.05; at six seeds the floor is 0.03125, so both families can carry a claim.
+### C. Statistical Protocol
+
+Every headline number is mean ± std over **six seeds**, with paired significance against
+the strongest baseline reported from **both** test families (Wilcoxon signed-rank and
+paired t). Six seeds is not arbitrary: the two-sided Wilcoxon p-floor is $2^{-(n-1)}$,
+which equals 0.0625 at five seeds and cannot reach 0.05; at six seeds the floor is
+0.03125, so both families can carry a claim.
+
+**Multiplicity, stated explicitly.** That floor is also a hard constraint on what six
+seeds can support. The comparison family here is large — up to eight challengers × two
+heads × three tasks, and again per sweep grid point — and *every* Wilcoxon win in this
+paper sits exactly at the floor. Under Holm–Bonferroni correction [27] within a
+(task, head, metric) family, two floor-valued comparisons already give an adjusted
+p = 0.0625 and none survives at α = 0.05. We therefore report: (i) raw p-values from both
+families; (ii) Holm-adjusted values, implemented in `cadvae.eval.stats.holm_bonferroni`;
+and (iii) paired effect sizes, because at six seeds a p-value carries little information
+about magnitude while a marketing reader needs to know how much lift is lost. Claims in
+Section VI that rest on the Wilcoxon floor are marked as such and are supported by the
+paired t and the effect size, not by the Wilcoxon alone.
+
+**Seeds are not sampling units.** On Dataset A the split is redrawn per seed, so seed
+variance mixes initialization variance with split variance and the paired test pairs
+across *different* test sets. `cadvae.eval.stats.bootstrap_ci` supplies percentile
+intervals over test rows, which measure a different thing — how much of a number is an
+accident of which users landed in the test split — and the two are never conflated in
+Section VI.
 
 ### D. Interpretability and Stability Instruments
 
-MIG [4] and SAP [5] follow the estimator conventions of [7], with one documented deviation: because our ground-truth factors (the construct targets) are continuous, both latents and factors are discretized by quantile (equal-mass) bins, which are robust to the heavy tails of monetary features. Ground-truth-recovery unit tests require a disentangled code to outscore a rotation-entangled code of identical information content. Stability (pending sweep): pairwise cross-seed ARI/NMI of K-means personas on a fixed seed-independent user sample, plus bootstrap persistence [11].
+MIG [4] and SAP [5] follow the estimator conventions of [7], with one documented
+deviation: because our ground-truth factors (the construct targets) are continuous, both
+latents and factors are discretized by quantile (equal-mass) bins, which are robust to the
+heavy tails of monetary features. Ground-truth-recovery unit tests require a disentangled
+code to outscore a rotation-entangled code of identical information content.
 
-### E. Selection Hygiene (Pre-Compute Audit)
+Stability is pairwise cross-seed ARI/NMI of K-means personas on a fixed seed-independent
+user sample, plus bootstrap persistence [11]. Because a degenerate representation is
+trivially stable (Section VI-D), we also define and report **SMP — Stability at Matched
+Performance**: the maximum cross-seed ARI among configurations within the selection slack
+of the best validation downstream score. SMP excludes collapsed configurations by
+construction and is the honest form of the stability comparison.
 
-An audit before any sweep compute found that the sweet-spot (β, λ) point would have been selected on test metrics, the classic tuned-on-test flaw. The sweep now records validation metrics per run; selection is on validation, reporting on test, and a drift-guard test pins the dual-evaluation heads to the exact Phase-3 specification. The same audit added per-task best-baseline comparisons (avoiding straw-man significance tests) and atomic record writes.
+### E. Pre-Registered Hypotheses and Falsification Criteria
 
-## VI. Recorded Results
+Fixed before any proposed-model run:
 
-All numbers in this section are from committed, config-hashed runs on an RTX 4050 (6 GB), 6 seeds, audited protocol. Result records live under `results/` (gitignored, regenerable); the canonical copies of the tables below are also in `docs/NOTEBOOK.md`.
+| # | Hypothesis | Falsified if | Outcome |
+|---|---|---|---|
+| H1 | A construct-aligned representation matches or beats the strongest baseline on primary downstream lift | Sweet-spot PR-AUC significantly below the bar in both test families | **Falsified** on both datasets (VI-B) |
+| H2 | Alignment produces axes that genuinely encode the named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Supported** (VI-C) |
+| H3 | Construct anchoring stabilizes personas relative to incumbents | Incumbent personas at least as stable as aligned ones | **Falsified** (VI-D) |
+| H4 | Increasing β improves downstream lift | Lift flat or decreasing in β | **Falsified**, in the direction [25] predicts (VI-B) |
 
-### A. Dataset A: Campaign Response (Test PR-AUC, Base Rate 0.150)
+Directional hypothesis for H4 was stated in advance from [25]: because informativeness
+predicts downstream performance better than dimension-wise disentanglement, increasing β
+should *cost* lift rather than buy it.
 
-**TABLE I** — Baseline bar, Dataset A (6 seeds, mean ± std)
+**Is the negative result publishable?** Yes, and this was decided before running: the bars
+are pre-registered, the protocol is leakage-audited, and "the interpretable model loses to
+three raw features under honest evaluation" is a result the applied literature needs. The
+project was designed so that its value does not depend on the effect existing.
+
+### F. Selection Hygiene and Pre-Registered Additions
+
+An audit before any sweep compute found that the sweet-spot (β, λ) point would have been
+selected on test metrics, the classic tuned-on-test flaw. The sweep records validation
+metrics per run; selection is on validation, reporting on test, and a drift-guard test
+pins the dual-evaluation heads to the exact Phase-3 specification. The same audit added
+per-task best-baseline comparisons (avoiding straw-man significance tests) and atomic
+record writes.
+
+Two analyses are **implemented and unit-tested but not yet run**, and are reported here as
+pre-registered protocol, never as results:
+
+1. **Named-axis baselines** (`constructs`, `construct_pca` in
+   `cadvae.eval.representations`). Because the constructs are deterministic functions of
+   the features (Section IV-C), using them directly as coordinates gives a representation
+   with alignment R² = 1 by construction, no training, and — with PCA of the construct
+   residual appended — the same aligned/free structure CA-DVAE learns. This is the strip
+   test for the alignment mechanism: if it matches CA-DVAE, the machinery is decoration.
+   It is eligible for the bar, and is given the benefit of the doubt where the construct
+   count exceeds the latent budget (Dataset B: all 17 named axes retained rather than
+   truncated to 16).
+2. **Concept-leakage diagnostic** (`cadvae.eval.interpretability.leakage_diagnostic`).
+   Following [21], [22], it reports for each construct the off-target R² of its winning
+   axis (purity) and the construct's recoverability from the *free* block alone. A high
+   on-target R² with a high free-block R² would mean the named axis is not where the
+   information uniquely lives. Nineteen ground-truth tests verify that the diagnostic
+   separates a clean partition from a leaky one whose on-target scores are identical.
+
+## VI. Results
+
+All numbers are from committed, config-hashed runs with 6 seeds under the audited
+protocol. Baselines and repro checks ran on an RTX 4050 (6 GB); the sweep ran on a
+Kaggle T4 at commit `d867713`. Canonical tables are mirrored in
+[docs/NOTEBOOK.md](docs/NOTEBOOK.md).
+
+### A. The Bars: Non-Neural Incumbents Win
+
+**TABLE I** — Baseline bar, Dataset A, campaign response (6 seeds, mean ± std, base rate 0.149)
 
 | Representation | PR-AUC (logreg) | PR-AUC (gbt) | ROC-AUC (gbt) |
 |---|---|---|---|
@@ -167,11 +485,14 @@ All numbers in this section are from committed, config-hashed runs on an RTX 405
 
 *Excluded from bar selection.
 
-An honest finding, contrary to the neural-segmentation narrative: **PCA significantly beats the trained autoencoder** (paired t, p = 0.0019; Wilcoxon, p = 0.03125), and PCA is statistically indistinguishable from the raw ceiling (p = 0.19). At n = 2,240, linear compression loses nothing and the neural baseline is not the bar; PCA is. This *raised* the bar CA-DVAE must meet on Dataset A from 0.532 to 0.568.
+**PCA significantly beats the trained autoencoder** (paired t, p = 0.0019; Wilcoxon at the
+floor, p = 0.03125), and PCA is statistically indistinguishable from the raw ceiling
+(p = 0.19). At n = 2,240 linear compression loses nothing and the neural baseline is not
+the bar; PCA is. This *raised* the bar CA-DVAE must meet on Dataset A from 0.532 to 0.568.
+Section II-D notes this is the outcome [26] predicts for tabular data at this scale.
 
-### B. Dataset B: Future Purchase (Test PR-AUC, Base Rate 0.033)
-
-**TABLE II** — Baseline bar, Dataset B (6 seeds, 200k train subsample, full 509k-user test set)
+**TABLE II** — Baseline bar, Dataset B, future purchase (6 seeds, 200k train subsample,
+full 509k-user test set, base rate 0.033)
 
 | Representation | PR-AUC (logreg) | PR-AUC (gbt) | ROC-AUC (gbt) |
 |---|---|---|---|
@@ -186,9 +507,11 @@ An honest finding, contrary to the neural-segmentation narrative: **PCA signific
 
 *Excluded from bar selection.
 
-The second honest finding: **on behavioral data, three raw RFM features beat every learned representation** (every method below RFM with both test families significant; Wilcoxon p = 0.03125, t ≤ 1.5 × 10⁻⁵). The raw ceiling sits significantly above RFM, so non-RFM features carry signal that no learned representation currently captures; that headroom is exactly what the sweep probes. Hard one-hot cluster representations (the standard "persona" format) discard the most signal on both datasets.
-
-### C. Dataset B: Multi-Task Records (the Blessed Lift Framing)
+**On behavioural data, three raw RFM features beat every learned representation.** The raw
+ceiling sits significantly above RFM, so non-RFM features carry signal no learned
+representation captures. Hard one-hot cluster representations — the standard "persona"
+format — discard the most signal on both datasets, losing 40–65% of their parent
+embedding's PR-AUC.
 
 **TABLE III** — Per-task best baselines, Dataset B (6 seeds)
 
@@ -196,57 +519,361 @@ The second honest finding: **on behavioral data, three raw RFM features beat eve
 |---|---|---|---|---|
 | purchased (primary) | PR-AUC (gbt) | RFM | 0.1953 ± 0.0035 | — |
 | churned | PR-AUC (gbt) | AE | 0.8620 ± 0.0006 | beats RFM 0.8498 every seed (t, p = 1.7 × 10⁻⁸) |
-| next_category | acc@1 (logreg) | AE | 0.6097 ± 0.0020 | RFM collapses to 0.5058 (near base rate 0.5053) |
+| next_category | acc@1 | AE + K-means | 0.5550 (stable across all 6 seeds) | RFM collapses to 0.4070, *below* the 0.5053 base rate (p = 0.017) |
 
-No single baseline wins all three tasks: RFM wins purchase prediction, the AE embedding wins churn and category. RFM's collapse on next_category is structural (it contains no category information). A finding directly motivating the stability axis: the plain AE embedding is **bimodal across seeds** on next_category under the tree head (macro-AUC ≈ 0.73 on seeds 0-2 versus ≈ 0.52 on seeds 3-5; acc@1 std ± 0.081), meaning the unregularized AE sometimes fails to allocate latent capacity to category structure at all. Construct anchoring is the designed remedy; Phase-6 ARI/NMI will quantify it.
+No single baseline wins all three tasks, and the per-task best baseline — not a single
+global bar — is what the proposed model is compared against, so that no comparison is
+made against a straw man. On `next_category`, AE + K-means at 0.5550 is the real bar, above
+raw features (0.4520, p = 0.021) and PCA (p = 0.020); several methods, RFM included, score
+*below* the 0.5053 base rate, because the heads optimize log-loss rather than top-1
+accuracy. RFM's collapse is structural: it contains no category information at all
+(macro-OVR AUC 0.52 versus 0.63–0.66 for the AE family).
 
-### D. CA-DVAE Sanity Runs (Gate Evidence, Not Results)
+The plain AE embedding is **bimodal across seeds** on `next_category` (macro-OVR AUC
+0.73 / 0.74 / 0.73 on seeds 0–2 versus 0.54 / 0.52 / 0.52 on seeds 3–5; acc@1 0.58 versus
+0.41–0.47), meaning the unregularized AE sometimes fails to allocate latent capacity to
+category structure at all. This is the observation that originally motivated construct
+anchoring as a stability remedy — a motivation Section VI-D goes on to falsify.
 
-Single arbitrary configuration points (β = 1, λ = 1), deliberately untuned, run only to verify the machinery end to end.
+### B. The Frontier: What Interpretability Costs in Lift
 
-**TABLE IV** — Phase-4 sanity runs, seed 7
+The Phase-5 campaign is a 6 β × 4 λ × 6 seed grid, 144 runs per dataset, 288 total, all
+complete. The λ = 0 column is the β-VAE ablation; the β = 1 row is the alignment-only
+ablation. Operating points are selected on **validation** downstream score and reported on
+**test**.
 
-| Dataset | Aligned/free dims | Downstream PR-AUC (gbt) | Bar | Alignment R² (mean / RFM) |
+**TABLE IV** — Validation-selected operating points versus the pre-registered bars
+
+| Dataset | Sweet spot (β, λ) | Test PR-AUC (gbt) | Bar | Gap | Wilcoxon | paired t |
+|---|---|---|---|---|---|---|
+| A | (0.25, 4) | 0.5130 ± 0.0597 | 0.5677 (PCA) | −0.055 | 0.0312 (floor) | 3.0 × 10⁻³ |
+| B | (0.10, 1) | 0.1798 ± 0.0051 | 0.1953 (RFM) | −0.016 | 0.0312 (floor) | 3.4 × 10⁻⁵ |
+
+**H1 is falsified on both datasets.** The interpretability cost in predictive lift is
+real, quantified, and significant under the paired t; the Wilcoxon values sit at the
+n = 6 floor and would not survive familywise correction on their own (Section V-C), but
+the t-test and the effect sizes carry the claim, and the direction is consistent across
+every seed.
+
+The frontier is smooth and legible rather than a cliff. On Dataset A a weak-alignment
+point (β = 0.5, λ = 0.25) reaches 0.5647 — essentially at the bar — but with RFM-axis
+R² of only 0.35: the lift is recoverable precisely by giving up the naming. On Dataset B
+the best point anywhere in the grid is 0.1827 ± 0.0018 at (β = 0.1, λ = 0), i.e. with the
+alignment switched off entirely, and it still does not reach the RFM bar.
+
+**H4 is falsified in the predicted direction.** High-β rows (β ∈ {1, 2}) are the worst on
+both datasets, confirming the posterior-collapse diagnostic recorded at the Phase-4 gate
+(KL_free ≈ 0.02 at β = 1) and matching the expectation set from [25]: pressure toward
+dimension-wise independence costs informativeness, and informativeness is what the
+downstream head needs.
+
+### C. Interpretability: The Mechanism Works, and MIG Does Not
+
+At the selected points the named axes genuinely encode the constructs: Dataset A reaches
+mean alignment R² 0.854 with RFM-axis R² **0.968**; Dataset B reaches RFM-axis R² up to
+0.88 at λ = 4. Persona cards built from latent traversals are visually consistent with the
+names: Dataset A's price-sensitivity axis moves +deals / +kidhome / +recency against
+−income / −premium spend, which is deal-reliance semantics; every Dataset B affinity axis
+moves its own category share as the dominant feature.
+
+**A metric finding, reported rather than hidden.** MIG is **degenerate as a selection
+criterion in this setting**. On Dataset B, MIG is *highest* at λ = 0 (0.26–0.35) and
+*drops* with alignment (0.07–0.10 at λ = 4). The cause is structural: aligning 12 latent
+dimensions to 17 correlated construct targets necessarily shares construct information
+across latents, and MIG's top-1-minus-top-2 gap penalizes exactly that. Selecting on MIG
+chose a pure β-VAE with no named axes at all as Dataset B's "sweet spot", producing an
+ablation table in which the proposed model and its own ablation were identical rows.
+Selection was moved to mean alignment R², and a sensitivity analysis confirms the failure
+is not a slack artifact: MIG-selection picks the degenerate λ = 0 point at every slack
+tested, while R²-selection is slack-invariant on A and moves gracefully along the frontier
+on B. Both curves are still emitted. MIG is low everywhere on Dataset A (0.02–0.05),
+which is itself a caution about its usefulness for continuous, correlated business
+constructs.
+
+### D. Stability: A Cost, Not a Benefit — and a Confound
+
+**TABLE V** — Cross-seed persona stability (ARI, K = 8, identical protocol)
+
+| Representation | Dataset A | Dataset B |
+|---|---|---|
+| RFM + K-means | 0.975 ± 0.011 | 0.962 ± 0.033 |
+| AE + K-means | 0.703 ± 0.068 | 0.745 ± 0.037 |
+| CA-DVAE, stable region (λ ∈ [0.25, 1], low β) | 0.64–0.70 | 0.58–0.73 |
+| CA-DVAE at the selected point | 0.467 | 0.583 |
+
+**H3 is falsified.** Both incumbents produce more stable personas than the selected
+aligned model. RFM+K-means is near-perfectly stable — unsurprisingly, since it clusters
+three deterministic features, so stability was never RFM's weakness. Strong alignment
+actively destabilizes: λ = 4 gives 0.46–0.55 across all β on Dataset A and is erratic on B
+(0.29–0.75 with large standard deviations at low β). Moderate alignment (λ ∈ [0.25, 1]) at
+low β is the stable-and-performant region, and the effect is non-monotone: on Dataset A,
+λ = 0.25 yields ARI 0.644, *above* the β-VAE ablation's 0.541, while λ = 4 yields 0.467,
+*below* it. Single-point stability claims would be reviewer-fragile in either direction,
+which is why the full 24-point stability surface is reported rather than one number.
+
+**The confound that makes raw stability comparisons meaningless.** The most stable grid
+points are the most collapsed ones: Dataset A at (β = 1, λ = 0) reaches ARI 0.775 and
+Dataset B at (β = 2, λ = 0) reaches 0.834 — both at the *worst* downstream PR-AUC in their
+grids. A near-constant assignment is trivially reproducible. Stability must therefore be
+read jointly with downstream performance, never alone. A K-sensitivity check over
+K ∈ {5, 8, 12} generalizes the point: the ordering "linear incumbents (RFM/PCA, 0.73–0.99)
+≫ neural methods (AE/CA-DVAE, 0.41–0.78)" holds at every K on both datasets, so
+**stability tracks model simplicity**.
+
+**SMP — the honest comparison.** Restricting to configurations within the selection slack
+of the best validation score, both datasets select (β = 0.05, λ = 1), where cross-seed ARI
+is **0.697 on A versus 0.703 for AE+K-means, and 0.725 on B versus 0.745**. At matched
+performance, aligned personas are as stable as the neural incumbent's. They remain far
+less stable than the non-neural incumbent's.
+
+### E. Attribution: The Named Axes Are Not Decoration
+
+Because the constructs are deterministic functions of the features (Section IV-C), the
+sharpest objection to the interpretability claim is circularity: the aligned block may be
+merely re-encoding its own supervision targets. Decomposing downstream performance by
+latent block addresses this directly.
+
+**TABLE VI** — Downstream PR-AUC (gbt) by latent block, at the selected points
+
+| Dataset | Full latent | Aligned block alone | Free block alone | Reference |
 |---|---|---|---|---|
-| A (200 epochs) | 10 / 6 | 0.479 | 0.568 (PCA) | 0.71 / **0.90** |
-| B (50k sample, 40 epochs) | 12 / 4 | 0.150 | 0.195 (RFM) | 0.64 / 0.68 |
+| A (β=0.25, λ=4) | 0.5127 | 0.4429 (10 dims) | 0.4456 (6 dims) | raw RFM 0.3794 |
+| B (β=0.10, λ=1) | 0.1798 | **0.1722** (12 dims) | 0.1447 (4 dims) | AE full 0.1723 |
 
-Two observations. First, **the alignment mechanism works**: named axes genuinely encode the constructs (Dataset A per-axis R²: recency 0.91, frequency 0.88, monetary 0.90), which is direct evidence for the interpretability claim independent of the lift claim. Second, at this arbitrary point the model sits below both bars, exactly the predicted interpretability-performance cost; per protocol we did not tune to close the gap. Training diagnostics show the free dims collapsed to the prior at β = 1 (KL_free ≈ 0.02 on both datasets), a concrete, logged hypothesis for why the sweep grid extends β down to 0.05. A single full-scale preflight point on B (β = 1, λ = 1, 200k) reached PR-AUC 0.1726 with MIG 0.306, closing the gap to the AE (0.1723) while adding interpretability; this is one un-swept point, recorded as a lead, not a result.
+On Dataset B, **the twelve named axes alone carry as much downstream signal as the
+autoencoder's entire unnamed embedding**. On Dataset A the named block alone beats raw
+RFM, and the two blocks are complementary rather than redundant — neither alone reaches
+the full latent. The named axes are therefore load-bearing, not labels attached to a black
+box.
 
-### E. Pending: Sweep, Trade-Off Curve, Stability
+Two caveats are recorded with this table. First, it does not settle *concept leakage*
+(Section V-F): showing that the aligned block is informative is not the same as showing
+that each named axis carries only its own construct, which is what the pre-registered
+purity diagnostic measures. Second, the block-restricted heads reproduce the sweep records
+bit-exactly on B (2.8 × 10⁻¹⁷) but deviate by 5.3 × 10⁻³ on A — cross-hardware encoding
+noise (sweep embeddings from a Kaggle T4 under torch 2.10, re-encoded on the RTX 4050
+under torch 2.6) amplified by A's 448-row test set. B's 509k-row pipeline absorbs it. The
+magnitude is measured rather than assumed.
 
-The Phase-5 campaign is a 6 β × 4 λ × 6 seed grid (144 runs per dataset; the λ = 0 column is the β-VAE ablation, the β = 1 row is the alignment-only ablation), with validation-based sweet-spot selection and test-set reporting. The Phase-6 outputs (interpretability-performance trade-off curve, cross-seed ARI/NMI stability, bootstrap persistence, persona cards from latent traversals) consume the sweep artifacts. **None of these numbers exist yet**; this section will be populated from `results/phase5/` and `results/phase6/` when the runs land.
+### F. Where the Aligned Model Wins
+
+**TABLE VII** — Dataset B multi-task outcome at the selected point (β = 0.10, λ = 1)
+
+| Task | CA-DVAE | Best baseline | Outcome |
+|---|---|---|---|
+| purchased | 0.1798 ± 0.0051 | RFM 0.1953 | **Loss** (W 0.0312, t 3.4 × 10⁻⁵) |
+| churned (dormancy) | 0.8632 | AE 0.8620 | **Win**, both families (W 0.0312, t 3.6 × 10⁻⁴) |
+| next_category | 0.45–0.50 acc@1 | AE + K-means 0.5550 | **Loss** (t significant; W 0.0625, one step above the floor) |
+
+The dormancy win is real, tight across seeds, and small. In business units, precision at
+the top 10% of the ranked list is 0.9312 versus 0.9300 for the AE — **about 12 additional
+dormant users identified per 10,000 targeted** (W 0.0312, t 7.8 × 10⁻³). It is reported at
+exactly that size. The `next_category` result is a loss, not parity: the head-level
+bimodality observed in the baselines is not cured by construct anchoring.
+
+Taken together with Section VI-D's SMP result, the defensible positive claim is narrow and
+specific: **against the neural persona pipeline — the thing this literature actually
+proposes — the construct-aligned model matches stability at matched performance, wins
+dormancy prediction, and adds named axes at no measured cost in the primary task relative
+to that pipeline.** Against the non-neural incumbents it loses on lift and stability
+alike.
+
+### G. Ablations
+
+Both components are ablatable as configuration points. λ = 0 (β-VAE, no alignment) is the
+best-performing region on Dataset B and produces no named axes; β = 1 with alignment is
+dominated by low-β alignment on both datasets. The ablation therefore shows that the
+alignment component *costs* primary lift while supplying the interpretability the paper is
+about, and that the disentanglement component costs lift without a compensating measured
+benefit in this setting — consistent with [25]. Neither component is decoration in the
+strip-test sense: each changes the measured outcome, and each has its own ablation row.
+
+### H. Baseline Tuning Parity
+
+An AE mini-sweep on Dataset A (6 configurations × 6 seeds) was run so that the hard
+baseline is not undertuned relative to the proposed model's 24 configurations per seed.
+**The pre-registered bar is defended:** the best AE under the tree head reaches 0.5519,
+still below PCA's 0.5677. For transparency, a tuned latent-32 AE — twice the CA-DVAE
+capacity — reaches 0.5731 on the logistic head, at parity with PCA and not significantly
+different in either family (Wilcoxon 0.22 / 0.44; t 0.17 / 0.86). The pre-registered bar
+(gbt head) is unchanged, and the raw ceiling of 0.615 remains above everything.
 
 ## VII. Discussion
 
-**What the baselines already establish.** The evaluation gap this project targets is visible in its own baseline table. Under a frozen-representation protocol with future-behavior labels, the two incumbents most often dismissed in the neural-segmentation literature, PCA and raw RFM, are the strongest baselines on Datasets A and B respectively, and the fashionable pipelines (DEC, AE + K-means cluster one-hots) are the weakest. Any paper in this area that reports only silhouette scores on a single seed would never observe this. We hypothesize that hard cluster assignment is the principal signal destroyer: on both datasets, every K = 8 one-hot representation loses 40-65% of its parent embedding's PR-AUC.
+**What the study establishes.** Under a leakage-safe, frozen-representation, multi-seed
+protocol on held-out future behaviour, the two representations most often treated as
+superseded in the neural-segmentation literature — PCA on tabular survey data and three
+raw RFM features on behavioural data — are the strongest baselines, and the fashionable
+pipelines (DEC, AE + K-means one-hots) are the weakest. Any evaluation reporting only
+silhouette scores on a single seed would never observe this. Hard cluster assignment is
+the principal signal destroyer: every K = 8 one-hot representation loses 40–65% of its
+parent embedding's PR-AUC.
 
-**Implications for the proposed model.** The bars are demanding and non-neural, which we consider a feature of the study design: beating PCA at 0.568 and RFM at 0.195 with a representation that is *simultaneously* interpretable and stable is a genuinely falsifiable claim. The sanity evidence splits cleanly: the interpretability mechanism is confirmed (alignment R² up to 0.90 on named axes), while the lift question is open pending the sweep. It appears probable, from the posterior-collapse diagnostic and the full-scale preflight point, that the interesting region of the curve lies at β < 1; the data will decide.
+**Interpretability has a price, and this is what it is.** Named axes at R² ≈ 0.97 cost
+0.055 PR-AUC against PCA on Dataset A and 0.016 against RFM on Dataset B, plus roughly
+0.3 ARI of persona stability relative to the non-neural incumbent. The trade-off is
+three-way, not two-way, and the stability leg is the one the project's own design
+originally got backwards. A practitioner can now make the trade explicitly instead of
+assuming it away.
 
-**Limitations.** Dataset B's price-sensitivity construct is a price-tier proxy, not discount responsiveness (no discount field exists in the log). The churn label is a short-horizon dormancy proxy on a two-month log. Dataset B training uses a 200k-user subsample per seed (evaluation always uses the full test split); subsample sensitivity is a logged robustness item. All numbers were produced on one fixed Windows/RTX 4050 machine, with a committed single-platform lockfile as the authoritative environment; cross-machine reproduction uses a documented numeric tolerance.
+**When each representation is the right choice.** If the goal is ranking customers by
+purchase propensity, use RFM: it is more accurate, more stable, free, and needs no GPU.
+If the goal is a persona scheme that names its own axes, supports traversal-based
+persona cards, and expresses category structure that RFM cannot represent at all, the
+aligned model buys that for a measured and modest price — and does so while matching the
+neural persona pipeline it replaces. If the goal is maximum accuracy irrespective of
+interpretation, use the raw feature vector with a gradient-boosted head; the ceiling is
+above every representation tested.
 
-## VIII. Reproducibility and Engineering Rigor
+**A methodological caution for this subfield.** MIG should not be used to select models
+when ground-truth factors are continuous and correlated, which is the normal case for
+business constructs. It inverts with alignment strength for a structural reason
+(Section VI-C), and selecting on it here would have produced a paper whose proposed model
+was silently identical to its own ablation. Similarly, stability must never be reported
+apart from performance: the most stable configurations in both grids are the most
+collapsed ones.
 
-The repository is built so that a skeptical reviewer can re-run everything and get the same numbers:
+## VIII. Threats to Validity
 
-- **Determinism.** Global seed control; deterministic cuDNN; `CUBLAS_WORKSPACE_CONFIG` pinned; DEC's nondeterministic CUDA path rewritten (matmul distance expansion, CPU permutation draws); single-threaded BLAS on every sklearn fit that feeds a representation; deterministic row order everywhere positional operations occur. Identity re-runs are bit-reproducible on the reference machine.
-- **Leakage guards as unit tests.** Perturbation proofs that train-fitted transforms ignore val/test on both datasets; temporal-ordering assertions; user-disjointness; label-window exclusion; construct-scaler isolation; a drift guard pinning sweep evaluation heads to the Phase-3 specification. Full suite: **68 tests passing**, ruff and mypy clean.
-- **Config-driven provenance.** Every run writes its resolved Hydra config, config hash, git commit, dirty flag, and seed. Ablations are configuration points, not code branches. Sweep record writes are atomic (a power cut cannot forge a completed run), and the sweep is resume-safe.
-- **No silent fallbacks.** Requesting CUDA when it is unavailable raises an error rather than degrading to CPU.
-- **Documented decisions.** Every consequential choice is a numbered entry with rationale in [docs/DECISIONS.md](docs/DECISIONS.md) (D-001 through D-033); every experiment is logged with command, hash, and observation in [docs/NOTEBOOK.md](docs/NOTEBOOK.md); live phase state is in [docs/CHECKLIST.md](docs/CHECKLIST.md).
-- **Verification tooling.** `cadvae.eval.repro_check` re-runs a pinned seed and diffs every numeric metric against recorded records, exiting nonzero on mismatch.
+**Construct validity.** The constructs are deterministic functions of the features, so the
+alignment task adds no information and can only shape geometry (Section IV-C). The
+attribution analysis (VI-E) rules out the strongest form of the circularity objection but
+not concept leakage, whose diagnostic is pre-registered and unrun. Dataset B's
+price-sensitivity target measures browsed price tier, not discount responsiveness.
 
-## IX. Conclusion and Roadmap
+**Internal validity.** On Dataset A the split is redrawn per seed, so paired tests pair
+across different test sets and seed variance mixes two sources (Section V-C). The
+448-row test split makes PR-AUC genuinely unstable; bootstrap intervals are implemented
+for this reason. Sweep embeddings were produced on different hardware from the
+re-encoding used in VI-E, with a measured deviation of 5.3 × 10⁻³ on A.
 
-This project replaces an unmeasured marketing artifact with three falsifiable measurements and builds the harness to take them honestly. The recorded evidence so far fixes hard, pre-registered bars (PCA 0.5677 on Dataset A; RFM 0.1953 on Dataset B), confirms the construct-alignment mechanism (named-axis R² up to 0.90), and surfaces two findings worth reporting regardless of how the proposed model fares: learned neural embeddings do not automatically beat linear or heuristic incumbents under leakage-safe future-behavior evaluation, and hard cluster personas discard most of the predictive signal their parent embeddings contain.
+**Statistical validity.** Every Wilcoxon result sits at the n = 6 discrete floor and none
+would survive familywise correction alone; claims rest on the paired t, the effect size,
+and per-seed consistency. Extending to more seeds *after* observing these p-values was
+deliberately rejected as optional stopping, which would be a worse attack surface than the
+one it closes.
 
-Remaining work, in order: (1) the Phase-5 β×λ sweep (144 runs per dataset; local overnight or Kaggle T4 x2, scripts in `cloud/`); (2) Phase-6 analysis: trade-off curve, sweet spot selected on validation, stability ARI/NMI, bootstrap persistence, persona cards; (3) Phase-7 fresh-clone reproduction verification. A correct negative result at the end of that pipeline will be reported as such.
+**External validity.** One feature window and one label window on Dataset B — a
+rolling-origin replication across two or three origins would close the "the result is the
+window" objection and is the single most valuable unrun experiment. Two datasets, one
+domain (retail e-commerce plus a survey-style customer table), one language, one time
+period. The tabular-scale regime of Dataset A is exactly where [26] predicts trees and
+linear methods to win, so the A results should not be read as a general claim about
+neural representation learning.
+
+**Conclusion validity.** The dormancy win is statistically real and practically small
+(≈ 12 users per 10,000). It is not evidence that the method is broadly superior, and is
+not presented as such.
+
+## IX. Ethics and Responsible Use
+
+Both datasets are public and were used under their stated terms; Dataset B is used under
+an attribution and non-redistribution posture, and neither raw files nor derived caches
+are redistributed here. No personal identifiers are used: Dataset B is keyed by
+pseudonymous user IDs, and all features are aggregates.
+
+Buyer-persona representations are targeting instruments, and the interpretability this
+paper measures cuts both ways: axes named "price sensitivity" make a model easier to audit
+*and* easier to use for price discrimination against deal-reliant customers, who in
+Dataset A co-vary with lower income and the presence of children in the household. Any
+deployment should be assessed for differential treatment across protected or proxy
+attributes before use; nothing in this evaluation certifies fairness, and no fairness
+metric is reported. Personas derived from behavioural logs also generalize poorly to
+people whose behaviour is sparse or atypical — Dataset B's universe requires ≥ 5 events,
+excluding the least-active users entirely, which is a selection effect a deployed system
+would inherit.
+
+## X. Reproducibility and Engineering Rigor
+
+- **Determinism.** Global seed control; deterministic cuDNN; `CUBLAS_WORKSPACE_CONFIG`
+  pinned; DEC's nondeterministic CUDA path rewritten (matmul distance expansion, CPU
+  permutation draws); single-threaded BLAS on every sklearn fit that feeds a
+  representation; deterministic row order everywhere positional operations occur. Identity
+  re-runs are bit-reproducible on the reference machine.
+- **Verified reproduction.** `repro_check` re-runs a pinned seed and diffs every numeric
+  metric against recorded records: **REPRODUCTION OK at `atol=1e-9` (bit-exact) on both
+  datasets**, and again inside a **fresh clone** built from the lockfile (69 tests passing
+  in the clone). The Definition-of-Done requirement is demonstrated, not assumed.
+- **Leakage guards as unit tests.** Perturbation proofs that train-fitted transforms
+  ignore val/test on both datasets; temporal-ordering assertions; user-disjointness;
+  label-window exclusion; construct-scaler isolation; a drift guard pinning sweep
+  evaluation heads to the Phase-3 specification. Suite: **69 tests passing** at the close
+  of Phase 7, plus **19 new tests** added with the pre-registered analyses of Section V-F
+  (verified passing; ruff clean).
+- **Cross-version portability.** Polars is pinned at 1.42.1 because Dataset B's split is a
+  seed-salted Polars hash of `user_id` and that hash is not stable across versions — an
+  unpinned run would silently drift the splits relative to the recorded bars. scikit-learn
+  is pinned at 1.9.0 for identical heads.
+- **Config-driven provenance.** Every run writes its resolved Hydra config, config hash,
+  git commit, dirty flag, and seed. Ablations are configuration points, not code branches.
+  Sweep record writes are atomic and the sweep is resume-safe.
+- **No silent fallbacks.** Requesting CUDA when it is unavailable raises rather than
+  degrading to CPU. A live GPU matmul, not `is_available()`, gates the sweep — this caught
+  a Kaggle P100 whose driver reported availability while its kernels crashed.
+- **Documented decisions.** [docs/DECISIONS.md](docs/DECISIONS.md) (D-001 … D-038),
+  [docs/NOTEBOOK.md](docs/NOTEBOOK.md), [docs/CHECKLIST.md](docs/CHECKLIST.md).
+
+**Computational cost.** The full study is small, which matters given that a three-feature
+baseline wins: Dataset A's 144-run sweep takes ≈ 20 min (≈ 8 s/run) and Dataset B's
+≈ 7.7 h (≈ 190 s/run) on a single T4; the Dataset B feature cache is one ~200 s streaming
+pass over 110M events; baselines and Phase-6 analysis add well under an hour. Total
+compute for every number in this paper is under nine GPU-hours. RFM costs three column
+aggregations.
+
+## XI. Limitations and Future Work
+
+**Limitations.** Dataset B's price-sensitivity construct is a price-tier proxy. The churn
+label is a short-horizon dormancy proxy on a two-month log. Dataset B training uses a
+200k-user subsample per seed (evaluation always uses the full test split). Section VIII
+states the validity threats in full.
+
+**Residual novelty risk, stated plainly.** The aligned/free latent partition is prior
+art [20], and this paper does not claim it. The measurement framing's nearest neighbour
+is [17], whose full text is paywalled and was not read for this manuscript; if it already
+reports a frozen, held-out, multi-seed persona evaluation, contribution (1) narrows to a
+replication and extension. This is the highest single risk to the positioning and should
+be resolved before submission. The marketing and information-systems venues were not
+searched, and no search was run for prior work on persona stability across seeds, so that
+axis's novelty is unassessed.
+
+**Future work, in priority order.** (1) Run the two pre-registered analyses of Section V-F
+— the named-axis baselines are the strip test this paper most needs, since a
+zero-training `[constructs | PCA(residual)]` representation has perfect named axes by
+construction, and the concept-leakage diagnostic completes the interpretability evidence.
+(2) Rolling-origin replication on Dataset B. (3) A third dataset from a different domain.
+(4) Significance testing on stability deltas, which are currently reported as point
+estimates with seed spread. Not planned: a nonlinear alignment head, which would close the
+lift gap by removing the property the paper measures.
+
+## XII. Conclusion
+
+This work replaces an unmeasured marketing artifact with three falsifiable measurements,
+builds the harness to take them honestly, and reports what the measurements say. They say
+that construct-aligned personas cost predictive lift and cost stability, that the
+incumbents this literature dismisses are hard to beat under honest evaluation, and that
+the interpretability being purchased is real — the named axes carry as much downstream
+signal on behavioural data as an autoencoder's entire embedding. Of four pre-registered
+hypotheses, three were falsified, including one the project's own design expected to hold.
+The methodological findings — MIG's inversion under correlated constructs, and the
+collapse-stability confound that makes unqualified stability comparisons meaningless — are
+offered as cautions to anyone evaluating persona representations next.
 
 ## Acknowledgment
 
-The author thanks REES46 Marketing Platform for the public eCommerce behavior dataset [12] and the maintainers of the Customer Personality Analysis dataset [13]. Dataset B is used under an attribution and non-redistribution posture: raw files and derived caches are never redistributed with this repository, and readers obtain the data from the original Kaggle source.
+The author thanks REES46 Marketing Platform for the public eCommerce behavior dataset [12]
+and the maintainers of the Customer Personality Analysis dataset [13]. Dataset B is used
+under an attribution and non-redistribution posture: raw files and derived caches are never
+redistributed with this repository, and readers obtain the data from the original Kaggle
+source.
 
-**AI disclosure (per IEEE policy on AI-generated content).** Generative AI (Claude, Anthropic) was used substantively in this project: implementation of the codebase under the phased protocol in [CLAUDE.md](CLAUDE.md), drafting of documentation, and drafting and structuring of this manuscript. All research direction, consequential scientific decisions (recorded per-decision in docs/DECISIONS.md), gate sign-offs, and accountability for the content rest with the human author. All reported numbers were produced by executed code on real data and are reproducible from the committed configurations and seeds; none were generated by a language model.
+**AI disclosure (per IEEE policy on AI-generated content).** Generative AI (Claude,
+Anthropic) was used substantively in this project: implementation of the codebase under the
+phased protocol in [CLAUDE.md](CLAUDE.md), drafting of documentation, literature retrieval
+and verification, and drafting and structuring of this manuscript. All research direction,
+consequential scientific decisions (recorded per-decision in docs/DECISIONS.md), gate
+sign-offs, and accountability for the content rest with the human author. All reported
+numbers were produced by executed code on real data and are reproducible from the committed
+configurations and seeds; none were generated by a language model.
 
 ## References
 
@@ -276,15 +903,40 @@ The author thanks REES46 Marketing Platform for the public eCommerce behavior da
 
 [13] A. Patel, "Customer personality analysis." Kaggle. Accessed: Jul. 9, 2026. [Online]. Available: https://www.kaggle.com/datasets/imakash3011/customer-personality-analysis
 
-[14] F. Pedregosa et al., "Scikit-learn: Machine learning in Python," *J. Mach. Learn. Res.*, vol. 12, pp. 2825–2830, 2011.
+[14] F. Pedregosa *et al.*, "Scikit-learn: Machine learning in Python," *J. Mach. Learn. Res.*, vol. 12, pp. 2825–2830, 2011.
 
-[15] A. Paszke et al., "PyTorch: An imperative style, high-performance deep learning library," in *Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)*, Vancouver, BC, Canada, 2019.
+[15] A. Paszke *et al.*, "PyTorch: An imperative style, high-performance deep learning library," in *Proc. Adv. Neural Inf. Process. Syst. (NeurIPS)*, Vancouver, BC, Canada, 2019.
+
+[16] J. Salminen, K. Guan, S. G. Jung, and B. J. Jansen, "A survey of 15 years of data-driven persona development," *Int. J. Human–Computer Interaction*, vol. 37, no. 18, pp. 1685–1708, 2021, doi: 10.1080/10447318.2021.1908670.
+
+[17] P.-F. Hsu, Y.-H. Lu, S.-C. Chen, and P.-Y. Kuo, "Creating and validating predictive personas for target marketing," *Int. J. Human–Computer Studies*, vol. 181, art. 103147, 2023, doi: 10.1016/j.ijhcs.2023.103147.
+
+[18] P. W. Koh, T. Nguyen, Y. S. Tang, S. Mussmann, E. Pierson, B. Kim, and P. Liang, "Concept bottleneck models," in *Proc. 37th Int. Conf. Mach. Learn. (ICML)*, 2020.
+
+[19] Z. Chen, Y. Bei, and C. Rudin, "Concept whitening for interpretable image recognition," *Nature Machine Intelligence*, vol. 2, pp. 772–782, Dec. 2020.
+
+[20] Y. Sawada and K. Nakamura, "Concept bottleneck model with additional unsupervised concepts," *IEEE Access*, 2022. [Online]. Available: https://arxiv.org/abs/2202.01459
+
+[21] A. Mahinpei, J. Clark, I. Lage, F. Doshi-Velez, and W. Pan, "Promises and pitfalls of black-box concept learning models," 2021. [Online]. Available: https://arxiv.org/abs/2106.13314
+
+[22] A. Margeloiu, M. Ashman, U. Bhatt, Y. Chen, M. Jamnik, and A. Weller, "Do concept bottleneck models learn as intended?", 2021. [Online]. Available: https://arxiv.org/abs/2105.04289
+
+[23] R. A. Mancisidor, M. Kampffmeyer, K. Aas, and R. Jenssen, "Learning latent representations of bank customers with the variational autoencoder," 2019. [Online]. Available: https://arxiv.org/abs/1903.06580
+
+[24] F. Locatello, B. Poole, G. Rätsch, B. Schölkopf, O. Bachem, and M. Tschannen, "Weakly-supervised disentanglement without compromises," in *Proc. 37th Int. Conf. Mach. Learn. (ICML)*, 2020.
+
+[25] R. Nai, Z. Wen, J. Li, Y. Li, and Y. Gao, "Revisiting disentanglement in downstream tasks: A study on its necessity for abstract visual reasoning," in *Proc. AAAI Conf. Artificial Intelligence*, 2024.
+
+[26] L. Grinsztajn, E. Oyallon, and G. Varoquaux, "Why do tree-based models still outperform deep learning on tabular data?", in *Proc. Adv. Neural Inf. Process. Syst. (NeurIPS) Datasets and Benchmarks Track*, 2022.
+
+[27] S. Holm, "A simple sequentially rejective multiple test procedure," *Scandinavian J. Statistics*, vol. 6, no. 2, pp. 65–70, 1979.
 
 ---
 
 ## Appendix A: Reproduction Guide
 
-Requires: Windows, an NVIDIA GPU (developed against an RTX 4050 laptop, 6 GB VRAM), Python 3.12.
+Requires: Windows, an NVIDIA GPU (developed against an RTX 4050 laptop, 6 GB VRAM),
+Python 3.12.
 
 ```powershell
 python -m pip install uv          # or: winget install astral-sh.uv
@@ -293,16 +945,22 @@ python -m uv sync                 # creates .venv from uv.lock (exact pinned dep
 .venv\Scripts\python.exe -m pytest                # full test suite (leakage guards included)
 ```
 
-(If `uv run` fails with a trampoline error on Windows, invoke the venv interpreter directly as above; it is the same environment.)
+(If `uv run` fails with a trampoline error on Windows, invoke the venv interpreter
+directly as above; it is the same environment.)
 
-**Data.** Datasets are **not** committed (see Acknowledgment for the license posture). See [data/README.md](data/README.md) for download instructions and the expected layout under `data/raw/`. Then build the caches:
+**Data.** Datasets are **not** committed (see Acknowledgment for the license posture). See
+[data/README.md](data/README.md) for download instructions and the expected layout under
+`data/raw/`. Then build the caches:
 
 ```powershell
 # Dataset A cache is built on demand by prepare(); Dataset B needs one streaming pass (~4 min):
 .venv\Scripts\python.exe -c "from omegaconf import OmegaConf; from cadvae.data.ecommerce import cache_user_table; cache_user_table(OmegaConf.load('configs/data/ecommerce.yaml'))"
 ```
 
-**Pipeline, exact commands per phase.** All runs are config-driven (Hydra); every run directory records the resolved config, its hash, the git commit, dirty flag, and seed. Seeds: `eval.seeds = [0..5]` (D-023). Dataset B always takes the D-020 protocol overrides shown below.
+**Pipeline, exact commands per phase.** All runs are config-driven (Hydra); every run
+directory records the resolved config, its hash, the git commit, dirty flag, and seed.
+Seeds: `eval.seeds = [0..5]` (D-023). Dataset B always takes the D-020 protocol overrides
+shown below.
 
 ```powershell
 # Phase 3 — baselines (fixes the bar; multi-task records)
@@ -312,11 +970,11 @@ python -m uv sync                 # creates .venv from uv.lock (exact pinned dep
 # Phase 4 — single-point sanity run (gate evidence, not a result)
 .venv\Scripts\python.exe -m cadvae.eval.run_cadvae_sanity data=personality
 
-# Phase 5 — the beta x lambda sweep (resumable; ~2 h for A, ~8 h for B on the 4050)
+# Phase 5 — the beta x lambda sweep (resumable; ~20 min for A, ~7.7 h for B on a T4)
 powercfg /change standby-timeout-ac 0     # once, before an overnight run
 .venv\Scripts\python.exe -m cadvae.eval.run_cadvae_sweep data=personality
 .venv\Scripts\python.exe -m cadvae.eval.run_cadvae_sweep data=ecommerce eval.train_subsample=200000 model.max_epochs=40
-# Cloud alternative (Kaggle T4 x2): see cloud/README.md
+# Cloud alternative (Kaggle T4 — the path these results used): see cloud/README.md
 
 # Phase 6 — analysis, trade-off curve, stability, persona cards (no training)
 .venv\Scripts\python.exe -m cadvae.eval.run_phase6 data=personality
@@ -327,7 +985,18 @@ powercfg /change standby-timeout-ac 0     # once, before an overnight run
 .venv\Scripts\python.exe -m cadvae.eval.repro_check data=ecommerce eval.train_subsample=200000 model.max_epochs=40
 ```
 
-**Definition of done.** A fresh clone, following this guide, reproduces all reported numbers (mean ± std over 6 seeds), the trade-off curve, the stability analysis, and every figure, verified by `repro_check` (exit 0). The pipeline is bit-reproducible on a single machine (D-028); use `repro.atol` for cross-machine tolerance.
+**Pre-registered additions (Section V-F), not yet run.** The named-axis baselines are
+selected through the same `eval.methods` mechanism as every other baseline:
+
+```powershell
+.venv\Scripts\python.exe -m cadvae.eval.run_baselines data=personality "eval.methods=[raw,pca,rfm,constructs,construct_pca,ae]"
+```
+
+**Definition of done.** A fresh clone, following this guide, reproduces all reported
+numbers (mean ± std over 6 seeds), the trade-off curves, the stability analysis, and every
+figure, verified by `repro_check` (exit 0). Verified 2026-07-11 on both datasets and in a
+fresh clone. The pipeline is bit-reproducible on a single machine (D-028); use
+`repro.atol` for cross-machine tolerance.
 
 ## Appendix B: Repository Layout
 
@@ -336,14 +1005,37 @@ configs/          Hydra configs: root (eval/sweep/phase6/repro blocks), data/, m
 src/cadvae/
   data/           Polars preprocessing, leakage-safe splits, constructs (Phase 1–2)
   models/         ae.py, dec.py, cadvae.py (Phase 3–4)
-  eval/           protocol, metrics, stats, interpretability, sweep + analysis runners
+  eval/           protocol, representations, metrics, stats, interpretability,
+                  sweep + analysis runners
   viz/            figures.py — trade-off curve, stability bars, persona cards
   utils/          seeding (determinism), device (no silent CPU fallback), run logging
-cloud/            Kaggle/Colab/HF sweep setup (Kaggle T4 x2 path verified)
+cloud/            Kaggle/Colab/HF sweep setup (Kaggle T4 path verified — used for the sweep)
 data/             raw + interim + processed (gitignored; processed = Parquet caches)
+research/         literature ledger, change register, decision log for the manuscript
 results/          per-run evidence (gitignored; numbers recorded in docs/ + README)
 tests/            pytest — leakage guards, protocol smoke, metric ground-truth, phase-6 e2e
 docs/             DECISIONS.md, NOTEBOOK.md, CHECKLIST.md, data cards
 ```
+
+## Appendix C: Result Artifacts
+
+Regenerated by `run_phase6` into `results/phase6/{personality,ecommerce}_analysis/`
+(gitignored; numbers mirrored in [docs/NOTEBOOK.md](docs/NOTEBOOK.md)):
+
+| Artifact | Contents | Paper reference |
+|---|---|---|
+| `analysis.json` | Aggregated sweep, Pareto frontier, sweet-spot selection, paired tests | VI-B |
+| `tradeoff_r2.png` / `tradeoff_mig.png` | Interpretability–performance curves on both x-axes | VI-B, VI-C |
+| `stability.png`, `stability_map.{json,png}` | Cross-seed ARI/NMI at the selected point and over all 24 grid points | VI-D |
+| `frontier3.png` | Three-way frontier: downstream × alignment R² × cross-seed ARI | VI-B, VI-D |
+| `persona_cards.png` | Latent traversals along each named axis, standardized deltas with raw-unit annotations | VI-C |
+| `attribution.json` | Downstream performance by latent block (aligned / free / full) | VI-E |
+| `smp.json` | Stability at Matched Performance | VI-D |
+| `baseline_stability.json` | Cross-seed ARI for incumbent persona pipelines | VI-D |
+| `stability_k_sensitivity.json` | Stability over K ∈ {5, 8, 12} | VI-D |
+| `selection_sensitivity.json` | Sweet-spot robustness to the selection slack | VI-C |
+| `churn_business.json` | Dormancy win in precision@10% and users per 10,000 | VI-F |
+| `ae_minisweep.json` | Baseline tuning-parity check | VI-H |
+| `multitask.md`, `ablations.md` | Per-task and ablation tables | VI-F, VI-G |
 
 For the full research protocol and phased execution rules, see [CLAUDE.md](CLAUDE.md).

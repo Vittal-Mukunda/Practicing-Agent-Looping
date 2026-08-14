@@ -1,0 +1,217 @@
+# Research Ledger — CA-DVAE manuscript review (2026-08-14)
+
+Verification tags: `[V]` = abstract page or full text actually fetched this session ·
+`[S]` = search snippet only (discovery/navigation, may not support a novelty claim).
+
+---
+
+### L-001 [V]
+Cite:    P. W. Koh, T. Nguyen, Y. S. Tang, S. Mussmann, E. Pierson, B. Kim, P. Liang,
+         "Concept Bottleneck Models", ICML 2020.
+URL:     https://arxiv.org/abs/2007.04612
+Fetched: abstract page
+Method:  Two-stage: input → predicted human-specified concepts → label predicted *from
+         the concepts only*. Supports test-time concept intervention.
+Results: "competitive accuracy with standard end-to-end models"; accuracy improves
+         when humans correct concepts at test time.
+SUPPORTING: Establishes the canonical framing of "designated units trained to predict
+         named concepts" — the manuscript's Component 1 is an instance of this family.
+DISCONFIRMING: **This is the manuscript's nearest architectural neighbour and it is not
+         cited.** A reviewer who knows CBMs will read the construct-alignment head as a
+         relabelled concept bottleneck. Novelty must be argued against it explicitly.
+
+### L-002 [V]
+Cite:    Y. Sawada, K. Nakamura, "Concept Bottleneck Model with Additional Unsupervised
+         Concepts", 2022 (IEEE Access; arXiv:2202.01459).
+URL:     https://arxiv.org/abs/2202.01459
+Fetched: abstract page
+Method:  CBM-AUC — bottleneck holds **supervised concepts plus additional unsupervised
+         concepts** trained jointly (unsupervised part via self-explaining networks).
+SUPPORTING: —
+DISCONFIRMING: **This is the closest published match to the CA-DVAE latent partition**
+         (named/aligned block + free/unsupervised block, trained jointly). The
+         *partition itself* is therefore not novel. The manuscript's novelty must rest
+         on the application/measurement framing, not the mechanism — which the
+         manuscript already half-concedes but does not evidence.
+
+### L-003 [V]
+Cite:    Z. Chen, Y. Bei, C. Rudin, "Concept Whitening for Interpretable Image
+         Recognition", *Nature Machine Intelligence*, vol. 2, pp. 772–782, Dec. 2020.
+URL:     https://arxiv.org/abs/2002.01650
+Fetched: abstract page
+Method:  Normalize + decorrelate the latent space so that "the axes of the latent space
+         are aligned with known concepts of interest". Drop-in for batch norm.
+SUPPORTING: —
+DISCONFIRMING: A second independent prior mechanism for "make latent *axes* nameable".
+         Notably it achieves axis alignment *with decorrelation*, which is what the
+         manuscript's β term is trying to buy separately.
+
+### L-004 [V]
+Cite:    A. Mahinpei, J. Clark, I. Lage, F. Doshi-Velez, W. Pan, "Promises and Pitfalls
+         of Black-Box Concept Learning Models", 2021 (arXiv:2106.13314).
+URL:     https://arxiv.org/abs/2106.13314
+Fetched: abstract page
+Results: Concept representations "encode information beyond the pre-defined concepts,
+         and natural mitigation strategies do not fully work, rendering the
+         interpretation of the downstream prediction misleading."
+SUPPORTING: Gives the manuscript a *known, named, citable failure mode* it can test for
+         and thereby strengthen its interpretability claim.
+DISCONFIRMING: **Directly attacks the manuscript's headline interpretability evidence.**
+         Alignment R² = 0.90 on a named axis is exactly the statistic that concept
+         leakage inflates; a high diagonal does not establish that the axis carries
+         *only* that construct. Soft concepts + a free side channel is the documented
+         leakage regime.
+
+### L-005 [V]
+Cite:    A. Margeloiu, M. Ashman, U. Bhatt, Y. Chen, M. Jamnik, A. Weller, "Do Concept
+         Bottleneck Models Learn as Intended?", 2021 (arXiv:2105.04289).
+URL:     https://arxiv.org/abs/2105.04289
+Fetched: listing page + abstract via search of the arXiv record
+Results: Learned concepts "do not correspond to anything semantically meaningful in
+         input space"; CBMs struggle to meet interpretability/predictability/
+         intervenability simultaneously.
+SUPPORTING: Second independent group documenting the same structural limitation as
+         L-004 → this is a **recurring, structural** property, not a footnote.
+DISCONFIRMING: Same attack surface as L-004.
+
+### L-006 [V]
+Cite:    J. Salminen, K. Guan, S. G. Jung, B. J. Jansen, "A Survey of 15 Years of
+         Data-Driven Persona Development", *Int. J. Human–Computer Interaction*,
+         vol. 37, no. 18, pp. 1685–1708, 2021. DOI 10.1080/10447318.2021.1908670
+URL:     https://research.tudelft.nl/en/publications/a-survey-of-15-years-of-data-driven-persona-development/
+Fetched: bibliographic page with verbatim abstract
+Results: Reviews 77 data-driven persona articles 2005–2020; names remaining gaps in
+         "(a) shared resources, (b) **evaluation methods**, (c) standardization,
+         (d) inclusivity, (e) risk of losing in-depth user insights."
+SUPPORTING: **Independent, citable evidence for the manuscript's core premise** — an
+         evaluation gap in persona development, stated by the field's own survey.
+DISCONFIRMING: Also shows the manuscript's stronger phrasing ("evaluated by nothing")
+         is false: an active literature *does* evaluate personas. The premise must be
+         narrowed to the defensible version.
+
+### L-007 [V — bibliographic]
+Cite:    P.-F. Hsu, Y.-H. Lu, S.-C. Chen, P.-Y. Kuo, "Creating and validating predictive
+         personas for target marketing", *Int. J. Human–Computer Studies*, vol. 181,
+         art. 103147, 2023. DOI 10.1016/j.ijhcs.2023.103147
+URL:     https://api.openalex.org/works/doi:10.1016/j.ijhcs.2023.103147 (metadata);
+         publisher page 403s, full text not retrieved.
+Fetched: OpenAlex metadata record (authors/venue/volume/year verified). Abstract NOT
+         retrieved — content characterization below is `[S]` from search snippets and
+         must be checked against the full text before any sharp claim rests on it.
+SUPPORTING: —
+DISCONFIRMING: **The nearest neighbour to the manuscript's central "measurement
+         reformulation" contribution.** Snippets describe a persona method validated by
+         *predictive accuracy* on new customers. The manuscript's property (1) is
+         therefore not an unprecedented reformulation; its defensible delta is the
+         frozen-representation protocol, the leakage audit, multi-seed statistics, and
+         the addition of interpretability + stability as co-equal measured axes.
+
+### L-008 [V]
+Cite:    L. Grinsztajn, E. Oyallon, G. Varoquaux, "Why do tree-based models still
+         outperform deep learning on tabular data?", NeurIPS 2022 Datasets & Benchmarks
+         (arXiv:2207.08815).
+URL:     https://arxiv.org/abs/2207.08815
+Fetched: abstract page
+Results: 45 datasets, tuned comparison; "tree-based models remain state-of-the-art on
+         medium-sized data (~10K samples)". Causes: NN sensitivity to uninformative
+         features, rotation non-invariance, difficulty with irregular functions.
+SUPPORTING: **Explains the manuscript's own headline baseline finding** (PCA > AE at
+         n = 2,240; RFM + GBT beats learned embeddings). Converts a "surprising honest
+         result" into "the predicted result, now demonstrated for representation
+         learning in segmentation". Also supplies the tuned-baseline methodology bar.
+
+### L-009 [V]
+Cite:    R. Nai, Z. Wen, J. Li, Y. Li, Y. Gao, "Revisiting Disentanglement in Downstream
+         Tasks: A Study on Its Necessity for Abstract Visual Reasoning", AAAI 2024
+         (arXiv:2403.00352).
+URL:     https://arxiv.org/abs/2403.00352
+Fetched: abstract page
+Results: Dimension-wise disentanglement is unnecessary downstream; "the informativeness
+         of representations is a better indicator of downstream performance than
+         disentanglement"; prior positive findings explained by the correlation between
+         informativeness and disentanglement.
+SUPPORTING: Lets the manuscript **pre-register a directional hypothesis** for the β
+         sweep (β ↑ ⇒ informativeness ↓ ⇒ lift ↓) instead of exploring blind.
+DISCONFIRMING: Weakens any implicit expectation that the β term will *help* lift.
+
+### L-010 [V]
+Cite:    F. Locatello, B. Poole, G. Rätsch, B. Schölkopf, O. Bachem, M. Tschannen,
+         "Weakly-Supervised Disentanglement Without Compromises", ICML 2020
+         (arXiv:2002.02886).
+URL:     https://arxiv.org/abs/2002.02886 (record confirmed via ICML/PMLR listing)
+Fetched: listing + abstract via search of the arXiv/PMLR record
+Results: Weak supervision (pairs sharing factors) suffices for disentanglement; large
+         empirical study across benchmarks.
+SUPPORTING: The manuscript already cites Locatello et al. 2019 (impossibility) to
+         justify supervision; this is the constructive follow-up and completes that
+         argument — supervision is the standard escape, so using it is conventional,
+         not a differentiator.
+
+### L-011 [V]
+Cite:    R. A. Mancisidor, M. Kampffmeyer, K. Aas, R. Jenssen, "Learning Latent
+         Representations of Bank Customers With The Variational Autoencoder",
+         arXiv:1903.06580, 2019 (journal version: *Expert Systems with Applications*).
+URL:     https://arxiv.org/abs/1903.06580
+Fetched: abstract page
+Method:  VAE whose latent space is **steered** using Weight of Evidence so the induced
+         clustering reflects customer creditworthiness.
+SUPPORTING: —
+DISCONFIRMING: The "steer a customer VAE latent space with a business quantity" idea is
+         prior art in the finance/marketing application area. CLAUDE.md refers to it as
+         "prior single-axis latent steering" but the manuscript never cites it. Must be
+         named for the multi-construct delta to be legible.
+
+---
+
+## Terminology map
+
+CONCEPT: construct-alignment head
+  synonyms: concept bottleneck · concept supervision · attribute supervision ·
+            latent steering · semantic axis alignment · concept whitening
+  formal:   supervised latent subspace / partitioned latent variable model
+            (cf. Kingma M2 semi-supervised VAE: label block + style block)
+  applied:  "named axes", "interpretable factors", "business constructs"
+  adjacent: XAI (CBM stream), neuroscience (constrained-subspace VAE),
+            single-cell genomics (supervised independent subspace PCA)
+
+CONCEPT: persona quality
+  synonyms: persona validation · persona evaluation · segment quality ·
+            predictive persona · segmentation validity
+  adjacent: HCI (data-driven personas), marketing science (segment retention),
+            representation learning (linear probing / frozen-feature transfer)
+
+## Searches run
+- concept bottleneck models interpretable concepts prediction → L-001 (Layer 1)
+- concept bottleneck residual side channel unsupervised hybrid → L-002 (Layer 4)
+- Chen Bei Rudin concept whitening → L-003 (Layer 4)
+- promises and pitfalls black-box concept learning → L-004 (Layer 5, failure-oriented)
+- Margeloiu do CBMs learn as intended → L-005 (Layer 5)
+- data-driven persona generation evaluation Salminen Jung Jansen → L-006 (Layer 1)
+- "Creating and validating predictive personas for target marketing" → L-007 (Layer 3)
+- Grinsztajn tree-based models outperform deep learning tabular → L-008 (Layer 5)
+- disentangled representations useful downstream limited evidence → L-009 (Layer 5)
+- weakly-supervised disentanglement without compromises → L-010 (Layer 2)
+- VAE customer segmentation RFM interpretable latent marketing → L-011 (Layer 4)
+- supervised latent subspace VAE named constructs tradeoff curve → CS-VAE, sisPCA,
+  EXoN [S] (Layer 4; corroborates L-002 — partitioned supervised/unsupervised latent
+  spaces are a recurring, multi-field design, not a new one)
+
+## Disconfirming searches for the manuscript's novelty claims
+- "is the aligned/free latent partition already published?" → **YES** (L-002, plus
+  CS-VAE/sisPCA/EXoN [S]). Kills any mechanism-novelty claim. Manuscript already
+  disclaims architectural novelty; it must now disclaim *mechanism* novelty too.
+- "has persona quality already been reformulated as predictive accuracy?" → **PARTIALLY**
+  (L-007). Does not kill the contribution; narrows it to protocol + multi-axis.
+- "does the field already say persona evaluation is unsolved?" → **YES, citably** (L-006).
+  Strengthens the premise while forcing weaker phrasing.
+- "is there evidence the β term will hurt downstream lift?" → **YES** (L-009). Converts
+  the sweep from exploration into a directional test.
+
+## Residual novelty risk (highest first)
+1. L-007 full text unread (paywalled). If it already reports a frozen, multi-seed,
+   held-out-future evaluation of persona representations, contribution (1) shrinks to
+   a replication + extension. **Check before submission.**
+2. The marketing/IS literature (JM, JMR, Marketing Science, ICIS) was not searched;
+   segment-retention and predictive-segmentation work there may pre-empt the framing.
+3. No search was run for "persona stability across seeds", so the stability axis's
+   novelty is unassessed.
