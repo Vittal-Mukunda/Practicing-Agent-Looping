@@ -412,3 +412,87 @@ Reduced to: (1) the marketing/IS venues were sampled, not systematically swept �
 database search (Scopus/WoS with the pass-2 vocabulary) would be the completeness check;
 (2) no search was run on "persona stability across seeds" as a phrase, though L-012
 establishes the marketing-side prior art for the instrument itself.
+
+---
+
+# Third pass — 2026-08-15 (external review prompted three checks; all three verified)
+
+### L-016 [V — FULL TEXT] — the stability axis has a second, different prior art
+Cite:    B. J. Jansen, S. Jung, S. A. Chowdhury, J. Salminen, "Persona analytics: Analyzing
+         the stability of online segments and content interests over time using non-negative
+         matrix factorization", *Expert Systems with Applications*, vol. 185, art. 115611,
+         2021. Qatar Computing Research Institute, HBKU.
+Fetched: **full text, 15 pp.**, supplied by the project owner.
+Method:  32 monthly rounds of data collection on a major publisher's YouTube channel
+         (demographics + content consumption); **15 data-driven personas generated monthly
+         by non-negative matrix factorization**; change analysed monthly, yearly, lifetime.
+Results: "**an average 40% change in the personas**, and 78% of the personas experience
+         more change than consistency for topic interests." Implication drawn by the
+         authors: organizations publishing frequently should automate collection and
+         re-create personas periodically.
+SUPPORTING: Gives the manuscript a sharp, citable **distinction between two things both
+         called persona stability** — theirs is TEMPORAL (does a persona stay
+         representative as the population evolves), ours is STOCHASTIC REPRODUCIBILITY
+         (same data, same population, different seeds + bootstrap). Stating the difference
+         explicitly makes the stability positioning much harder to attack.
+DISCONFIRMING: The manuscript previously implied its stability axis covered persona
+         stability generally. It does not, and [32] shows the axis this paper does NOT
+         measure is where data-driven personas empirically fail. Now stated in §II-E,
+         §VIII (external validity) and §XII, and promoted to future-work item (2).
+
+### L-017 [V] — bounds the MIG novelty claim
+Cite:    F. Träuble, E. Creager, N. Kilbertus, F. Locatello, A. Dittadi, A. Goyal,
+         B. Schölkopf, S. Bauer, "On Disentangled Representations Learned from Correlated
+         Data", ICML 2021, PMLR 139:10401–10412.
+Fetched: PMLR abstract page.
+Results: **4,260 models** trained on systematically correlated data; "systematically
+         induced correlations in the dataset are being learned and reflected in the latent
+         representations"; addresses the gap between idealized independent-factor settings
+         and realistic dependent ones; proposes weak supervision / post-hoc correction.
+DISCONFIRMING: **The manuscript's MIG claim was too strong.** "MIG is degenerate under
+         correlated constructs / no prior report found" invites the reply that
+         correlated-factor disentanglement is an established research area with a
+         4,260-model study behind it.
+SUPPORTING (what survives, narrowed): their question is whether correlated factors end up
+         *disentangled*; ours is whether MIG survives as a **model-selection criterion**
+         along a supervised alignment-strength sweep — i.e. selection-ordering inversion,
+         not metric misbehaviour in general. Claim rewritten in the abstract, contributions
+         list, §II-C, §VI-C, §VII and §XI; the universal "MIG should not be used…" softened
+         to "should not be used as the *sole* criterion **in this setting**".
+NOT VERIFIED: the supplementary-material claim that global disentanglement metrics show no
+         clear trend as correlation increases was NOT retrieved; no claim rests on it.
+
+### L-018 [V — bibliographic] / [S — content] — interpretable customer embeddings
+Cite:    G. Glukhov, P. Zhdanov, E. Shikov, "Interpretable Embeddings for Geographic
+         Transactional Activity Analysis", *Procedia Computer Science*, vol. 229,
+         pp. 357–366, 2023. DOI 10.1016/j.procs.2023.12.038. ITMO University.
+Fetched: OpenAlex metadata (authors/venue/year/DOI, Diamond OA) + Semantic Scholar record.
+         **ScienceDirect 403s; full text not read.** Content below from consistent
+         secondary descriptions — `[S]`.
+Method (per [S]): motivated by transactional customer embeddings being high-quality but
+         hard to interpret. Three steps: compute per-client geographic-activity feature
+         vectors, cluster them, then set each embedding coordinate to the **distance
+         between the user's activity vector and a cluster centre** — so dimensions carry
+         meaning by construction. Evaluated on a partner-bank dataset.
+DISCONFIRMING: Another interpretable-customer-embedding line the manuscript did not cite;
+         omitting it weakens Related Work.
+SUPPORTING: The mechanism is **interpretability by prototype distance**, which is a
+         different construction from naming axes by regression onto marketing constructs,
+         and it is fixed rather than swept — so it cannot price interpretability. Cited in
+         §II-D on the mechanism only. **No claim is made about what they do or do not
+         evaluate**, since the full text was not read.
+
+## Effect on the manuscript
+| Item | Before | After |
+|---|---|---|
+| MIG finding | "degenerate for model selection under correlated constructs; no prior report" | "MIG-based *selection* inverts the alignment-strength ordering in this construct-supervised setting"; [33] cited as the established neighbouring result |
+| MIG prescription | "should not be used… which is the normal case for business constructs" | "should not be used as the *sole* criterion **in this setting**"; explicit non-claim of general invalidity |
+| Stability | one undifferentiated axis | temporal [32] vs stochastic (this work) separated in §II-E, §VIII, §XI, §XII |
+| Cluster personas | "the principal signal destroyer" | "a major signal destroyer **in these experiments**" |
+| "frontier" | used for the swept grid | grid = "trade-off surface"; "frontier" reserved for the Pareto-optimal subset |
+| Related work | no interpretable-embedding line in the customer domain besides [23] | [34] added |
+
+## Residual novelty risk after pass 3
+Unchanged and stated in §XI: the marketing/IS literature was sampled, not systematically
+swept. A Scopus/Web of Science query using the pass-2 and pass-3 vocabulary remains the
+completeness check, and is not reachable from this environment.

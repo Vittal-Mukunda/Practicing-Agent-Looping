@@ -46,7 +46,7 @@ latent vector is partitioned into a block trained by a linear auxiliary head to 
 named constructs (recency-frequency-monetary value, price sensitivity, category affinity)
 and a free block carrying a β-weighted Kullback-Leibler term. Neither the architecture nor
 the aligned/free partition is claimed as novel; the contribution is the measurement
-reformulation, a leakage-audited evaluation harness, and the resulting frontier. Across two
+reformulation, a leakage-audited evaluation harness, and the resulting trade-off surface. Across two
 public datasets (2,240 customers; 2.55 million users aggregated from 110 million events),
 288 sweep runs and six seeds per point, the findings are largely negative and specific.
 Non-neural incumbents set the bars: PCA reaches test PR-AUC 0.5677 ± 0.0729 on campaign
@@ -58,9 +58,11 @@ alignment R² up to 0.968 but sits significantly below both bars (0.5130 ± 0.05
 against the *neural* incumbent the aligned model matches stability at matched performance
 and wins dormancy prediction in both test families; on the behavioural dataset the twelve
 named axes alone carry as much downstream signal as the autoencoder's full unnamed embedding;
-and the Mutual Information Gap is shown to be degenerate for model selection under correlated
-constructs, inverting with alignment strength. Interpretability in this setting is a purchase,
-not a free lunch, and this work prices it.**
+and Mutual-Information-Gap-based selection is shown to reverse the preferred
+alignment-strength ordering on the behavioural dataset, because increasing alignment spreads
+construct information across correlated axes and shrinks the top-1/top-2 gap the metric
+rewards. Interpretability in this setting is a purchase, not a free lunch, and this work
+prices it.**
 
 **_Index Terms_ — Buyer personas, concept bottleneck models, customer segmentation,
 disentangled representation learning, evaluation methodology, interpretability,
@@ -123,8 +125,9 @@ The instrument for testing whether all three can be held simultaneously is a
 Construct-Aligned Disentangled VAE (CA-DVAE): a dense VAE over tabular customer features
 whose latent vector is partitioned into an aligned block, trained by a linear auxiliary
 head to predict the named constructs, and a free block carrying a β-weighted KL penalty.
-Sweeping the alignment weight λ and the disentanglement weight β traces a frontier over
-the three properties.
+Sweeping the alignment weight λ and the disentanglement weight β traces an empirical
+trade-off surface over the three properties; the Pareto-optimal subset of that surface is
+what we call the frontier.
 
 **What we found.** The result is largely negative, and the negative result is the
 contribution. Under leakage-safe evaluation the strongest baselines are the two
@@ -138,8 +141,8 @@ specifically, the aligned model matches stability at matched performance and win
 dormancy prediction in both test families; the twelve named axes alone carry as much
 downstream signal on the behavioural dataset as the autoencoder's full unnamed embedding,
 which counts against the "the names are decoration on a black box" reading without
-settling construct purity; and MIG is degenerate as a selection criterion under
-correlated constructs.
+settling construct purity; and MIG-based selection inverts the preferred
+alignment-strength ordering when the named constructs are correlated.
 
 The contributions of this work are as follows:
 
@@ -152,7 +155,7 @@ The contributions of this work are as follows:
   user-disjoint splits, train-only construct fitting, six seeds per number, paired
   significance tests from two families with familywise correction, and validation-based
   hyperparameter selection — enforced by unit tests rather than by convention.
-- An empirical interpretability–performance–stability frontier for construct-aligned
+- An empirical interpretability–performance–stability trade-off surface for construct-aligned
   persona representations, with the cost of interpretability quantified on both axes and
   the operating point selected on validation data only.
 - Four findings that hold regardless of how the proposed model fares: learned neural
@@ -266,6 +269,13 @@ In the customer domain specifically, Mancisidor *et al.* [23] steer a VAE's late
 with Weight of Evidence so the induced clustering reflects creditworthiness — prior art
 for "steer a customer VAE with a business quantity". The delta here is multiple named
 constructs held simultaneously, with the alignment strength swept rather than fixed.
+Glukhov *et al.* [34] pursue interpretable customer embeddings by construction in a
+transactional-banking setting, building each dimension as the distance between a user's
+geographic-activity vector and a cluster centre, so that dimensions carry meaning without a
+post-hoc explanation step. That is interpretability by *prototype distance*; the mechanism
+studied here names axes by regression onto marketing constructs, and the question asked is
+what that naming costs — a question that requires sweeping the alignment strength rather
+than fixing the construction.
 
 ### C. Disentangled Representation Learning
 
@@ -274,8 +284,14 @@ decomposition of [4] penalize latent dependence directly. Kumar *et al.* [5] int
 SAP and Chen *et al.* [4] MIG, both adopted here. Locatello *et al.* [7] showed
 unsupervised disentanglement is impossible without inductive bias or supervision, and
 their follow-up [24] showed weak supervision suffices — so using explicit supervision, as
-here, is the field's standard escape rather than a differentiator. Importantly for this
-paper's hypothesis, Nai *et al.* [25] find that dimension-wise disentanglement is
+here, is the field's standard escape rather than a differentiator. Träuble *et al.* [33]
+address the case most relevant to business constructs, which are rarely independent: across
+4,260 models trained on systematically correlated data, they show the induced correlations
+are learned and reflected in the latent representations. Their question is whether
+correlated factors end up disentangled; the narrower question asked in Section VI-C is
+whether MIG survives as a *model-selection criterion* when alignment strength is swept over
+correlated constructs. Importantly for this paper's hypothesis, Nai *et al.* [25] find that
+dimension-wise disentanglement is
 unnecessary for downstream performance and that *informativeness* is the better predictor,
 with prior positive findings explained by the correlation between the two. We use this to
 pre-state a directional hypothesis for the β sweep (Section V-E) rather than exploring
@@ -311,10 +327,27 @@ representation can be unstable for reasons a fixed clustering algorithm cannot b
 and NMI [10] are the underlying partition-agreement measures, and von Luxburg [11] frames
 bootstrap stability as a model-selection criterion in the clustering literature.
 
+**Two different things are called persona stability, and this paper measures only one of
+them.** Jansen *et al.* [32] study stability *longitudinally*: they run 32 monthly rounds
+of data collection on a major publisher's YouTube channel, generate 15 data-driven personas
+each month by non-negative matrix factorization, and measure how the persona set changes
+over time. They find an average **40% change in the personas**, with 78% of personas showing
+more change than consistency in topic interests. Their notion is temporal — whether a
+persona remains representative as the underlying population evolves.
+
+The stability measured here is *stochastic reproducibility*: the same data and the same
+population, but different training seeds, plus bootstrap resampling as a separate source of
+variation. The two are independent, and the distinction is not pedantic — a representation
+can be perfectly reproducible on a fixed population while becoming obsolete within months
+as that population changes, and [32] gives an empirical reason to expect exactly that in an
+online audience. Nothing in this paper speaks to temporal stability; Dataset B spans two
+months and is treated as a single population. This is stated as a limitation in Section VIII
+and as the most natural follow-up in Section XI.
+
 Section VI-D reports a confound that this framing makes easy to miss and that bears
 directly on [28]'s taxonomy: a degenerate, near-collapsed representation is *trivially*
-reproducible, so high stability can indicate an absence of structure rather than the
-presence of natural segments. Stability alone therefore cannot select a model, which is
+reproducible, so high stochastic stability can indicate an absence of structure rather than
+the presence of natural segments. Stability alone therefore cannot select a model, which is
 why Section V-D defines stability at matched performance.
 
 ## III. Proposed Method: CA-DVAE
@@ -627,7 +660,7 @@ n = 6 floor and would not survive familywise correction on their own (Section V-
 the t-test and the effect sizes carry the claim, and the direction is consistent across
 every seed.
 
-The frontier is smooth and legible rather than a cliff. On Dataset A a weak-alignment
+The trade-off surface is smooth and legible rather than a cliff. On Dataset A a weak-alignment
 point (β = 0.5, λ = 0.25) reaches 0.5647 — essentially at the bar — but with RFM-axis
 R² of only 0.35: the lift is recoverable precisely by giving up the naming. On Dataset B
 the best point anywhere in the grid is 0.1827 ± 0.0018 at (β = 0.1, λ = 0), i.e. with the
@@ -648,13 +681,22 @@ names: Dataset A's price-sensitivity axis moves +deals / +kidhome / +recency aga
 −income / −premium spend, which is deal-reliance semantics; every Dataset B affinity axis
 moves its own category share as the dominant feature.
 
-**A metric finding, reported rather than hidden.** MIG is **degenerate as a selection
-criterion in this setting**. On Dataset B, MIG is *highest* at λ = 0 (0.26–0.35) and
-*drops* with alignment (0.07–0.10 at λ = 4). The cause is structural: aligning 12 latent
-dimensions to 17 correlated construct targets necessarily shares construct information
-across latents, and MIG's top-1-minus-top-2 gap penalizes exactly that. Selecting on MIG
-chose a pure β-VAE with no named axes at all as Dataset B's "sweet spot", producing an
-ablation table in which the proposed model and its own ablation were identical rows.
+**A metric finding, reported rather than hidden.** **MIG-based selection inverts the
+preferred alignment-strength ordering in this construct-supervised setting.** On Dataset B,
+MIG is *highest* at λ = 0 (0.26–0.35) and *drops* with alignment (0.07–0.10 at λ = 4), so
+ranking models by MIG ranks them in the opposite direction to alignment quality. The cause
+is structural: aligning 12 latent dimensions to 17 correlated construct targets necessarily
+shares construct information across latents, and MIG's top-1-minus-top-2 gap penalizes
+exactly that. Selecting on MIG chose a pure β-VAE with no named axes at all as Dataset B's
+"sweet spot", producing an ablation table in which the proposed model and its own ablation
+were identical rows.
+
+This is a narrower claim than "disentanglement metrics misbehave under correlated factors",
+which is already established: Träuble *et al.* [33] train 4,260 models on systematically
+correlated data and show the induced correlations are learned and reflected in the latent
+representations. Their question is whether correlated factors end up disentangled; ours is
+whether MIG remains a valid **model-selection criterion** along a supervised
+alignment-strength sweep. The failure reported here is that specific one.
 Selection was moved to mean alignment R², and a sensitivity analysis confirms the failure
 is not a slack artifact: MIG-selection picks the degenerate λ = 0 point at every slack
 tested, while R²-selection is slack-invariant on A and moves gracefully along the frontier
@@ -779,8 +821,8 @@ superseded in the neural-segmentation literature — PCA on tabular survey data 
 raw RFM features on behavioural data — are the strongest baselines, and the fashionable
 pipelines (DEC, AE + K-means one-hots) are the weakest. Any evaluation reporting only
 silhouette scores on a single seed would never observe this. Hard cluster assignment is
-the principal signal destroyer: every K = 8 one-hot representation loses 40–65% of its
-parent embedding's PR-AUC.
+a major signal destroyer in these experiments: every K = 8 one-hot representation loses
+40–65% of its parent embedding's PR-AUC.
 
 **Interpretability has a price, and this is what it is.** Named axes at R² ≈ 0.97 cost
 0.055 PR-AUC against PCA on Dataset A and 0.016 against RFM on Dataset B, plus roughly
@@ -798,11 +840,13 @@ neural persona pipeline it replaces. If the goal is maximum accuracy irrespectiv
 interpretation, use the raw feature vector with a gradient-boosted head; the ceiling is
 above every representation tested.
 
-**A methodological caution for this subfield.** MIG should not be used to select models
-when ground-truth factors are continuous and correlated, which is the normal case for
-business constructs. It inverts with alignment strength for a structural reason
-(Section VI-C), and selecting on it here would have produced a paper whose proposed model
-was silently identical to its own ablation. Similarly, stability must never be reported
+**A methodological caution for this subfield.** In this setting, MIG should not be used as
+the *sole* model-selection criterion when continuous business constructs are correlated. It
+inverted with alignment strength for a structural reason (Section VI-C), and selecting on it
+here would have produced a paper whose proposed model was silently identical to its own
+ablation. We do not claim MIG is invalid in general — only that a single sweep over
+alignment strength was enough to make it select against the property it was chosen to
+measure, which is reason enough to pair it with a direct alignment score. Similarly, stability must never be reported
 apart from performance: the most stable configurations in both grids are the most
 collapsed ones.
 
@@ -826,9 +870,14 @@ and per-seed consistency. Extending to more seeds *after* observing these p-valu
 deliberately rejected as optional stopping, which would be a worse attack surface than the
 one it closes.
 
-**External validity.** One feature window and one label window on Dataset B — a
-rolling-origin replication across two or three origins would close the "the result is the
-window" objection and is the single most valuable unrun experiment. Two datasets, one
+**External validity.** The stability reported here is stochastic reproducibility on a fixed
+population, and says nothing about whether a persona representation remains valid as the
+population evolves. That is a real and measured risk rather than a hypothetical one: [32]
+observe an average 40% change in data-driven personas across 32 monthly rounds on an online
+audience. Dataset B spans two months and is treated as one population, so temporal stability
+is outside this study's reach entirely. One feature window and one label window on
+Dataset B — a rolling-origin replication across two or three origins would close the "the
+result is the window" objection and is the single most valuable unrun experiment. Two datasets, one
 domain (retail e-commerce plus a survey-style customer table), one language, one time
 period. The tabular-scale regime of Dataset A is exactly where [26] predicts trees and
 linear methods to win, so the A results should not be read as a general claim about
@@ -879,7 +928,11 @@ would inherit.
 - **Cross-version portability.** Polars is pinned at 1.42.1 because Dataset B's split is a
   seed-salted Polars hash of `user_id` and that hash is not stable across versions — an
   unpinned run would silently drift the splits relative to the recorded bars. scikit-learn
-  is pinned at 1.9.0 for identical heads.
+  [14] is pinned at 1.9.0 for identical downstream heads, and PyTorch [15] supplies the
+  encoder/decoder and the DEC baseline; both versions are recorded in every run manifest,
+  because the sweep ran on a different stack (torch 2.10.0+cu128, Kaggle T4) from the
+  baselines (torch 2.6.0+cu124, RTX 4050) and Section VI-E measures what that difference
+  costs.
 - **Config-driven provenance.** Every run writes its resolved Hydra config, config hash,
   git commit, dirty flag, and seed. Ablations are configuration points, not code branches.
   Sweep record writes are atomic and the sweep is resume-safe.
@@ -916,9 +969,11 @@ folded into Section II, and they cost this paper two claims:
 - Naming the interpretability/performance tension in segmentation is prior art [30].
 
 What survives, on the evidence searched, is the three-axis reformulation with a measured
-frontier, the leakage-audited multi-seed protocol applied to persona representations, and
-two methodological findings for which no prior report was found: MIG's inversion under
-correlated constructs, and the collapse–stability confound.
+trade-off surface, the leakage-audited multi-seed protocol applied to persona representations, and
+two methodological findings for which no prior report was found in this specific form:
+MIG-based *selection* inverting the alignment-strength ordering in a construct-supervised
+sweep — narrower than, and distinct from, the established result that disentanglement is
+degraded by correlated factors [33] — and the collapse–stability confound.
 
 **The largest of these risks is now closed.** [17] was obtained and read in full. It does
 use a held-out partition, so the concession in Section II-A is made on the strength of the
@@ -948,10 +1003,14 @@ does not pre-empt the mechanism.
 — the named-axis baselines are the strip test this paper most needs, since a
 zero-training `[constructs | PCA(residual)]` representation has perfect named axes by
 construction, and the concept-leakage diagnostic completes the interpretability evidence.
-(2) Rolling-origin replication on Dataset B. (3) A third dataset from a different domain.
-(4) Significance testing on stability deltas, which are currently reported as point
-estimates with seed spread. Not planned: a nonlinear alignment head, which would close the
-lift gap by removing the property the paper measures.
+(2) **Joint stochastic and temporal stability** — measuring both properties on the same
+representations, since [32] shows the temporal property is where data-driven personas
+actually fail (40% average change over 32 monthly rounds) and this study measures only the
+stochastic one. (3) Rolling-origin replication on Dataset B, which is the cheapest step
+toward (2). (4) A third dataset from a different domain. (5) Significance testing on
+stability deltas, which are currently reported as point estimates with seed spread. Not
+planned: a nonlinear alignment head, which would close the lift gap by removing the property
+the paper measures.
 
 ## XII. Conclusion
 
@@ -962,9 +1021,17 @@ incumbents this literature dismisses are hard to beat under honest evaluation, a
 the interpretability being purchased is real — the named axes carry as much downstream
 signal on behavioural data as an autoencoder's entire embedding. Of four pre-registered
 hypotheses, three were falsified, including one the project's own design expected to hold.
-The methodological findings — MIG's inversion under correlated constructs, and the
-collapse-stability confound that makes unqualified stability comparisons meaningless — are
-offered as cautions to anyone evaluating persona representations next.
+The methodological findings — MIG-based selection inverting the alignment-strength ordering
+under correlated constructs, and the collapse-stability confound that makes unqualified
+stability comparisons meaningless — are offered as cautions to anyone evaluating persona
+representations next.
+
+One boundary should be carried forward with the result. The stability measured here is
+stochastic reproducibility on a fixed population, a different property from the longitudinal
+persona stability studied in prior work [32], where an average 40% change in personas was
+observed across 32 monthly rounds. Whether these representations remain valid as customer
+populations evolve is unanswered, and measuring both properties on the same representations
+is the natural next study.
 
 ## Acknowledgment
 
@@ -1060,6 +1127,12 @@ submitting elsewhere — an earlier draft of this manuscript was framed to IEEE 
 [30] I. Boussebough, K. Zarour, C. Aouabdia, and D. S. Boutina, "Multi-view customer segmentation in the digital economy: Balancing performance and interpretability for actionable insights," *J. Telecommunications and the Digital Economy*, vol. 14, no. 2, pp. 58–83, 2026, doi: 10.18080/jtde.v14n2.1462.
 
 [31] I. Grigorova, A. S. Efremov, and A. Karamfilov, "An automated machine learning framework for interpretable customer segmentation in financial services," *Int. J. Financial Studies*, vol. 13, no. 4, art. 243, 2025, doi: 10.3390/ijfs13040243.
+
+[32] B. J. Jansen, S. Jung, S. A. Chowdhury, and J. Salminen, "Persona analytics: Analyzing the stability of online segments and content interests over time using non-negative matrix factorization," *Expert Systems with Applications*, vol. 185, art. 115611, 2021, doi: 10.1016/j.eswa.2021.115611.
+
+[33] F. Träuble, E. Creager, N. Kilbertus, F. Locatello, A. Dittadi, A. Goyal, B. Schölkopf, and S. Bauer, "On disentangled representations learned from correlated data," in *Proc. 38th Int. Conf. Mach. Learn. (ICML)*, PMLR 139, 2021, pp. 10401–10412.
+
+[34] G. Glukhov, P. Zhdanov, and E. Shikov, "Interpretable embeddings for geographic transactional activity analysis," *Procedia Computer Science*, vol. 229, pp. 357–366, 2023, doi: 10.1016/j.procs.2023.12.038.
 
 ---
 

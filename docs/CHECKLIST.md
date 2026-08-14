@@ -170,3 +170,13 @@ The torch- and data-dependent suites remain unrun since the edits — **run
 
 **Remaining before submission:** 8.20 (run both analyses on real data — owner, needs
 datasets + GPU) and 8.21 (MIP conversion, recommended after 8.20).
+
+### Phase 8 addendum 3 (2026-08-15): third literature pass
+
+| # | Task | Status |
+|---|------|--------|
+| 8.25 | Verify and cite Jansen et al. 2021; separate temporal from stochastic stability | **Completed** — D-046; full text read, distinction in §II-E/§VIII/§XII/§XI |
+| 8.26 | Verify Träuble et al. 2021; narrow the MIG claim to selection-ordering inversion | **Completed** — D-045; changed in 6 places |
+| 8.27 | Soften "principal signal destroyer" and the "frontier" terminology | **Completed** — D-045 |
+| 8.28 | Verify and cite Glukhov et al. 2023 | **Completed with a bound** — D-047; bibliographic [V], content [S], full text unread, no evaluation claims made |
+| 8.29 | Systematic Scopus/WoS sweep of marketing + IS venues | **Open (owner)** — not reachable from this environment; the remaining completeness check |

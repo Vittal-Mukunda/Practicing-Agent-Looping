@@ -735,3 +735,54 @@ numbered at write-up time.*
 - Net effect on positioning: contribution (1) narrows as expected, but the surviving
   claim is now defensible from the source text instead of resting on inference, and the
   paper gains a legitimate "we take up the directions this work proposed" framing.
+
+**D-045 (2026-08-15) — two claims narrowed after a third literature pass.**
+- **MIG finding was overclaimed.** The manuscript said MIG is "degenerate for model
+  selection under correlated constructs" with "no prior report found". Traeuble et al.,
+  ICML 2021 (PMLR 139:10401-10412) train **4,260 models** on systematically correlated
+  data and show the induced correlations are learned and reflected in the latents.
+  Correlated-factor disentanglement is an established area; claiming novelty for
+  "correlated factors break the metric" invites an easy rejection.
+  **Narrowed to what the experiment actually shows:** MIG-based *selection* inverts the
+  preferred alignment-strength ordering in a construct-supervised sweep — a
+  model-selection failure, not a general statement about the metric. The prescription
+  "MIG should not be used… which is the normal case for business constructs" became
+  "should not be used as the SOLE criterion IN THIS SETTING", with an explicit non-claim
+  of general invalidity. Changed in the abstract, contributions list, II-C, VI-C, VII, XI.
+  NOT relied upon: their supplementary claim about global metrics showing no clear trend
+  under increasing correlation (not retrieved).
+- **"Hard cluster assignment is the principal signal destroyer"** -> "a major signal
+  destroyer **in these experiments**". The data show a large observed loss under K-means
+  one-hots; they do not establish that hard assignment is universally the dominant cause.
+- **"Frontier" terminology.** The swept 6x4 grid is now called an empirical trade-off
+  surface; "frontier" is reserved for the Pareto-optimal subset (which `analysis.json`
+  actually computes). Prevents the reading that a formal Pareto frontier was characterized
+  when a finite grid was sampled.
+
+**D-046 (2026-08-15) — temporal vs stochastic stability separated (CONSEQUENTIAL).**
+- **Finding:** Jansen, Jung, Chowdhury & Salminen, *ESWA* 185:115611 (2021) study persona
+  stability **longitudinally** — 32 monthly rounds on a publisher's YouTube channel, 15
+  NMF personas per month — and report an **average 40% change in the personas**, with 78%
+  showing more change than consistency in topic interests. Full text read (owner-supplied).
+- **Why this is consequential, not a citation add:** the manuscript's stability axis is
+  *stochastic reproducibility* (same data, same population, different seeds + bootstrap).
+  It was written as though it covered persona stability generally. It does not, and [32]
+  shows the axis this project does NOT measure is where data-driven personas empirically
+  fail. A representation can be perfectly reproducible on a fixed population and obsolete
+  within months.
+- **Fix:** the distinction is now stated in II-E, carried into VIII (external validity)
+  and XII (conclusion), and promoted to future-work item (2) — measuring both properties
+  on the same representations, with rolling-origin replication as the cheapest first step.
+  Dataset B spans two months and is treated as one population, so temporal stability is
+  outside this study's reach entirely; that is now said plainly rather than left implicit.
+
+**D-047 (2026-08-15) — Glukhov et al. added to Related Work, content claim bounded.**
+- *Procedia Computer Science* 229:357-366 (2023), DOI 10.1016/j.procs.2023.12.038.
+  Bibliographic details verified via OpenAlex + Semantic Scholar; **ScienceDirect 403s and
+  the full text was NOT read.** Per the project's citation rule, the manuscript describes
+  only the mechanism as reported in secondary sources — embedding coordinates set to the
+  distance between a user's geographic-activity vector and a cluster centre, i.e.
+  interpretability by *prototype distance* — and makes **no claim about what they do or do
+  not evaluate**. The distinction drawn is that their construction is fixed, so it cannot
+  price interpretability; this work sweeps the alignment strength, which is what makes the
+  cost measurable.
