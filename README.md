@@ -570,6 +570,16 @@ pre-registered protocol, never as results:
    `results/phase5/` can be restored in one command (Appendix A). The only remaining
    prerequisite is the processed data caches.
 
+**Cost of closing these.** The two analyses stage unevenly, and the cheaper stage carries
+most of the value. Dataset A needs a single 220 KB CC0-licensed file
+(`marketing_campaign.csv`); with it, both the strip test and the leakage diagnostic run in
+minutes on the existing artifacts, against the dataset where the alignment mechanism is
+strongest (axis R² 0.968) and where the bar is PCA. Dataset B additionally needs ~14.7 GB
+of raw event logs and one ~200 s streaming pass, and is where the strip test bites hardest,
+since its 17 construct targets subsume the three RFM features that already beat every
+learned representation there. Neither analysis requires retraining, a GPU, or re-running
+the sweep.
+
 ## VI. Results
 
 All numbers are from committed, config-hashed runs with 6 seeds under the audited

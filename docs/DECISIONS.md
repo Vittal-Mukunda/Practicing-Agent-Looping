@@ -822,3 +822,27 @@ cheaper than the manuscript implied.**
   the largest fraction of any representation tested". The 40-65% measurement is retained
   verbatim in both places — the softening is to the headline generalization, not the
   evidence.
+
+**D-050 (2026-08-15) — the original working copy is not on this machine (verified).**
+- Searched the user profile for a second `cadvae` tree, the raw dataset files
+  (`marketing_campaign.csv`, `2019-Oct.csv`, `2019-Nov.csv`) and any project parquet
+  caches. Result: the ONLY `cadvae` tree is this fresh clone; no raw data and no
+  processed caches exist anywhere on the machine (the parquet files found belong to
+  unrelated projects). Phases 0-7 were executed against data that is no longer present.
+- **Consequence:** the two pending analyses cannot be run here, and this is now a verified
+  fact rather than an assumption about the environment. Recording it so no future session
+  re-searches.
+- **Staged cost of closing them, which is lower than the manuscript implied:**
+  * Dataset A needs ONE file — `marketing_campaign.csv`, ~220 KB, **CC0-1.0** — plus the
+    already-recoverable Phase-5 artifacts (D-048). Both the strip test and the leakage
+    diagnostic then run in minutes, on the dataset where the alignment mechanism is
+    strongest (axis R2 0.968) and the bar is PCA.
+  * Dataset B additionally needs ~14.7 GB of raw logs and one ~200 s streaming pass. It is
+    where the strip test bites hardest: its 17 construct targets subsume the three RFM
+    features that already beat every learned representation there, so `construct_pca`
+    starts from at or above the bar.
+  * Neither needs retraining, a GPU, or a re-sweep.
+- Now stated in V-F so the remaining experimental debt is costed in the manuscript itself.
+- **Not worked around:** sourcing the datasets from a non-Kaggle mirror would produce
+  numbers not comparable to the pre-registered bars, and Kaggle download requires the
+  owner's API token, which is theirs to use and not to be handled here.
