@@ -31,6 +31,7 @@ import hydra
 import numpy as np
 from omegaconf import DictConfig
 
+from cadvae.eval.interpretability import leakage_diagnostic
 from cadvae.eval.metrics import clustering_metrics
 from cadvae.eval.run_baselines import _prepare
 from cadvae.eval.run_cadvae_sweep import _run_tag
@@ -86,6 +87,63 @@ def _axis_labels_from_record(rec: dict) -> dict[int, str]:
         if d not in labels or r2 > labels[d][0]:
             labels[d] = (r2, f"{name} (R2={r2:.2f})")
     return {d: s for d, (_, s) in labels.items()}
+
+
+def _leakage_for_config(cfg: DictConfig, models_dir: Path, beta: float, lam: float,
+                        warnings: list[str]) -> dict | None:
+    """Concept-leakage diagnostic at one grid point, averaged over seeds (D-037).
+
+    Recomputed here rather than read from the sweep records: the 288 recorded runs
+    predate the diagnostic, and re-running the sweep to obtain it would cost ~8 h on
+    Dataset B for a quantity that needs only the saved state_dicts and the test split.
+
+    Why the paper needs this and ``axis_alignment`` is not enough: alignment R2 is the
+    DIAGONAL of the construct-by-axis matrix, and concept leakage is exactly what
+    inflates a diagonal (Mahinpei et al. 2021; Margeloiu et al. 2021). Reports the
+    off-diagonal (purity) and how well the FREE block alone recovers each construct.
+
+    Returns per-construct means across seeds plus the summary scalars, or None if the
+    point has no aligned dims (lambda = 0) or its models are missing.
+    """
+    seeds = [int(s) for s in cfg.eval.seeds]
+    missing = [f"{_run_tag(s, beta, lam)}.pt" for s in seeds
+               if not (models_dir / f"{_run_tag(s, beta, lam)}.pt").exists()]
+    if missing:
+        warnings.append(f"leakage: config (beta={beta:g}, lambda={lam:g}) skipped — "
+                        f"missing models: {missing}")
+        return None
+
+    per_seed: list[dict] = []
+    for seed in seeds:
+        model = rebuild_cadvae(load_model_state(models_dir / f"{_run_tag(seed, beta, lam)}.pt"))
+        aligned = int(getattr(model, "aligned_dims", 0))
+        if aligned == 0:                       # beta-VAE ablation: no named axes to score
+            warnings.append(f"leakage: (beta={beta:g}, lambda={lam:g}) has no aligned "
+                            f"dims — diagnostic undefined")
+            return None
+        ps, ks = _prepare(cfg, seed)
+        Z = encode(model, ps.X_test).astype(np.float64)
+        per_seed.append(leakage_diagnostic(Z, ks.C_test, list(ks.names), aligned))
+
+    def _mean(vals: list[float]) -> float:
+        finite = [v for v in vals if np.isfinite(v)]
+        return float(np.mean(finite)) if finite else float("nan")
+
+    names = list(per_seed[0]["per_construct"])
+    return {
+        "beta": beta, "lambda_align": lam, "n_seeds": len(per_seed),
+        "aligned_dims": per_seed[0]["aligned_dims"],
+        "free_dims": per_seed[0]["free_dims"],
+        "axis_purity_mean": _mean([r["axis_purity_mean"] for r in per_seed]),
+        "free_block_r2_mean": _mean([r["free_block_r2_mean"] for r in per_seed]),
+        "aligned_block_r2_mean": _mean([r["aligned_block_r2_mean"] for r in per_seed]),
+        "leakage_ratio": _mean([r["leakage_ratio"] for r in per_seed]),
+        "per_construct": {
+            n: {key: _mean([r["per_construct"][n][key] for r in per_seed])
+                for key in ("on_target_r2", "off_target_r2", "purity",
+                            "aligned_block_r2", "free_block_r2")}
+            for n in names},
+    }
 
 
 def _stability_for_config(cfg: DictConfig, models_dir: Path, beta: float, lam: float,
@@ -275,10 +333,16 @@ def analyze(cfg: DictConfig) -> dict:
     else:
         warnings.append(f"persona cards skipped: {card_model.name} or its record missing")
 
+    # concept-leakage diagnostic at the selected point (D-037) — completes the
+    # interpretability evidence, which axis_alignment alone cannot (it is the diagonal)
+    leakage = _leakage_for_config(cfg, models_dir, sb, sl, warnings)
+    if leakage is not None:
+        (logger.run_dir / "leakage.json").write_text(json.dumps(leakage, indent=1))
+
     analysis = {"dataset": name, "head": head, "primary_metric": pm,
                 "bar": bar, "ceiling": ceiling,
                 "sweet_spot": sweet_sel, "significance_vs_bar": significance,
-                "ablations": abl_rows, "stability": stability,
+                "ablations": abl_rows, "stability": stability, "leakage": leakage,
                 "grid_aggregate": agg, "files": files, "warnings": warnings}
     (logger.run_dir / "analysis.json").write_text(json.dumps(analysis, indent=1))
     print(f"PHASE 6 ANALYSIS COMPLETE -> {out_dir}", flush=True)

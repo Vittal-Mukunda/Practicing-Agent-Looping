@@ -144,3 +144,18 @@ numpy/scipy/scikit-learn environment against `src/`, together with the 6 pre-exi
 interpretability tests as a regression check on the `interpretability_summary` change.
 The torch- and data-dependent suites remain unrun since the edits — **run
 `pytest` before the next commit.**
+
+### Phase 8 addendum (2026-08-14, second review pass)
+
+| # | Task | Status |
+|---|------|--------|
+| 8.12 | Wire `leakage_diagnostic` into sweep + Phase 6 (D-037 was implemented but never called) | **Completed** — D-041; Phase-6 path recomputes from saved state_dicts, so no sweep re-run needed |
+| 8.13 | Execute the full test suite (previously impossible: no venv/torch) | **Completed** — D-042; 82 passed, 5 skipped, ruff + mypy clean (28 files) |
+| 8.14 | Fix the regression 8.13 exposed (hardcoded METHODS in test_eval_smoke) | **Completed** — now derived from `ALL_METHODS` |
+| 8.15 | Integration-check the new baselines through the real `evaluate_baselines` path | **Completed** — runs, deterministic, leakage guard holds, full ALL_METHODS unaffected |
+| 8.16 | Resolve Hsu et al. retrieval | **Closed as unobtainable** — Unpaywall: `is_oa=false`, no OA locations. Needs institutional access (owner) |
+| 8.17 | Resolve the financial-services overlap concern | **Closed — not an overlap.** Retrieved; their "alignment" is Hungarian cluster↔segment matching, not axis↔construct. Cited as [31] |
+| 8.18 | Retarget the AI disclosure from IEEE to Emerald | **Completed** — D-043; confirm wording against live policy at submission |
+| 8.19 | Soften overclaims flagged in external review | **Completed** — 3 sites; H2 restated as supported on prediction, purity untested |
+| 8.20 | **Run the named-axis baseline and the leakage diagnostic on real data** | **BLOCKED (owner)** — needs the datasets and a GPU; commands in Appendix A |
+| 8.21 | Convert to MIP format (≤8,000 words incl. 280/table; structured abstract ≤250 words) | **Pending** — recommended AFTER 8.20, since the strip-test result may change the conclusions |

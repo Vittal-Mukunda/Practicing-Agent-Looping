@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/PyTorch-2.6.0%2Bcu124-ee4c2c" alt="PyTorch 2.6.0+cu124">
   <img src="https://img.shields.io/badge/Polars-streaming-1f6feb" alt="Polars streaming">
   <img src="https://img.shields.io/badge/config-Hydra%20%2B%20OmegaConf-89b4fa" alt="Hydra">
-  <img src="https://img.shields.io/badge/tests-88%20(69%20run%20%2B%2019%20new)-brightgreen" alt="tests">
+  <img src="https://img.shields.io/badge/tests-82%20passed%20%7C%205%20skipped-brightgreen" alt="tests">
   <img src="https://img.shields.io/badge/lint%20%2B%20types-ruff%20%7C%20mypy%20clean-brightgreen" alt="ruff mypy">
   <img src="https://img.shields.io/badge/seeds-6%20per%20result-8a2be2" alt="6 seeds">
   <img src="https://img.shields.io/badge/sweep-288%2F288%20runs%20complete-brightgreen" alt="sweep complete">
@@ -137,8 +137,9 @@ the other way and are reported with equal weight: against the *neural* incumbent
 specifically, the aligned model matches stability at matched performance and wins
 dormancy prediction in both test families; the twelve named axes alone carry as much
 downstream signal on the behavioural dataset as the autoencoder's full unnamed embedding,
-which rules out the "the names are decoration on a black box" reading; and MIG is
-degenerate as a selection criterion under correlated constructs.
+which counts against the "the names are decoration on a black box" reading without
+settling construct purity; and MIG is degenerate as a selection criterion under
+correlated constructs.
 
 The contributions of this work are as follows:
 
@@ -451,7 +452,7 @@ Fixed before any proposed-model run:
 | # | Hypothesis | Falsified if | Outcome |
 |---|---|---|---|
 | H1 | A construct-aligned representation matches or beats the strongest baseline on primary downstream lift | Sweet-spot PR-AUC significantly below the bar in both test families | **Falsified** on both datasets (VI-B) |
-| H2 | Alignment produces axes that genuinely encode the named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Supported** (VI-C) |
+| H2 | Alignment produces axes that predict the named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Supported** on prediction (VI-C); *purity* not yet tested (V-F) |
 | H3 | Construct anchoring stabilizes personas relative to incumbents | Incumbent personas at least as stable as aligned ones | **Falsified** (VI-D) |
 | H4 | Increasing β improves downstream lift | Lift flat or decreasing in β | **Falsified**, in the direction [25] predicts (VI-B) |
 
@@ -489,8 +490,14 @@ pre-registered protocol, never as results:
    Following [21], [22], it reports for each construct the off-target R² of its winning
    axis (purity) and the construct's recoverability from the *free* block alone. A high
    on-target R² with a high free-block R² would mean the named axis is not where the
-   information uniquely lives. Nineteen ground-truth tests verify that the diagnostic
-   separates a clean partition from a leaky one whose on-target scores are identical.
+   information uniquely lives. Ground-truth tests verify that the diagnostic separates a
+   clean partition from a leaky one *whose on-target scores are identical* — which is
+   precisely the case `axis_alignment` cannot distinguish.
+
+   It is wired into both pipelines. New sweep runs record it per point; more usefully,
+   `run_phase6` recomputes it at the selected operating point from the **saved
+   state_dicts**, so obtaining it does not require re-running the sweep — a Phase-6
+   re-run (minutes, no training) emits `leakage.json` for both datasets.
 
 ## VI. Results
 
@@ -600,7 +607,7 @@ downstream head needs.
 
 ### C. Interpretability: The Mechanism Works, and MIG Does Not
 
-At the selected points the named axes genuinely encode the constructs: Dataset A reaches
+At the selected points the named axes carry their constructs strongly: Dataset A reaches
 mean alignment R² 0.854 with RFM-axis R² **0.968**; Dataset B reaches RFM-axis R² up to
 0.88 at λ = 4. Persona cards built from latent traversals are visually consistent with the
 names: Dataset A's price-sensitivity axis moves +deals / +kidhome / +recency against
@@ -674,13 +681,14 @@ latent block addresses this directly.
 On Dataset B, **the twelve named axes alone carry as much downstream signal as the
 autoencoder's entire unnamed embedding**. On Dataset A the named block alone beats raw
 RFM, and the two blocks are complementary rather than redundant — neither alone reaches
-the full latent. The named axes are therefore load-bearing, not labels attached to a black
-box.
+the full latent. The named block is therefore predictively load-bearing rather than merely
+decorative — though this does not by itself establish construct purity, and the two claims
+should not be conflated.
 
 Two caveats are recorded with this table. First, it does not settle *concept leakage*
 (Section V-F): showing that the aligned block is informative is not the same as showing
-that each named axis carries only its own construct, which is what the pre-registered
-purity diagnostic measures. Second, the block-restricted heads reproduce the sweep records
+that each named axis carries only its own construct, which is what the purity diagnostic
+measures. Second, the block-restricted heads reproduce the sweep records
 bit-exactly on B (2.8 × 10⁻¹⁷) but deviate by 5.3 × 10⁻³ on A — cross-hardware encoding
 noise (sweep embeddings from a Kaggle T4 under torch 2.10, re-encoded on the RTX 4050
 under torch 2.6) amplified by A's 448-row test set. B's 509k-row pipeline absorbs it. The
@@ -828,9 +836,12 @@ would inherit.
 - **Leakage guards as unit tests.** Perturbation proofs that train-fitted transforms
   ignore val/test on both datasets; temporal-ordering assertions; user-disjointness;
   label-window exclusion; construct-scaler isolation; a drift guard pinning sweep
-  evaluation heads to the Phase-3 specification. Suite: **69 tests passing** at the close
-  of Phase 7, plus **19 new tests** added with the pre-registered analyses of Section V-F
-  (verified passing; ruff clean).
+  evaluation heads to the Phase-3 specification. Suite: **82 passed, 5 skipped**, ruff and
+  mypy clean across 28 source files. The one deselected test is the CUDA-availability
+  check, which by design fails on a CPU-only environment. The smoke test now derives its
+  expected method set from `ALL_METHODS` rather than restating it, so adding a baseline
+  cannot silently desynchronize it — a regression the original hardcoded set did produce
+  when the Section V-F baselines were added.
 - **Cross-version portability.** Polars is pinned at 1.42.1 because Dataset B's split is a
   seed-salted Polars hash of `user_id` and that hash is not stable across versions — an
   unpinned run would silently drift the splits relative to the recorded bars. scikit-learn
@@ -875,15 +886,26 @@ frontier, the leakage-audited multi-seed protocol applied to persona representat
 two methodological findings for which no prior report was found: MIG's inversion under
 correlated constructs, and the collapse–stability confound.
 
-Two checks remain open and should be closed before submission. First, **[17]'s full text
-could not be obtained** — the publisher page, ACM DL, and every aggregator tried returned
-403, so its characterization above rests on abstract snippets that were consistent across
-independent sources but are not the paper itself. If it turns out to report a frozen,
-held-out, multi-seed evaluation, the protocol delta narrows further. Second, an automated
-framework for interpretable customer segmentation in financial services (*Int. J.
-Financial Studies* 13(4):243) is described in secondary sources as using "RFM-based
-interpretability benchmarks" and "interpretability alignment measures"; it could not be
-retrieved and may be closer to the construct-alignment idea than anything cited here.
+One check remains open. **[17] has no open-access version** — Unpaywall reports the record
+as closed with no repository, preprint, or embargoed copy, and the publisher page, ACM DL
+and every aggregator tried returned 403. Its characterization above therefore rests on
+abstract text that was consistent across independent secondary sources but is not the
+paper itself. Obtaining it requires institutional access or purchase, and it should be
+read before submission: if it reports a frozen, held-out, multi-seed evaluation, the
+protocol delta narrows further, though the three-axis frontier and the two methodological
+findings would be unaffected.
+
+A second concern was checked and dismissed. Grigorova *et al.* [31] present an automated
+framework for interpretable customer segmentation in financial services, described in
+secondary sources in terms close enough to construct alignment to warrant retrieval. The
+full text shows the resemblance is superficial: their "alignment" applies the Hungarian
+algorithm to match machine-generated *clusters* to RFM *segments*, evaluated with
+silhouette, Davies–Bouldin and ARI. That is cluster-to-segment correspondence, not
+alignment of latent *axes* with named constructs, and their evaluation uses internal
+indices without held-out downstream prediction. It is a useful companion result — they
+also report machine learning exposing heterogeneity within dormant customers that RFM
+misses, which is consistent with this paper's dormancy finding (Section VI-F) — but it
+does not pre-empt the mechanism.
 
 **Future work, in priority order.** (1) Run the two pre-registered analyses of Section V-F
 — the named-axis baselines are the strip test this paper most needs, since a
@@ -915,14 +937,28 @@ under an attribution and non-redistribution posture: raw files and derived cache
 redistributed with this repository, and readers obtain the data from the original Kaggle
 source.
 
-**AI disclosure (per IEEE policy on AI-generated content).** Generative AI (Claude,
-Anthropic) was used substantively in this project: implementation of the codebase under the
-phased protocol in [CLAUDE.md](CLAUDE.md), drafting of documentation, literature retrieval
-and verification, and drafting and structuring of this manuscript. All research direction,
-consequential scientific decisions (recorded per-decision in docs/DECISIONS.md), gate
-sign-offs, and accountability for the content rest with the human author. All reported
-numbers were produced by executed code on real data and are reproducible from the committed
-configurations and seeds; none were generated by a language model.
+**Generative AI disclosure.** Generative AI (Claude, Anthropic) was used substantively in
+this work, and its use is declared here in the article as well as at submission. It was
+used for: implementation of the codebase under the phased protocol in
+[CLAUDE.md](CLAUDE.md); drafting of documentation; literature retrieval and verification
+against source records; and drafting and structuring of this manuscript.
+
+No AI tool is credited with authorship, and none could be: accountability for this work
+rests entirely with the human author, as does all research direction, every consequential
+scientific decision (recorded individually in docs/DECISIONS.md), and every phase-gate
+sign-off. **No statistic in this paper was produced, estimated, or reported by a language
+model.** Every number was computed by executed code on real data, logged to a
+config-hashed run record, and is reproducible from the committed configurations and seeds;
+the reproduction check re-runs a pinned seed and diffs each value against its record. No
+figure or image in this work is AI-generated. No personal or sensitive data was submitted
+to any AI platform: the datasets were processed locally and on the compute described in
+Section VI, and Dataset B is keyed by pseudonymous identifiers in any case.
+
+*Note for submission:* this statement is written to the disclosure requirements of the
+target venue (Emerald, which requires AI use to be flagged in the article and at
+submission, prohibits AI authorship, and prohibits reporting statistics produced by AI).
+Confirm the wording against the venue's current policy at submission time, and adapt it if
+submitting elsewhere — an earlier draft of this manuscript was framed to IEEE policy.
 
 ## References
 
@@ -986,6 +1022,8 @@ configurations and seeds; none were generated by a language model.
 
 [30] I. Boussebough, K. Zarour, C. Aouabdia, and D. S. Boutina, "Multi-view customer segmentation in the digital economy: Balancing performance and interpretability for actionable insights," *J. Telecommunications and the Digital Economy*, vol. 14, no. 2, pp. 58–83, 2026, doi: 10.18080/jtde.v14n2.1462.
 
+[31] I. Grigorova, A. S. Efremov, and A. Karamfilov, "An automated machine learning framework for interpretable customer segmentation in financial services," *Int. J. Financial Studies*, vol. 13, no. 4, art. 243, 2025, doi: 10.3390/ijfs13040243.
+
 ---
 
 ## Appendix A: Reproduction Guide
@@ -1040,11 +1078,19 @@ powercfg /change standby-timeout-ac 0     # once, before an overnight run
 .venv\Scripts\python.exe -m cadvae.eval.repro_check data=ecommerce eval.train_subsample=200000 model.max_epochs=40
 ```
 
-**Pre-registered additions (Section V-F), not yet run.** The named-axis baselines are
-selected through the same `eval.methods` mechanism as every other baseline:
+**Pre-registered additions (Section V-F), not yet run.** Both are wired into the existing
+entry points; neither needs new infrastructure.
 
 ```powershell
+# 1. Named-axis baselines - the strip test. Same eval.methods mechanism as any baseline.
 .venv\Scripts\python.exe -m cadvae.eval.run_baselines data=personality "eval.methods=[raw,pca,rfm,constructs,construct_pca,ae]"
+.venv\Scripts\python.exe -m cadvae.eval.run_baselines data=ecommerce eval.train_subsample=200000 model.max_epochs=40 "eval.methods=[raw,pca,rfm,constructs,construct_pca,ae]"
+
+# 2. Concept-leakage diagnostic - recomputed from the SAVED sweep models, so this is a
+#    Phase-6 re-run (minutes, no training), NOT a re-run of the 8-hour sweep.
+#    Emits leakage.json next to analysis.json for each dataset.
+.venv\Scripts\python.exe -m cadvae.eval.run_phase6 data=personality
+.venv\Scripts\python.exe -m cadvae.eval.run_phase6 data=ecommerce eval.train_subsample=200000
 ```
 
 **Definition of done.** A fresh clone, following this guide, reproduces all reported
@@ -1086,6 +1132,7 @@ Regenerated by `run_phase6` into `results/phase6/{personality,ecommerce}_analysi
 | `persona_cards.png` | Latent traversals along each named axis, standardized deltas with raw-unit annotations | VI-C |
 | `attribution.json` | Downstream performance by latent block (aligned / free / full) | VI-E |
 | `smp.json` | Stability at Matched Performance | VI-D |
+| `leakage.json` | Concept-leakage diagnostic at the selected point: axis purity, off-target R², free-block recoverability | V-F (pending run) |
 | `baseline_stability.json` | Cross-seed ARI for incumbent persona pipelines | VI-D |
 | `stability_k_sensitivity.json` | Stability over K ∈ {5, 8, 12} | VI-D |
 | `selection_sensitivity.json` | Sweet-spot robustness to the selection slack | VI-C |

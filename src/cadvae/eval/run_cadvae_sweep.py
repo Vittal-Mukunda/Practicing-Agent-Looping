@@ -114,7 +114,12 @@ def run_point(ps, ks, tasks: dict, cfg: DictConfig, seed: int,
         "loss_final": history[-1], "loss_history": history,
         "downstream": {"primary": primary_test, **_task_heads(Etr, Ete, tasks, tr, seed)},
         "downstream_val": {"primary": primary_val},   # model-selection metrics (D-033)
-        "interpretability": interpretability_summary(Ete, ks.C_test, list(ks.names)),
+        # aligned_dims -> adds the concept-leakage block (D-037): axis purity and
+        # construct recoverability from the FREE block. Costs nothing extra here, but
+        # the 288 already-recorded runs predate it — Phase 6 recomputes it from the
+        # saved state_dicts so the diagnostic does not require re-running the sweep.
+        "interpretability": interpretability_summary(Ete, ks.C_test, list(ks.names),
+                                                     aligned_dims=aligned),
     }
     pred_te = align_predict(model, Xte, device=device)
     if pred_te is not None:

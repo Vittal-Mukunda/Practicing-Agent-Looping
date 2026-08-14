@@ -10,10 +10,12 @@ from omegaconf import OmegaConf
 
 from cadvae.data.constructs import ConstructSet
 from cadvae.data.personality import PreparedSplit
-from cadvae.eval.protocol import evaluate_baselines
+from cadvae.eval.protocol import ALL_METHODS, evaluate_baselines
 from cadvae.eval.stats import aggregate, significance_vs_best
 
-METHODS = {"raw", "pca", "rfm", "rfm_kmeans", "ae", "ae_kmeans", "gmm_ae", "dec"}
+# derived from the protocol rather than restated, so adding a baseline (D-036 added
+# constructs/construct_pca) cannot silently desynchronize the smoke test
+METHODS = set(ALL_METHODS)
 
 
 def _tiny(seed=0):

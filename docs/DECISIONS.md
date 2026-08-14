@@ -633,3 +633,62 @@ numbered at write-up time.*
   results tree is regenerated** — this correction is sourced from NOTEBOOK.md, which
   is the canonical record, but the raw records are gitignored and were not present
   in the review clone.
+
+**D-041 (2026-08-14) — leakage diagnostic wired into the pipelines (defect fix on D-037).**
+- **Defect:** D-037 added `leakage_diagnostic` but nothing called it. Running Phase 6
+  would not have produced the diagnostic, so the analysis the manuscript pre-registers
+  was unreachable without writing new code. Caught on review, not by a test.
+- **Fix, two places.** (1) `run_cadvae_sweep.run_point` now passes `aligned_dims=aligned`
+  to `interpretability_summary`, so new sweep runs record it per grid point at zero extra
+  cost. (2) `run_phase6._leakage_for_config` recomputes it at the selected operating
+  point **from the saved state_dicts**, averaged over seeds, and writes `leakage.json`
+  alongside `analysis.json`.
+- **Why (2) matters:** the 288 recorded runs predate the diagnostic. Without the Phase-6
+  path, obtaining it would mean re-running the sweep — ~8 h on Dataset B — for a quantity
+  that needs only the test split and models already on disk. With it, a Phase-6 re-run
+  (minutes, no training) is sufficient.
+- Returns None with a logged warning at lambda = 0 (no aligned dims: the diagnostic is
+  undefined for the beta-VAE ablation) and when models are missing, matching the
+  pre-check style of `_stability_for_config`.
+
+**D-042 (2026-08-14) — full suite executed; one real regression found and fixed.**
+- Prior sessions could not run the suite (no venv, no torch, no data). A CPU-only
+  environment was built specifically to close that gap. Result: **82 passed, 5 skipped**,
+  ruff clean, **mypy clean on 28 source files**. Only `test_cuda_available_and_computing`
+  fails, correctly, on CPU-only hardware.
+- **Regression found:** `tests/test_eval_smoke.py` hardcoded `METHODS = {...}`, which
+  D-036's two new baselines desynchronized — two tests failed. Fixed at the root by
+  deriving `METHODS = set(ALL_METHODS)` from the protocol, so adding a baseline can never
+  silently break it again.
+- **Integration check (synthetic data, real code path):** `evaluate_baselines` runs with
+  `constructs` / `construct_pca`, emits well-formed records for both, is bit-identical on
+  a same-seed re-run, preserves the named block exactly, and refuses to let eval rows move
+  the train-fitted transform. The full `ALL_METHODS` run including the torch baselines is
+  unaffected. This verifies the code EXECUTES; it produces no research numbers, and the
+  synthetic label was constructed from the constructs, so its ordering means nothing.
+
+**D-043 (2026-08-14) — retrieval risks resolved; AI disclosure retargeted.**
+- **Hsu et al. [17]: definitively unobtainable, not merely blocked.** Unpaywall reports
+  `is_oa: false`, `oa_status: "closed"`, and zero OA locations (including embargoed) —
+  no preprint, no repository copy exists. Institutional access or purchase is the only
+  route. The manuscript now says this precisely instead of listing 403s, and states what
+  would change if the paper turns out to contain a frozen multi-seed protocol.
+- **IJFS 13(4):243 retrieved — the concern was unfounded.** Grigorova, Efremov &
+  Karamfilov (2025) "align" by applying the **Hungarian algorithm to match ML clusters to
+  RFM segments**, scored with silhouette / Davies-Bouldin / ARI. That is cluster-to-
+  segment correspondence, NOT latent-axis-to-construct alignment, and they use internal
+  indices with no held-out downstream prediction. Cited as [31] and explicitly
+  distinguished; their finding that ML exposes heterogeneity among dormant customers that
+  RFM misses is a useful companion to this paper's dormancy result.
+- **AI disclosure retargeted from IEEE to Emerald** (the MIP target): declared in-article
+  and at submission, no AI authorship, no AI-produced statistics, no AI-generated figures,
+  no personal data sent to AI platforms. Emerald's own policy pages return 403 to
+  automated fetches, so the requirements were taken from consistent secondary sources
+  (multiple university library guides quoting the February 2023 statement) — **the author
+  must confirm the wording against the live policy at submission**, and a note in the
+  manuscript says so.
+- Overclaims softened in three places, per external review: "the named axes are
+  load-bearing, not labels attached to a black box" -> "predictively load-bearing rather
+  than merely decorative - though this does not by itself establish construct purity";
+  "rules out" -> "counts against"; H2 restated as supported *on prediction*, with purity
+  explicitly untested.
