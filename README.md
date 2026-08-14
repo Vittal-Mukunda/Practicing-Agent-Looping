@@ -176,24 +176,58 @@ Data-driven persona development is surveyed comprehensively by Salminen *et al.*
 who review 77 articles from 2005–2020 and identify evaluation methods as an open gap —
 the premise this work builds on, and the reason the claim here is "evaluation is
 underdeveloped", not "personas are never evaluated". Hsu *et al.* [17] are the nearest neighbour on the measurement axis, and the overlap is
-substantial enough to state plainly rather than minimize: their PP method builds personas
-with predictive data-mining algorithms and validates them by accuracy in predicting target
-customers, benchmarking predictive personas against traditional cluster-analysis personas
-using predictive accuracy as a single unified metric. **We therefore do not claim that
-measuring persona quality by predictive accuracy is new.** It is theirs.
+substantial enough to state plainly rather than minimize. Their predictive-persona (PP)
+method surveys 2,240 customers of a pet-food retailer, **partitions the data 60/40 into
+training and testing sets specifically to keep the test rows out of model building**, fits
+a logistic regression for purchase, and defines the persona as the predicted-buyer group.
+It is validated on the held-out partition by ranking and a decile lift chart (lift 3.2 in
+the first decile against a 23% naïve benchmark), and then — more convincingly than any
+offline metric — against **real subsequent purchase behaviour**: of respondents given
+discount coupons, 6.2% of those predicted to buy actually purchased within two weeks
+versus 0.7% of those predicted not to. They benchmark this against a traditional
+quantitative persona built by k-means and find the clustering personas cannot separate
+buyers (39.6% versus 46.2% purchase rates across the two clusters).
 
-**What remains, and why the difference is not cosmetic.** [17] resolves persona quality
-onto *one* metric. This paper's thesis is that a single metric is the problem: persona
-representations are chosen for interpretability and relied on for stability, and a
-one-axis criterion cannot express what is given up to obtain either. Three axes, and the
-measured trade-off between them, is the object of study — a frontier cannot exist in a
-one-axis framing. Secondarily, the unit of validation differs: [17] validates a persona
-*set* produced by a pipeline, whereas this work validates a *representation* by frozen
-transfer to labels it never saw, across seeds and multiple downstream tasks, under a
-leakage audit. The evaluation of embeddings by downstream transfer is itself routine in
-representation learning, including for customer embeddings specifically [29]; the novelty
-claimed here is its application to persona representations against incumbent *marketing*
-baselines, with leakage guards and multi-seed statistics.
+**We therefore do not claim that measuring persona quality by held-out predictive
+performance is new. It is theirs**, and their coupon-redemption validation has a claim to
+external validity that this paper's offline labels do not.
+
+**What remains, stated against the full text rather than inferred.** Three differences
+survive, and they are structural rather than cosmetic.
+
+*First, the object.* A PP persona is **defined by a supervised model of one chosen
+outcome** — the persona *is* the positive class of that model. It is therefore
+task-specific by construction and cannot be carried to a different downstream question.
+This paper's object is a task-agnostic *representation*, learned without any label, frozen,
+and transferred to three separate downstream tasks it never saw. That is why the
+representation here can lose on purchase prediction while winning on dormancy: a
+single-outcome persona has no such degrees of freedom.
+
+*Second, the number of axes.* [17] resolves persona quality onto one metric. This paper's
+thesis is that one metric is the problem: persona representations are chosen for
+interpretability and relied on for stability, and a one-axis criterion cannot express what
+is given up to obtain either. A frontier cannot exist in a one-axis framing.
+
+*Third, the statistical protocol.* [17] uses a single random split with no repetition, and
+benchmarks PP against the clustering persona descriptively — comparing percentages and
+visually comparing response profiles. There is no repeated resampling, no variance on any
+reported number, and no significance test of the persona comparison (the paper's
+significance testing concerns logistic-regression coefficients). This work reports six
+seeds per number with paired tests from two families, familywise correction, and a
+leakage audit enforced by unit tests. Evaluating embeddings by downstream transfer is
+itself routine in representation learning, including for customer embeddings
+specifically [29]; what is claimed here is that protocol applied to persona
+representations against incumbent *marketing* baselines.
+
+**This work also takes up two research directions [17] explicitly proposes.** Their
+future-work section suggests extending beyond a single outcome to several constructs —
+naming *price-sensitive*, quality-oriented and demand-oriented customers — by "altering
+the outcome variables" and repeating the procedure per construct; and it suggests
+complementing survey data with **online user behaviour data**. This paper does both:
+price sensitivity is one of the named constructs, and Dataset B is 110 million behavioural
+events. The methodological difference is that the constructs are held **jointly in one
+representation** rather than as several independent single-outcome models, which is what
+makes the interpretability–performance trade-off measurable at all.
 
 Naming the tension is also not new. Boussebough *et al.* [30] balance performance against
 interpretability in multi-view customer segmentation, resolving it with a context-driven
@@ -886,14 +920,17 @@ frontier, the leakage-audited multi-seed protocol applied to persona representat
 two methodological findings for which no prior report was found: MIG's inversion under
 correlated constructs, and the collapse–stability confound.
 
-One check remains open. **[17] has no open-access version** — Unpaywall reports the record
-as closed with no repository, preprint, or embargoed copy, and the publisher page, ACM DL
-and every aggregator tried returned 403. Its characterization above therefore rests on
-abstract text that was consistent across independent secondary sources but is not the
-paper itself. Obtaining it requires institutional access or purchase, and it should be
-read before submission: if it reports a frozen, held-out, multi-seed evaluation, the
-protocol delta narrows further, though the three-axis frontier and the two methodological
-findings would be unaffected.
+**The largest of these risks is now closed.** [17] was obtained and read in full. It does
+use a held-out partition, so the concession in Section II-A is made on the strength of the
+paper itself rather than inferred: measuring persona quality on data withheld from model
+building is theirs. It does **not** use repeated splits, report variance on any number, or
+apply a significance test to the persona comparison, and it measures neither
+interpretability nor stability — so the protocol and multi-axis deltas stated in Section
+II-A are verified against the text, not argued from the absence of evidence. Its persona
+is defined by a supervised model of a single outcome, which is a different object from a
+task-agnostic representation and cannot be transferred across tasks. On the evidence, the
+relationship is better described as continuation than collision: this work implements the
+two research directions [17]'s own future-work section proposes.
 
 A second concern was checked and dismissed. Grigorova *et al.* [31] present an automated
 framework for interpretable customer segmentation in financial services, described in

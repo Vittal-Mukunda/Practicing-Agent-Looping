@@ -334,3 +334,81 @@ for the vocabularies searched. Layer 3 is NOT closed while L-013's full text is 
 | Naming the interpretability/performance tension in segmentation | **Occupied** (L-014); quantifying it is not |
 | MIG degeneracy under correlated constructs | **No prior report found** in the sources searched — the cleanest surviving novelty |
 | Collapse–stability confound | **No prior report found** in this application area; L-012's "constructive segmentation" is adjacent and should be cited alongside |
+
+---
+
+# L-013 SUPERSEDED — full text obtained 2026-08-14
+
+### L-013b [V — FULL TEXT]
+Cite:    P.-F. Hsu, Y.-H. Lu, S.-C. Chen, P. P.-Y. Kuo, "Creating and validating predictive
+         personas for target marketing", *Int. J. Human–Computer Studies*, vol. 181,
+         art. 103147, 2024 (online 12 Sep 2023). Institute of Service Science, National
+         Tsing Hua University, Taiwan.
+Fetched: **full text, 18 pp.**, supplied by the project owner. No OA version exists
+         (Unpaywall `is_oa=false`, `oa_status="closed"`, zero locations incl. embargoed),
+         so this supersedes the earlier snippet-based `[S]` characterization.
+
+PROBLEM:  Quantitative personas built with traditional statistical methods "may not
+          reflect the marketing goals of decision-makers, and they mainly focus on
+          categorizing existing users rather than predicting target customers."
+METHOD:   7-step guideline. Survey of 2,240 pet-food (DCS) customers; multiple-choice
+          items decomposed to dummies; outcome binned to buyer / non-buyer; **random
+          60/40 train/test partition** (1,344 / 896) explicitly "to keep a separate
+          testing dataset out of the model building process… avoids overfitting"
+          (citing Shmueli et al.); **single logistic regression**; persona = the
+          predicted-buyer group, described by the significant coefficients.
+DATA:     Real survey + real subsequent purchase behaviour (224 coupon redemptions,
+          45 buying the focal product).
+EXPERIMENT: Held-out ranking + **decile lift chart** (lift 3.2 in decile 1 against a
+          0.23 naïve base rate; decile 1 captures 33% of true buyers); confusion matrix;
+          **behavioural validation** — 6.2% (12/193) of predicted buyers actually bought
+          with the coupon vs 0.7% (5/686) of predicted non-buyers. Benchmark vs a
+          k-means "traditional quantitative persona" (TQP): clusters fail to separate
+          buyers (39.6% vs 46.2%), and PP vs TQP is compared **descriptively** —
+          percentage ratios (87.4/30.9 = 2.83) and a visual comparison of response
+          profiles across questions.
+RESULTS:  PP separates buyers where clustering personas do not; pseudo-R² = 0.233.
+LIMITATIONS (authors'): qualitative work still needed for vivid personas; time/cost not
+          much reduced; data-science staffing required.
+
+SUPPORTING (for this project's positioning):
+  * **Their future work proposes two directions this project implements.** (a) Extend
+    beyond a single outcome to several constructs — they name **price-sensitive**,
+    quality-oriented and demand-oriented customers — by "altering the outcome variables"
+    and repeating the procedure per construct. (b) "use **online user behaviour data** to
+    complement our proposed PP method". This project does both, and does (a) *jointly in
+    one representation* rather than as N independent supervised models. Continuation,
+    not collision — and citable as such.
+
+DISCONFIRMING (what it costs this project):
+  * **Held-out predictive validation of personas is theirs.** Contribution (1) must be —
+    and now is — conceded outright rather than hedged.
+  * Their coupon-redemption validation has a stronger claim to external validity than
+    this project's purely offline labels. The manuscript now says so.
+
+VERIFIED ABSENT (full-text search, so these deltas are evidence-based, not inferred):
+  repeated splits / seeds · variance on any reported number · any significance test of
+  the PP-vs-TQP comparison (all 15 "significant" hits concern logit coefficient p-values)
+  · cross-validation · ROC-AUC or PR-AUC · any interpretability measure · any stability
+  or reproducibility analysis · representation learning of any kind · leakage auditing.
+
+STRUCTURAL DISTINCTION (the load-bearing one): a PP persona **is the positive class of a
+  supervised model of one chosen outcome**. It is task-specific by construction and cannot
+  be transferred to a different downstream question. This project's object is a
+  task-agnostic representation, learned label-free, frozen, then transferred to three
+  tasks it never saw — which is why it can lose on purchase while winning on dormancy.
+
+## Effect on the novelty table (revising the pass-2 entry)
+| Claim | Status after reading the full text |
+|---|---|
+| Persona quality measured by held-out prediction | **Anticipated — conceded outright** (was: anticipated per snippets) |
+| Three-axis reformulation + measured frontier | **Survives, now verified** — [17] measures neither interpretability nor stability |
+| Multi-seed statistics, significance testing, leakage audit | **Survives, now verified absent in [17]** rather than assumed absent |
+| Task-agnostic representation vs single-outcome persona | **New distinction, only visible from the full text** — the strongest of the three |
+| Multi-construct personas + behavioural data | **Proposed as future work by [17] itself** — reframes the relationship as continuation |
+
+## Residual novelty risk after this
+Reduced to: (1) the marketing/IS venues were sampled, not systematically swept — a formal
+database search (Scopus/WoS with the pass-2 vocabulary) would be the completeness check;
+(2) no search was run on "persona stability across seeds" as a phrase, though L-012
+establishes the marketing-side prior art for the instrument itself.

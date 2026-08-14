@@ -692,3 +692,46 @@ numbered at write-up time.*
   than merely decorative - though this does not by itself establish construct purity";
   "rules out" -> "counts against"; H2 restated as supported *on prediction*, with purity
   explicitly untested.
+
+**D-044 (2026-08-14) — Hsu et al. [17] read in full; §II-A rewritten against the text.**
+- Owner supplied the publisher PDF, closing the project's highest-ranked novelty risk.
+  (No OA version exists — Unpaywall `is_oa=false`, zero locations — so this could not
+  have been resolved without institutional access.)
+- **What the paper actually does** (IJHCS 181:103147, 18 pp., verified from full text):
+  survey of 2,240 pet-food customers in Taiwan; **random 60/40 train/test partition,
+  explicitly to keep test rows out of model building**; a single logistic regression for
+  purchase; persona = the predicted-buyer group. Validation on the held-out partition by
+  ranking + decile lift chart (lift 3.2 in decile 1 vs a 23% naïve benchmark) and a
+  confusion matrix; then against **real coupon redemption** two weeks post-survey (6.2%
+  of predicted buyers purchased vs 0.7% of predicted non-buyers). Benchmarked against a
+  k-means "traditional quantitative persona", which fails to separate buyers (39.6% vs
+  46.2% across clusters).
+- **CONCEDED, and now on the strength of the paper rather than snippets:** measuring
+  persona quality on data withheld from model building is theirs. Their coupon-redemption
+  check arguably has better external validity than this project's offline labels, and the
+  manuscript now says so.
+- **VERIFIED ABSENT** (searched the full text): repeated splits or seeds; variance on any
+  reported number; any significance test of the PP-vs-TQP comparison (all 15 "significant"
+  mentions concern logistic-regression coefficient p-values); cross-validation; ROC/PR-AUC;
+  any interpretability measure; any stability analysis; representation learning of any
+  kind; leakage auditing. The Section II-A deltas are therefore verified, not argued from
+  absence in secondary sources.
+- **The structural difference, which matters most:** a PP persona is *defined by a
+  supervised model of one chosen outcome* — the persona IS that model's positive class.
+  It is task-specific by construction and cannot transfer. This project's object is a
+  task-agnostic representation, learned label-free, frozen, and transferred to three
+  downstream tasks. That is exactly why our representation can lose on purchase while
+  winning on dormancy; a single-outcome persona has no such degrees of freedom.
+- **Reframing (the useful find):** [17]'s own future-work section proposes (a) extending
+  beyond one outcome to several constructs — **naming price-sensitive, quality-oriented
+  and demand-oriented customers** — by "altering the outcome variables" and repeating the
+  procedure per construct, and (b) complementing survey data with **online user behaviour
+  data**. This project does both: price sensitivity is a named construct, and Dataset B is
+  110M behavioural events. The methodological delta is holding the constructs **jointly in
+  one representation** instead of as N independent single-outcome models — which is
+  precisely what makes an interpretability-performance trade-off measurable at all.
+  The relationship is better described as continuation than collision, and §II-A now says
+  so with the citation.
+- Net effect on positioning: contribution (1) narrows as expected, but the surviving
+  claim is now defensible from the source text instead of resting on inference, and the
+  paper gains a legitimate "we take up the directions this work proposed" framing.

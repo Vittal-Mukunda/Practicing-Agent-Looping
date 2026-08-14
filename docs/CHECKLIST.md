@@ -135,7 +135,7 @@ final entry for the honest claim structure.
 | 8.7 | Multiplicity correction + effect sizes + test-row bootstrap CIs | **Completed 2026-08-14 (D-038)** — additive to `significance_vs_best` |
 | 8.8 | New tests for 8.5–8.7 | **Completed 2026-08-14** — 19 tests, verified passing; ruff clean on `src` + `tests` |
 | 8.9 | Run 8.5 + 8.6 and fold the results into §VI | **Pending** — requires the datasets and a GPU; currently pre-registered in §V-F |
-| 8.10 | Resolve the residual novelty risk: read Hsu et al. 2023 (IJHCS 181:103147) in full | **Pending (owner)** — paywalled; highest single risk to the positioning |
+| 8.10 | Resolve the residual novelty risk: read Hsu et al. 2023 (IJHCS 181:103147) in full | **CLOSED 2026-08-14** — owner supplied the PDF; read in full, §II-A rewritten against the text (D-044) |
 | 8.11 | GATE: owner reviews the rewritten manuscript | **AT THE GATE 2026-08-14** |
 
 **Note on 8.8.** The full 69-test suite could not be executed in the review session
@@ -153,9 +153,20 @@ The torch- and data-dependent suites remain unrun since the edits — **run
 | 8.13 | Execute the full test suite (previously impossible: no venv/torch) | **Completed** — D-042; 82 passed, 5 skipped, ruff + mypy clean (28 files) |
 | 8.14 | Fix the regression 8.13 exposed (hardcoded METHODS in test_eval_smoke) | **Completed** — now derived from `ALL_METHODS` |
 | 8.15 | Integration-check the new baselines through the real `evaluate_baselines` path | **Completed** — runs, deterministic, leakage guard holds, full ALL_METHODS unaffected |
-| 8.16 | Resolve Hsu et al. retrieval | **Closed as unobtainable** — Unpaywall: `is_oa=false`, no OA locations. Needs institutional access (owner) |
+| 8.16 | Resolve Hsu et al. retrieval | **CLOSED 2026-08-14** — no OA version exists (Unpaywall `is_oa=false`); owner supplied the publisher PDF directly |
 | 8.17 | Resolve the financial-services overlap concern | **Closed — not an overlap.** Retrieved; their "alignment" is Hungarian cluster↔segment matching, not axis↔construct. Cited as [31] |
 | 8.18 | Retarget the AI disclosure from IEEE to Emerald | **Completed** — D-043; confirm wording against live policy at submission |
 | 8.19 | Soften overclaims flagged in external review | **Completed** — 3 sites; H2 restated as supported on prediction, purity untested |
 | 8.20 | **Run the named-axis baseline and the leakage diagnostic on real data** | **BLOCKED (owner)** — needs the datasets and a GPU; commands in Appendix A |
 | 8.21 | Convert to MIP format (≤8,000 words incl. 280/table; structured abstract ≤250 words) | **Pending** — recommended AFTER 8.20, since the strip-test result may change the conclusions |
+
+### Phase 8 addendum 2 (2026-08-14): Hsu et al. read in full
+
+| # | Task | Status |
+|---|------|--------|
+| 8.22 | Read [17] in full and rewrite §II-A against the text rather than snippets | **Completed** — D-044 |
+| 8.23 | Verify which deltas survive contact with the actual paper | **Completed** — object (task-agnostic representation vs single-outcome persona), axis count, statistical protocol. All three verified present/absent in the text |
+| 8.24 | Reframe the relationship using [17]'s own future-work section | **Completed** — they propose multi-construct personas (naming price sensitivity) and online behavioural data; this work does both, jointly |
+
+**Remaining before submission:** 8.20 (run both analyses on real data — owner, needs
+datasets + GPU) and 8.21 (MIP conversion, recommended after 8.20).
