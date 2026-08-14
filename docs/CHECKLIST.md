@@ -180,3 +180,11 @@ datasets + GPU) and 8.21 (MIP conversion, recommended after 8.20).
 | 8.27 | Soften "principal signal destroyer" and the "frontier" terminology | **Completed** — D-045 |
 | 8.28 | Verify and cite Glukhov et al. 2023 | **Completed with a bound** — D-047; bibliographic [V], content [S], full text unread, no evaluation claims made |
 | 8.29 | Systematic Scopus/WoS sweep of marketing + IS venues | **Open (owner)** — not reachable from this environment; the remaining completeness check |
+
+### Phase 8 addendum 4 (2026-08-15)
+
+| # | Task | Status |
+|---|------|--------|
+| 8.30 | Verify whether Phase-5 sweep artifacts still exist | **Completed** — D-048; 288 state_dicts + 292 records intact on `origin/kaggle-results`. Restore command added to Appendix A |
+| 8.31 | Propagate the D-045 MIG narrowing into the Introduction; soften "survive"/"most signal" | **Completed** — D-049 |
+| 8.20 | Run the named-axis baseline + leakage diagnostic on real data | **STILL BLOCKED (owner)** — sole prerequisite is the processed data caches; artifacts and code are both ready |

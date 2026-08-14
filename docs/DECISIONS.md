@@ -786,3 +786,39 @@ numbered at write-up time.*
   not evaluate**. The distinction drawn is that their construction is fixed, so it cannot
   price interpretability; this work sweeps the alignment strength, which is what makes the
   cost measurable.
+
+**D-048 (2026-08-15) — Phase-5 artifacts verified recoverable; the pending analyses are
+cheaper than the manuscript implied.**
+- **Checked, not assumed:** `git ls-remote` confirms `origin/kaggle-results` still exists,
+  and `git ls-tree -r` confirms it holds **288 `.pt` model state_dicts + 292 JSON records
+  + 2 yaml** under `phase5/{personality,ecommerce}_sweep/`. The working tree has no
+  `results/` at all (this clone is fresh), which is why the artifacts appeared lost.
+- **Consequence:** the concept-leakage diagnostic (D-037/D-041) does **not** need the
+  ~8 h Dataset-B sweep re-run. Restore is a download:
+  `git archive origin/kaggle-results | tar -x -C results`, then `run_phase6` recomputes
+  the diagnostic from the saved encoders in minutes. Appendix A now carries this command
+  and V-F states the dependency explicitly.
+- **The single remaining prerequisite for BOTH pending analyses is the processed data
+  caches** (`data/processed/*.parquet`), which are gitignored by license posture and are
+  not in this clone. Dataset A's cache builds on demand; Dataset B needs one ~200 s
+  streaming pass over the raw event log. Neither can be produced in the review environment
+  (no raw data, no Kaggle credentials, no GPU), and producing them from a
+  differently-sourced copy of the datasets would yield numbers not comparable to the
+  pre-registered bars — which is why this has not been worked around.
+- Recorded so the next session does not re-derive that the artifacts were lost. They are
+  not.
+
+**D-049 (2026-08-15) — three claim-strength edits from external review.**
+- Introduction contribution bullet: "MIG inverts… making it unsafe for model selection"
+  -> "MIG-based **selection** inverts… making MIG unsafe as the **sole** model-selection
+  criterion in this setting." The Introduction now matches the precision VI-C already had;
+  the mismatch was an artifact of D-045 narrowing VI-C without propagating upward.
+- Abstract: "Three results **survive** as positive" -> "Three positive findings emerge."
+  "Survive" implies passage through the familywise correction, which V-C explicitly says
+  the Wilcoxon results do not achieve. The word was doing rhetorical work the statistics
+  do not support.
+- "hard cluster personas discard **most** of their parent embedding's predictive signal"
+  -> "**a large fraction** of"; and "discard the most signal on both datasets" -> "lose
+  the largest fraction of any representation tested". The 40-65% measurement is retained
+  verbatim in both places — the softening is to the headline generalization, not the
+  evidence.

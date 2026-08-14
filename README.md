@@ -54,7 +54,7 @@ response and three raw RFM features reach 0.1953 ± 0.0035 on future purchase, b
 a trained autoencoder. At its validation-selected operating point CA-DVAE reaches named-axis
 alignment R² up to 0.968 but sits significantly below both bars (0.5130 ± 0.0597 and
 0.1798 ± 0.0051), and its personas are markedly less stable than incumbent personas
-(ARI 0.467 / 0.583 versus 0.975 / 0.962 for RFM+K-means). Three results survive as positive:
+(ARI 0.467 / 0.583 versus 0.975 / 0.962 for RFM+K-means). Three positive findings emerge:
 against the *neural* incumbent the aligned model matches stability at matched performance
 and wins dormancy prediction in both test families; on the behavioural dataset the twelve
 named axes alone carry as much downstream signal as the autoencoder's full unnamed embedding;
@@ -160,11 +160,11 @@ The contributions of this work are as follows:
   the operating point selected on validation data only.
 - Four findings that hold regardless of how the proposed model fares: learned neural
   embeddings do not automatically beat linear or heuristic incumbents under leakage-safe
-  future-behaviour evaluation; hard cluster personas discard most of their parent
-  embedding's predictive signal; stability tracks model simplicity and must never be read
-  apart from performance, because near-collapsed models are trivially stable; and MIG
-  inverts with alignment strength when constructs are correlated, making it unsafe for
-  model selection in this setting.
+  future-behaviour evaluation; hard cluster personas discard a large fraction of their
+  parent embedding's predictive signal; stability tracks model simplicity and must never be
+  read apart from performance, because near-collapsed models are trivially stable; and
+  MIG-based *selection* inverts with alignment strength when constructs are correlated,
+  making MIG unsafe as the sole model-selection criterion in this setting.
 
 Section II reviews related work and states what this work is not. Section III specifies
 the model, Section IV the data and constructs, Section V the protocol. Section VI reports
@@ -564,7 +564,11 @@ pre-registered protocol, never as results:
    It is wired into both pipelines. New sweep runs record it per point; more usefully,
    `run_phase6` recomputes it at the selected operating point from the **saved
    state_dicts**, so obtaining it does not require re-running the sweep — a Phase-6
-   re-run (minutes, no training) emits `leakage.json` for both datasets.
+   re-run (minutes, no training) emits `leakage.json` for both datasets. The Phase-5
+   artifacts this depends on are preserved off the working tree: all 288 model
+   state_dicts and 292 run records remain on the `kaggle-results` branch, from which
+   `results/phase5/` can be restored in one command (Appendix A). The only remaining
+   prerequisite is the processed data caches.
 
 ## VI. Results
 
@@ -615,7 +619,7 @@ full 509k-user test set, base rate 0.033)
 **On behavioural data, three raw RFM features beat every learned representation.** The raw
 ceiling sits significantly above RFM, so non-RFM features carry signal no learned
 representation captures. Hard one-hot cluster representations — the standard "persona"
-format — discard the most signal on both datasets, losing 40–65% of their parent
+format — lose the largest fraction of any representation tested on both datasets, 40–65% of their parent
 embedding's PR-AUC.
 
 **TABLE III** — Per-task best baselines, Dataset B (6 seeds)
@@ -1189,7 +1193,18 @@ powercfg /change standby-timeout-ac 0     # once, before an overnight run
 ```
 
 **Pre-registered additions (Section V-F), not yet run.** Both are wired into the existing
-entry points; neither needs new infrastructure.
+entry points; neither needs new infrastructure, and neither requires re-running the sweep.
+
+The Phase-5 artifacts live on the `kaggle-results` branch (288 model state_dicts, 292 run
+records), not in the working tree. Restore them first — this is a download, not a
+computation:
+
+```powershell
+mkdir results -Force
+git fetch origin kaggle-results
+git archive origin/kaggle-results | tar -x -C results
+# -> results/phase5/{personality,ecommerce}_sweep/{records,models}/
+```
 
 ```powershell
 # 1. Named-axis baselines - the strip test. Same eval.methods mechanism as any baseline.
