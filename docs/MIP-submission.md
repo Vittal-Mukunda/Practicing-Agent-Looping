@@ -317,14 +317,20 @@ direct. A persona card built by moving one latent dimension is moving a directio
 several constructs, so its apparent interpretability is weaker evidence than it looks. The
 defensible claim is a **named subspace**, not named axes.
 
-A related methodological caution is that the Mutual Information Gap, a standard
-disentanglement metric, *inverts* here. On Dataset B it is highest with alignment switched
-off and falls as alignment strengthens, because aligning 12 dimensions to 17 correlated
-constructs necessarily shares information across them. Selecting on it chose a model with no
-named axes at all. This is narrower than the established finding that correlated factors
-degrade disentanglement (Träuble *et al.*, 2021). The point is that MIG should not be used as
-the sole selection criterion when business constructs are correlated, which is the normal
-case.
+A related methodological caution concerns the Mutual Information Gap. Its gap term is
+designed to reward compactness: Chen *et al.* (2018) define it so that a factor captured by
+one latent scores highly, and explicitly so that it penalises the case where latents other
+than the winner also encode that factor. Construct alignment does the opposite by design,
+spreading each construct across an aligned block. On Dataset B, MIG is accordingly highest
+with alignment switched off and falls as alignment strengthens, and selecting on it chose a
+model with no named axes at all.
+
+This is not a claim that the metric is broken, and it is narrower than the finding that
+correlated factors degrade disentanglement generally (Träuble *et al.*, 2021). Chen *et al.*
+themselves report that disentanglement remains achievable when factors are sampled
+dependently. The point is that MIG's objective and construct-subspace alignment are different
+goals, and in this setting they point in opposite directions, so MIG should not be the sole
+selection criterion when the named constructs are correlated.
 
 ### 4.4 The decisive control: interpretability without training
 

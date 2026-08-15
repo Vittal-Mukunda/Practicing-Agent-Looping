@@ -726,6 +726,16 @@ correlated data and show the induced correlations are learned and reflected in t
 representations. Their question is whether correlated factors end up disentangled; ours is
 whether MIG remains a valid **model-selection criterion** along a supervised
 alignment-strength sweep. The failure reported here is that specific one.
+
+It is also worth stating what MIG was built to do, because the inversion is the metric
+working as designed rather than malfunctioning. Chen *et al.* [4] define the gap term so that
+a factor captured by a single latent scores highly and one whose information is *also*
+carried by other latents is penalised; compactness is the objective. Construct alignment
+deliberately distributes each construct across a block, so the two objectives are opposed
+here. Chen *et al.* further report that disentanglement remains achievable when the
+generative factors are sampled dependently, so this is not a general claim about correlated
+factors either. The claim is only that MIG and construct-subspace alignment are different
+goals, and that selecting on the former discards the latter.
 Selection was moved to mean alignment R², and a sensitivity analysis confirms the failure
 is not a slack artifact: MIG-selection picks the degenerate λ = 0 point at every slack
 tested, while R²-selection is slack-invariant on A and moves gracefully along the frontier

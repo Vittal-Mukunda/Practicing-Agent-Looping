@@ -9,17 +9,21 @@ test is precisely "latent axes align with named marketing constructs".
 Implemented metrics (each with the standard citation for the methods section):
 
 * **MIG — Mutual Information Gap.** Chen, Li, Grosse, Duvenaud, "Isolating Sources
-  of Disentanglement in Variational Autoencoders", NeurIPS 2018 (eq. 6):
+  of Disentanglement in Variational Autoencoders", NeurIPS 2018 (sec. 4.1, eq. 6):
   for each factor v_k, the gap between the largest and second-largest mutual
   information I(z_j; v_k) over latent dims j, normalized by the factor entropy
   H(v_k); averaged over factors. MIG ∈ [0, 1]; high = each factor is captured by
-  ONE axis rather than smeared over many.
+  ONE axis rather than smeared over many. The gap term is deliberate: the authors
+  state it penalizes the case where latents OTHER than the winner also encode the
+  factor. Construct alignment distributes a construct across a block by design, so
+  MIG scores against it — see D-063. Verified against the source 2026-08-15.
 * **SAP — Separated Attribute Predictability.** Kumar, Sattigeri, Balakrishnan,
   "Variational Inference of Disentangled Latent Concepts from Unlabeled
-  Observations", ICLR 2018 (sec. 4.1, continuous-factor form): the score matrix
-  S[j, k] is the R² of predicting factor k from single latent j (= squared Pearson
-  correlation for the linear case); SAP = mean over factors of (top-1 − top-2) of
-  each factor's column.
+  Observations", ICLR 2018 (sec. 3, continuous-attribute form): the score matrix
+  S[j, k] is the R² of predicting factor k from single latent j, which the paper
+  gives explicitly as the squared Pearson correlation
+  (Cov(mu_i, y_k) / (sigma_mu_i * sigma_y_k))^2; SAP = mean over factors of
+  (top-1 − top-2) of each factor's column. Verified against the source 2026-08-15.
 * **Per-axis alignment score** (ours, D-026): for each construct, the best
   single-dim R² and which dim wins — the direct "is there a dim you can point at
   and name?" number used on persona cards.

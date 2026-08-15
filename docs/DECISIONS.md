@@ -1120,3 +1120,28 @@ and turned out to be wrong.
   re-confirm that every claim attributed to a source is faithful to that source. Six were
   read at abstract level or in full during the literature work and carry verification tags in
   `research/ledger.md`.
+
+**D-063 (2026-08-15) — Chen (MIG) and Kumar (SAP) re-read; implementations confirmed, one
+citation corrected, one claim sharpened.**
+- **Both implementations are faithful to the source equations**, checked line by line against
+  the papers rather than against memory:
+  * MIG, Chen et al. sec. 4.1 eq. 6: `(1/K) sum_k (1/H(v_k)) (I(z_j*, v_k) - max_{j != j*}
+    I(z_j, v_k))`. Our code computes `(top2[1] - top2[0]) / h` per factor and means over
+    factors. Normalisation by factor entropy, top-1-minus-top-2, averaging and the [0, 1]
+    bound all match.
+  * SAP, Kumar et al.: the paper gives the continuous-attribute score explicitly as the
+    SQUARED PEARSON CORRELATION, `(Cov(mu_i, y_j) / (sigma_mu_i sigma_y_j))^2`, then takes
+    the difference of the top two entries per column and means. Our
+    `S = (Zs.T @ Vs / n) ** 2` on standardised inputs is exactly that.
+- **Citation error found and fixed.** The SAP docstring cited "sec. 4.1"; the score is
+  defined in **Section 3** of Kumar et al. Corrected, and the explicit squared-correlation
+  formula added so the implementation can be checked against the source without refetching.
+- **Claim sharpened, and this is the substantive outcome.** Chen et al. state that the gap
+  term is *designed* to penalise the case where latents other than the winner also encode a
+  factor: compactness is MIG's objective. Construct alignment deliberately distributes each
+  construct across a block. So the inversion reported in VI-C is **the metric working as
+  designed against an opposed objective**, not the metric malfunctioning. Chen et al. also
+  report that disentanglement remains achievable under dependently sampled factors (sec.
+  6.1), so this is not a general claim about correlated factors either. Both manuscripts now
+  say exactly this, which is more precise and harder to attack than the previous wording.
+- Metric tests re-run after the edit: 11 passed, ruff clean.
