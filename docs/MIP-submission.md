@@ -8,32 +8,33 @@
 
 ## Structured abstract
 
-**Purpose.** Buyer personas direct substantial marketing expenditure, yet the field's own
-survey of data-driven persona development names evaluation as an open gap. Existing
-predictive validation reduces persona quality to a single accuracy figure, which cannot
-express what is sacrificed to obtain the interpretability practitioners choose personas for.
-This paper asks what an interpretable persona costs.
+**Purpose.** Buyer personas direct substantial marketing expenditure, yet the field's own survey
+names persona evaluation as an open gap. Existing predictive validation reduces persona
+quality to a single accuracy figure, which cannot express what is given up to obtain
+interpretability. This paper asks what an interpretable persona costs.
 
-**Design/methodology/approach.** Persona quality is reformulated as three separately
-falsifiable properties: predictive lift on held-out future behaviour, alignment with named
-marketing constructs, and stability across repeated estimation. Nine representations,
-including RFM, PCA, autoencoders and a construct-aligned variational autoencoder, are
-compared on two public datasets (2,240 customers; 2.55 million users from 110 million
-events), with two further construct-based controls on the first. All are evaluated under a
-frozen-representation protocol with leakage guards enforced by automated tests, six seeds
-per result, performance bars fixed before the proposed-model sweep, and familywise
-correction.
+**Design/methodology/approach.** Persona quality is reformulated as three falsifiable properties: predictive lift on
+held-out behaviour, construct alignment, and stability across repeated estimation. Nine
+representations, including RFM, PCA, autoencoders and a construct-aligned variational
+autoencoder, are compared on two public datasets (2,240 customers; 2.55 million users
+from 110 million events), plus two construct-based controls. All use a frozen-
+representation protocol with automated leakage guards, six seeds, and bars fixed in
+advance.
 
-**Findings.** Interpretability is costly and the cost is measurable. Non-neural incumbents
-set the strongest bars; the construct-aligned model falls below both and yields markedly
-less stable personas. On the survey dataset, two controls sharpen the result: alignment is a
-property of a latent subspace rather than of individual named axes, and a zero-training
-representation built directly from the constructs achieves comparable measured lift while
-holding perfect axis purity by construction.
+**Findings.** Non-neural incumbents set the strongest bars; the construct-aligned model falls below
+both and yields less stable personas. On the survey dataset, two controls sharpen this:
+alignment is a subspace property rather than one of individual named axes, and a zero-
+training representation built from the constructs achieves comparable measured lift with
+perfect axis purity.
 
-**Originality/value.** The contribution is measurement rather than method: a protocol that
-prices interpretability, and evidence that an assumed benefit of neural segmentation does
-not survive it.
+**Practical implications.** Managers can price interpretability rather than assume it. For ranking customers by
+purchase propensity, RFM remains more accurate and more stable at no cost. Where
+interpretable coordinates are the goal, they can be built directly from existing
+features, without a neural model.
+
+**Originality/value.** The contribution is measurement rather than method: a protocol that prices
+interpretability, and evidence that an assumed benefit of neural segmentation does not
+survive it.
 
 ---
 

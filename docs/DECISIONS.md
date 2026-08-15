@@ -1077,3 +1077,24 @@ and turned out to be wrong.
   correct human voice for a research manuscript; no opinions or first-person colour added.
 - **Every numeric result verified present after the rewrite** by automated check against a
   list of 45 reported figures. Nothing was lost or altered.
+
+**D-061 (2026-08-15) — abstract restructured to the ScholarOne form's actual constraints.**
+- The live submission form imposes two limits the published guidelines omit: **title <= 20
+  words** and **each abstract section <= 100 words**, alongside the 250-word total that
+  includes keywords and classification. The manuscript's single-block 4-section abstract had
+  to be split into the form's discrete fields and rebalanced.
+- **Optional sections.** Added *Practical implications*, which matters for a practitioner
+  journal and was previously absent. Did NOT add *Research limitations/implications*: it
+  duplicated the scoping already carried in Findings ("On the survey dataset") and pushed the
+  total to 314 against a hard 250. *Social implications* does not apply.
+- Five drafts were needed to fit: 314 -> 269 -> 259 -> 252 -> **246**, verified by an
+  automated counter rather than by eye. Stopping at exactly 250 was rejected as too tight
+  against a counter whose tokenisation may differ from ours.
+- The manuscript's own abstract was regenerated **from the same source strings** as the form
+  fields, so the two cannot drift apart.
+- Title is 13 words, within the cap.
+- `SCHOLARONE_FORM.md` holds every field copy-paste ready with its count, the file-upload
+  order with ScholarOne designations, a compliance table, and the five pre-submission actions
+  that remain with the author.
+- **Word count is safe under either counting rule:** 6,883 at the guidelines' 250 words per
+  table/figure, 7,093 at the 280 the journal page states. Both inside the 6,000-8,000 band.
