@@ -197,3 +197,15 @@ datasets + GPU) and 8.21 (MIP conversion, recommended after 8.20).
 | 8.20b | Concept-leakage diagnostic, Dataset A | **DONE** — VI-D2; block R² 0.873 but mean axis purity −0.025 → H2 split |
 | 8.20c | Both controls on Dataset B | **Pending** — needs ~14.7 GB raw logs; expected to bite harder |
 | 8.32 | Environment integrity check before trusting new numbers | **DONE** — non-neural baselines + CA-DVAE sweet spot reproduce bit-exactly on CPU |
+
+### Phase 9 — MIP submission version (2026-08-15)
+
+| # | Task | Status |
+|---|------|--------|
+| 9.1 | Cut 16,379 → ≤8,000 words in Emerald's counting | **Done** — 6,822 (D-054) |
+| 9.2 | Structured abstract ≤250 incl. keywords + classification | **Done** — 243 |
+| 9.3 | Reframe for a marketing readership | **Done** — managerial implications lead; new §5 implication for segmentation research |
+| 9.4 | Figures exported with in-text callouts | **Done** — docs/mip_figures/ |
+| 9.5 | Convert to .docx | **Pending (owner)** |
+| 9.6 | Resolve double-anonymous vs public repo | **Pending (owner)** — anonymised artefact link needed |
+| 9.7 | Dataset B controls | **Pending** — disclosed in §6; not a submission blocker |

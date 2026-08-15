@@ -923,3 +923,30 @@ cheaper than the manuscript implied.**
 - **VI-C heading** "Interpretability: The Mechanism Works, and MIG Does Not" ->
   "**Construct Alignment and the Limits of MIG-Based Selection**". "The Mechanism Works"
   is false at axis level and was the most quotable overclaim left in the paper.
+
+**D-054 (2026-08-15) — MIP submission version created (docs/MIP-submission.md).**
+- Separate file, not a replacement: README.md remains the full technical report and the
+  repository's archival record. The MIP version is the submission artefact.
+- **6,822 words** against Emerald's 8,000 limit, counted their way (abstract + keywords +
+  classification + body + references + 280 per table/figure). Structured abstract is **243
+  including keywords and classification**, which is the binding form of the 250 cap — the
+  first draft was 266 and had to be trimmed. Four mandatory sub-headings, 6 keywords,
+  "Research paper", UK English throughout.
+- **The cut was 16,379 -> 6,822 (58%)**, but it is a reframe rather than a trim. Removed
+  entirely: the reproducibility engineering section, the ethics section, all three
+  appendices, the pre-registered hypothesis table, the residual-novelty-risk discussion,
+  and 11 of 34 references. Compressed: six related-work streams into three paragraphs; the
+  Hsu / Jansen / Traeuble distinctions into one sentence each.
+- **Kept, deliberately, despite the budget:** every concession (they are load-bearing for
+  the originality claim, now consolidated into a "what this study does not claim"
+  paragraph); the n=6 Wilcoxon-floor limitation; the tuning-parity study; the ablations;
+  the Dataset-B-pending caveat. Cutting any of these would have made the paper look
+  stronger and be weaker.
+- Register shifted for the audience: disentanglement machinery recedes, the managerial
+  finding leads, and a new subsection draws the implication for segmentation research
+  (elaborate pipelines performed worst under leakage-safe evaluation).
+- Two figures exported to docs/mip_figures/ from the Phase-6 run with in-text callouts.
+- **Two actions left for the author**, recorded in the file's own checklist: convert to
+  .docx, and resolve the double-anonymous conflict with the public repository (the
+  availability statement names the author's repo; anonymise for review or omit and restore
+  on acceptance).
