@@ -565,8 +565,12 @@ described here as designed, before their outcomes, because they were specified i
    residual appended — the same aligned/free structure CA-DVAE learns. This is the strip
    test for the alignment mechanism: if it matches CA-DVAE, the machinery is decoration.
    It is eligible for the bar, and is given the benefit of the doubt where the construct
-   count exceeds the latent budget (Dataset B: all 17 named axes retained rather than
-   truncated to 16).
+   count exceeds the latent budget: on Dataset B all 17 named axes are retained rather than
+   truncated to 16, **and the free block keeps a floor of 4 components** (D-064), so the
+   control is 21-dimensional there. Without that floor the arithmetic would hand it zero
+   free components and collapse it onto `constructs` alone, which VI-E2 measures as by far
+   the weaker representation. The floor is inert on Dataset A, where the budget already
+   allows 6.
 2. **Concept-leakage diagnostic** (`cadvae.eval.interpretability.leakage_diagnostic`).
    Following [21], [22], it reports for each construct the off-target R² of its winning
    axis (purity) and the construct's recoverability from the *free* block alone. A high

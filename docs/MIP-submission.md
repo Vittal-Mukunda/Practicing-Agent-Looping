@@ -469,7 +469,11 @@ the second supports a persona card shown to a marketing team.
 
 The two controls of Sections 4.3 and 4.4 have been run on Dataset A only. The behavioural
 dataset's seventeen correlated construct targets make within-block entanglement more likely
-there rather than less, and completing those runs is the first priority. Six seeds cannot
+there rather than less, and completing those runs is the first priority. One construction
+detail is fixed in advance for that replication: because those seventeen targets exceed the
+sixteen-dimensional latent budget, the control there carries all seventeen named axes plus
+four residual components, so that it retains the free capacity Section 4.4 shows is
+necessary rather than collapsing onto the constructs alone. Six seeds cannot
 support familywise-corrected Wilcoxon claims, as stated in Section 3. Dataset B covers a
 single two-month window treated as one population, so no claim is made about performance
 under distribution shift. Dataset A's test split is small at 448 rows, which makes PR-AUC

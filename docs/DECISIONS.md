@@ -1145,3 +1145,33 @@ citation corrected, one claim sharpened.**
   6.1), so this is not a general claim about correlated factors either. Both manuscripts now
   say exactly this, which is more precise and harder to attack than the previous wording.
 - Metric tests re-run after the edit: 11 passed, ruff clean.
+
+**D-064 (2026-08-15) — free-capacity floor on the named-axis control (CONSEQUENTIAL,
+owner-decided).**
+- **Defect found before running Dataset B, not after.** `construct_residual_pca` sized its
+  free block as `max(0, latent_dim - n_constructs)`. Dataset B has **17 constructs against
+  latent_dim 16**, so that arithmetic gives **zero** free components and `construct_pca`
+  becomes byte-identical to `constructs` alone. The strip test on B would have compared
+  CA-DVAE against a control stripped of the free block, which VI-E2 measured on Dataset A as
+  the single largest effect in the paper (0.4129 vs 0.5438, d_z = 5.46).
+- That would have flattered CA-DVAE on B for a reason unrelated to naming, and a reviewer
+  could fairly have called the comparison rigged. Caught by inspecting the config before
+  spending compute rather than by reading the output afterwards.
+- **Owner decision (asked, per CLAUDE.md section 6 — this changes what gets measured):** give
+  the control a free-block floor. Rule is now
+  `n_free = max(latent_dim - n_constructs, min_free_dims)`, with `min_free_dims` taken from
+  the model config, so **the control never carries less free capacity than CA-DVAE itself**.
+  Options rejected: leaving it collapsed (dishonest comparison), and raising latent_dim for B
+  (would invalidate the 144-run sweep and the bar fixed in advance).
+- **Widths:** Dataset A unchanged at 10 named + 6 free = 16. Dataset B becomes 17 named + 4
+  free = 21, wider than CA-DVAE's 16. That is consistent with the stated posture that the
+  control is deliberately given the benefit of the doubt, and it makes the strip test harder
+  for CA-DVAE rather than easier, which is the right direction for a control.
+- **Regression verified by execution, not by argument:** re-ran the Dataset A baselines.
+  `construct_pca` 0.5438 +/- 0.0640, `constructs` 0.4129 +/- 0.0650, `pca` 0.5677 +/- 0.0729,
+  logreg `construct_pca` 0.5399 +/- 0.0451 — all bit-identical to the published Table IV. The
+  floor is inert wherever the budget already exceeds it.
+- Two ground-truth tests added: the floor applies when constructs meet or exceed the budget,
+  and it is a no-op when they do not.
+- The construction is now stated in advance in both manuscripts, so the pending B result is
+  pre-specified rather than explained after the fact.

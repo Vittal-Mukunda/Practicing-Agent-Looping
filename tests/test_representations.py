@@ -73,13 +73,27 @@ def test_deterministic():
     assert np.array_equal(a_tr, b_tr) and np.array_equal(a_te, b_te)
 
 
-def test_constructs_at_or_over_capacity_return_the_named_block_only():
-    """Dataset B's case (17 constructs, d=16): keep every named axis, do not truncate."""
+def test_free_block_has_a_floor_when_constructs_fill_the_budget():
+    """Dataset B's case: 17 constructs against d=16 must still get a free block (D-064).
+
+    Without the floor the free block would be empty and the control would collapse onto
+    ``constructs`` alone, which is by far the weaker representation (0.4129 vs 0.5438 on
+    Dataset A). That would flatter CA-DVAE for a reason unrelated to naming.
+    """
     C_tr, X_tr, C_te, X_te = _data()
-    for latent in (K, K - 2):
-        R_tr, R_te = construct_residual_pca(C_tr, X_tr, C_te, X_te, latent)
-        assert R_tr.shape == (N_TR, K) and R_te.shape == (N_TE, K)
-        assert np.allclose(R_tr, C_tr) and np.allclose(R_te, C_te)
+    for latent in (K, K - 2):                      # budget met exactly, and exceeded
+        R_tr, R_te = construct_residual_pca(C_tr, X_tr, C_te, X_te, latent, min_free_dims=4)
+        assert R_tr.shape == (N_TR, K + 4) and R_te.shape == (N_TE, K + 4)
+        assert np.allclose(R_tr[:, :K], C_tr)      # named axes still pass through intact
+        assert np.allclose(R_te[:, :K], C_te)
+
+
+def test_floor_does_not_change_the_dataset_a_geometry():
+    """Where the budget already allows more than the floor, the floor is inert."""
+    C_tr, X_tr, C_te, X_te = _data()
+    a, _ = construct_residual_pca(C_tr, X_tr, C_te, X_te, D, min_free_dims=4)
+    b, _ = construct_residual_pca(C_tr, X_tr, C_te, X_te, D, min_free_dims=0)
+    assert a.shape[1] == D and np.array_equal(a, b)
 
 
 def test_free_block_recovers_structure_the_constructs_miss():

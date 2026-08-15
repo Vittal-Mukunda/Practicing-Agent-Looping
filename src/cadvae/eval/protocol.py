@@ -169,8 +169,9 @@ def evaluate_baselines(ps, ks, cfg, seed: int, device: str = "cuda",
     #     The strip test for CA-DVAE's alignment head — same named axes, no training.
     emit("constructs", ks.C_train[tr], ks.C_test)
     if "construct_pca" in methods:
-        R_tr, R_te = construct_residual_pca(ks.C_train[tr], Xtr, ks.C_test, Xte,
-                                            int(cfg.model.latent_dim), seed)
+        R_tr, R_te = construct_residual_pca(
+            ks.C_train[tr], Xtr, ks.C_test, Xte, int(cfg.model.latent_dim), seed,
+            min_free_dims=int(cfg.model.get("min_free_dims", 4)))
         emit("construct_pca", R_tr, R_te)
 
     # --- AE embedding (the hard baseline) + AE-based clustering ---

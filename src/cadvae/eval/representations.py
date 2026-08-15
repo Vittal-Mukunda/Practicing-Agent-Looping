@@ -16,12 +16,20 @@ CA-DVAE claims. It is therefore the correct strip test for the alignment mechani
 stability, the alignment machinery is decoration; if it can, the aligned block is
 demonstrably more than a re-encoding of its own supervision targets.
 
-Deliberately conservative choice, in the baseline's favour: when the construct count
-already meets or exceeds the latent budget ``d`` (Dataset B: 17 constructs, d = 16),
-the representation is the full construct block and its width exceeds ``d`` rather
-than being truncated. Truncating would drop named axes to satisfy a capacity budget
-the baseline did not ask for; giving a baseline the benefit of the doubt is what
-makes beating it meaningful.
+Deliberately conservative choice, in the baseline's favour: named axes are never
+truncated to fit the latent budget ``d``, and the free block is never dropped. The
+free block is sized as ``max(d - n_constructs, min_free_dims)``, so the control always
+carries at least as much free capacity as CA-DVAE itself does (D-064).
+
+That floor matters. On Dataset A the budget arithmetic already gives 6 free components
+and the rule changes nothing. On Dataset B there are 17 constructs against d = 16, so
+``d - n_constructs`` is negative and a naive rule would hand the control zero free
+components -- collapsing it onto ``constructs`` alone, which Section VI-E2 measured as
+by far the weaker representation (0.4129 vs 0.5438 on A, d_z = 5.46). Testing CA-DVAE
+against a control stripped of the one component this project proved load-bearing would
+flatter the model for a reason unrelated to naming. The control is therefore wider than
+``d`` on Dataset B (17 + 4 = 21 dimensions), and that is stated where the result is
+reported.
 
 Torch-free on purpose (numpy + scikit-learn only) so the geometry is unit-testable
 without a GPU, a trained model, or the datasets.
@@ -41,7 +49,7 @@ def _design(C: np.ndarray) -> np.ndarray:
 
 def construct_residual_pca(C_train: np.ndarray, X_train: np.ndarray,
                            C_eval: np.ndarray, X_eval: np.ndarray,
-                           latent_dim: int, seed: int = 0
+                           latent_dim: int, seed: int = 0, min_free_dims: int = 4
                            ) -> tuple[np.ndarray, np.ndarray]:
     """``[C | PCA(X - X̂(C))]`` — named axes plus a free block, with no training.
 
@@ -56,9 +64,13 @@ def construct_residual_pca(C_train: np.ndarray, X_train: np.ndarray,
     multithreaded-BLAS reduction order is not bit-stable, and this representation
     feeds downstream heads.
 
-    Returns ``(R_train, R_eval)``. Width is ``max(latent_dim, C.shape[1])``.
+    ``min_free_dims`` is the floor on the free block, matching the model's own
+    ``model.min_free_dims``; the control never gets less free capacity than CA-DVAE.
+
+    Returns ``(R_train, R_eval)``. Width is
+    ``C.shape[1] + max(latent_dim - C.shape[1], min_free_dims)``.
     """
-    n_free = max(0, int(latent_dim) - C_train.shape[1])
+    n_free = max(int(latent_dim) - C_train.shape[1], int(min_free_dims))
     if n_free == 0:
         return C_train, C_eval
 
