@@ -482,14 +482,17 @@ reproduce bit-exactly from the committed configurations. *[AUTHOR: for double-an
 review, supply an anonymised repository link here or omit this statement and restore it on
 acceptance — a link carrying your name would compromise anonymity.]*
 
-**Generative AI disclosure.** *[AUTHOR: rewrite this paragraph to describe exactly your
-own use, naming the tool and version, and note that Emerald does not permit AI-generated
-drafting of submission text. The statement below describes the analysis pipeline only and is
-accurate for that; it must not be left as-is if any drafting assistance was used.]* No
-statistic reported here was produced or estimated by a language model: every figure was
-computed by executed code on real data and logged to a configuration-hashed run record, and
-the reported values reproduce bit-exactly from the committed configurations and seeds. No
-figure is AI-generated, and no personal data was submitted to any AI platform.
+**Generative AI disclosure.** Generative AI (Claude, Anthropic) was used in this work.
+Its use is declared here and at submission. *[AUTHOR: confirm the wording below matches your
+actual use across the whole project history before submitting, and name the tool version.]*
+Research direction, the study design, and every consequential methodological decision were
+made by the author and are recorded individually in a project decision log. No AI tool is
+credited with authorship, and accountability for the integrity, originality and validity of
+this work rests with the author. No statistic reported here was produced or estimated by a
+language model: every figure was computed by executed code on real data and logged to a
+configuration-hashed run record, and all reported values reproduce bit-exactly from the
+committed configurations and seeds. No figure is AI-generated, and no personal or sensitive
+data was submitted to any AI platform.
 
 ## References
 

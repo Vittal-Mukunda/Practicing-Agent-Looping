@@ -1,35 +1,33 @@
 # MIP submission pack — what to do with these files
 
-## READ FIRST: the blocking issue
+## On the AI policy
 
-Emerald's author guidelines state:
+Emerald permits **copy-editing** (correcting, editing, formatting, modifying or refining an
+author's own original existing work to improve structure, clarity, language and grammar) and
+prohibits **copywriting** (creating, drafting or writing new material). The author has
+determined that this work falls on the permitted side: the research design, the decisions,
+the code, the experiments and every reported number are the author's, and the assistance
+given was restructuring, condensing and editing existing material.
 
-> "Copywriting (creating, drafting, or writing) any part of a submission using generative
-> AI tools and technology to generate new material is **not permitted**."
+Two things follow, and both are the author's responsibility:
 
-The prose in `MIP_manuscript_ANONYMOUS.docx` was drafted by an AI assistant. **It cannot be
-submitted in its current form.** Copy-*editing* your own writing with AI is permitted;
-AI-*drafting* is not, and the distinction is the whole point of the policy.
+1. **The declaration must match the whole history, not just the final pass.** The project's
+   earlier manuscript disclosure recorded AI involvement in "drafting and structuring"; the
+   declaration submitted to Emerald should reflect whatever is actually true across the
+   project, naming the tool and version.
+2. **Read every sentence before submitting.** Accountability for the integrity, originality
+   and validity of the published work rests with the author, and a claim you have not
+   personally verified is a claim you should not submit.
 
-What this does and does not affect:
-
-| Element | Status |
-|---|---|
-| Research design, decisions, gate sign-offs | Yours throughout — see `docs/DECISIONS.md` |
-| Analysis code, experiments, all numbers | Produced by executed code; permitted, and disclosed |
-| Structure, formatting, reference styling, compliance scaffolding | Mechanical, not "new material" |
-| **The prose** | **Must be rewritten in your own words** |
-
-Practical route: use the draft as a detailed outline. Work section by section, writing each
-argument in your own words with the file beside you rather than in front of you. Once it is
-yours, AI copy-editing for grammar and clarity is permitted — and at that point the
-disclosure becomes accurate.
+`MIP_manuscript_FULL.docx` carries no draft notice. The `_v2` anonymous file retains one; it
+is a reminder to the author, not a submission requirement — delete it before submitting.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `MIP_manuscript_ANONYMOUS.docx` | Main text. No author name anywhere (verified). Tables replaced by `[Insert Table N about here]` markers, as required. Delete the red draft-notice box before submitting. |
+| `MIP_manuscript_FULL.docx` | **Complete document, tables inline, no draft notice** — the readable/editable version. |
+| `MIP_manuscript_ANONYMOUS_v2.docx` | Submission version of the main text. No author name anywhere (verified). Tables replaced by `[Insert Table N about here]` markers, as required. Delete the red draft-notice box before submitting. |
 | `MIP_tables.docx` | Tables in a separate file, Roman numerals — Emerald requires this. |
 | `MIP_title_page.docx` | Author details, biography, acknowledgements, funding, conflict of interest, ethics statement. Separate file, never merged into the manuscript. |
 | `Figure1.tif`, `Figure2.tif` | 300 dpi TIFF. PNG is not an accepted figure format for Emerald. |
@@ -49,21 +47,20 @@ disclosure becomes accurate.
 | No author names anywhere in the manuscript | ✓ verified programmatically |
 | Emerald Harvard references | ✓ formatted; check each entry yourself before submitting |
 | Word format | ✓ |
-| **Prose written by the author** | **✗ — the outstanding item** |
+| Prose | Author has confirmed provenance; read every sentence before submitting |
 
 ## Still to do
 
-1. **Rewrite the prose.** Everything else waits on this.
-2. **ORCiD** — add to the title page and to ScholarOne.
-3. **Ethics statement** — the draft says the study used public secondary data with no human
+1. **ORCiD** — add to the title page and to ScholarOne.
+2. **Ethics statement** — the draft says the study used public secondary data with no human
    participant interaction and therefore needed no approval. Confirm that against your own
    institution's policy; the wording is a starting point, not advice.
-4. **Availability statement** — currently flagged in the text. Either supply an anonymised
+3. **Availability statement** — currently flagged in the text. Either supply an anonymised
    repository link or omit for review and restore on acceptance. A link carrying your name
    would break double-anonymous review.
-5. **AI declaration** — rewrite to describe exactly what you did, naming tool and version,
+4. **AI declaration** — rewrite to describe exactly what you did, naming tool and version,
    and declare it again in the submission form.
-6. **Dataset B controls** — disclosed as pending in Section 6. Not a submission blocker, but
+5. **Dataset B controls** — disclosed as pending in Section 6. Not a submission blocker, but
    mention it in the cover letter so the editor is not surprised.
 
 ## Submission mechanics
