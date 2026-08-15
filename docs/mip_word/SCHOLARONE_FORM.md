@@ -71,7 +71,7 @@ your name, affiliation and the repository URL, which would break double-anonymou
 
 | Requirement | Status |
 |---|---|
-| Length 6,000 to 8,000 words | 6,883 at 250 words per table/figure; 7,093 at 280. Inside the band on either count |
+| Length 6,000 to 8,000 words | 6,982 at 250 words per table/figure; 7,192 at 280. Inside the band on either count |
 | Title within 20 words | 13 |
 | Abstract within 250 words including keywords and classification | 246 |
 | Each abstract section within 100 words | longest is 66 |
@@ -94,5 +94,6 @@ your name, affiliation and the repository URL, which would break double-anonymou
    article, naming the tool and version, and make it match the whole project history.
 4. **Cover letter.** Mention that the two controls in Sections 4.3 and 4.4 were run on one
    dataset and the replication is pending, so the editor is not surprised by Section 6.
-5. **Reference check.** Verify each of the 23 entries against the source. Automated
-   formatting is not a substitute for checking.
+5. **References already verified.** All 23 were checked against OpenAlex, Crossref and
+   PMLR on 15 Aug 2026; see REFERENCE_VERIFICATION.md. No factual error was found and four
+   entries gained confirmed proceedings detail.
