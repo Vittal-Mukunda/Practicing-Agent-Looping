@@ -476,23 +476,28 @@ usable immediately: incumbent representations are hard to beat, interpretable co
 are cheap to construct directly, and the cost of an interpretable persona is now a number
 rather than an assumption.
 
-**Data and code availability.** All configurations, seeds and analysis code are available,
-and reported results reproduce bit-exactly from the committed configurations.
+**Data and code availability.** Both datasets are publicly available. All configurations,
+seeds and analysis code are archived and will be released on publication; reported results
+reproduce bit-exactly from the committed configurations. *[AUTHOR: for double-anonymous
+review, supply an anonymised repository link here or omit this statement and restore it on
+acceptance — a link carrying your name would compromise anonymity.]*
 
-**Generative AI disclosure.** Generative AI (Claude, Anthropic) was used in implementing the
-analysis code, in literature retrieval and verification, and in drafting this manuscript. No
-AI tool is credited with authorship; accountability for the work rests with the author. No
-statistic reported here was produced or estimated by a language model — every figure was
-computed by executed code on real data and logged to a configuration-hashed run record. No
+**Generative AI disclosure.** *[AUTHOR: rewrite this paragraph to describe exactly your
+own use, naming the tool and version, and note that Emerald does not permit AI-generated
+drafting of submission text. The statement below describes the analysis pipeline only and is
+accurate for that; it must not be left as-is if any drafting assistance was used.]* No
+statistic reported here was produced or estimated by a language model: every figure was
+computed by executed code on real data and logged to a configuration-hashed run record, and
+the reported values reproduce bit-exactly from the committed configurations and seeds. No
 figure is AI-generated, and no personal data was submitted to any AI platform.
 
 ## References
 
-Boussebough, I., Zarour, K., Aouabdia, C. and Boutina, D.S. (2026), "Multi-view customer segmentation in the digital economy: balancing performance and interpretability for actionable insights", *Journal of Telecommunications and the Digital Economy*, Vol. 14 No. 2, pp. 58-83.
+Boussebough, I., Zarour, K., Aouabdia, C. and Boutina, D.S. (2026), "Multi-view customer segmentation in the digital economy: balancing performance and interpretability for actionable insights", *Journal of Telecommunications and the Digital Economy*, Vol. 14 No. 2, pp.58-83.
 
 Chen, R.T.Q., Li, X., Grosse, R. and Duvenaud, D. (2018), "Isolating sources of disentanglement in variational autoencoders", *Advances in Neural Information Processing Systems*.
 
-Dolnicar, S. and Leisch, F. (2010), "Evaluation of structure and reproducibility of cluster solutions using the bootstrap", *Marketing Letters*, Vol. 21 No. 1, pp. 83-101.
+Dolnicar, S. and Leisch, F. (2010), "Evaluation of structure and reproducibility of cluster solutions using the bootstrap", *Marketing Letters*, Vol. 21 No. 1, pp.83-101.
 
 Grigorova, I., Efremov, A.S. and Karamfilov, A. (2025), "An automated machine learning framework for interpretable customer segmentation in financial services", *International Journal of Financial Studies*, Vol. 13 No. 4, art. 243.
 
@@ -500,11 +505,11 @@ Grinsztajn, L., Oyallon, E. and Varoquaux, G. (2022), "Why do tree-based models 
 
 Higgins, I., Matthey, L., Pal, A., Burgess, C., Glorot, X., Botvinick, M., Mohamed, S. and Lerchner, A. (2017), "β-VAE: learning basic visual concepts with a constrained variational framework", *International Conference on Learning Representations*.
 
-Holm, S. (1979), "A simple sequentially rejective multiple test procedure", *Scandinavian Journal of Statistics*, Vol. 6 No. 2, pp. 65-70.
+Holm, S. (1979), "A simple sequentially rejective multiple test procedure", *Scandinavian Journal of Statistics*, Vol. 6 No. 2, pp.65-70.
 
 Hsu, P.-F., Lu, Y.-H., Chen, S.-C. and Kuo, P.-Y. (2023), "Creating and validating predictive personas for target marketing", *International Journal of Human-Computer Studies*, Vol. 181, art. 103147.
 
-Hubert, L. and Arabie, P. (1985), "Comparing partitions", *Journal of Classification*, Vol. 2 No. 1, pp. 193-218.
+Hubert, L. and Arabie, P. (1985), "Comparing partitions", *Journal of Classification*, Vol. 2 No. 1, pp.193-218.
 
 Hughes, A.M. (1994), *Strategic Database Marketing*, Probus, Chicago, IL.
 
@@ -526,13 +531,13 @@ Margeloiu, A., Ashman, M., Bhatt, U., Chen, Y., Jamnik, M. and Weller, A. (2021)
 
 Nai, R., Wen, Z., Li, J., Li, Y. and Gao, Y. (2024), "Revisiting disentanglement in downstream tasks: a study on its necessity for abstract visual reasoning", *AAAI Conference on Artificial Intelligence*.
 
-Salminen, J., Guan, K., Jung, S.G. and Jansen, B.J. (2021), "A survey of 15 years of data-driven persona development", *International Journal of Human-Computer Interaction*, Vol. 37 No. 18, pp. 1685-1708.
+Salminen, J., Guan, K., Jung, S.G. and Jansen, B.J. (2021), "A survey of 15 years of data-driven persona development", *International Journal of Human-Computer Interaction*, Vol. 37 No. 18, pp.1685-1708.
 
 Sawada, Y. and Nakamura, K. (2022), "Concept bottleneck model with additional unsupervised concepts", *IEEE Access*.
 
-Träuble, F., Creager, E., Kilbertus, N., Locatello, F., Dittadi, A., Goyal, A., Schölkopf, B. and Bauer, S. (2021), "On disentangled representations learned from correlated data", *International Conference on Machine Learning*, PMLR 139, pp. 10401-10412.
+Träuble, F., Creager, E., Kilbertus, N., Locatello, F., Dittadi, A., Goyal, A., Schölkopf, B. and Bauer, S. (2021), "On disentangled representations learned from correlated data", *International Conference on Machine Learning*, PMLR 139, pp.10401-10412.
 
-Xie, J., Girshick, R. and Farhadi, A. (2016), "Unsupervised deep embedding for clustering analysis", *International Conference on Machine Learning*, pp. 478-487.
+Xie, J., Girshick, R. and Farhadi, A. (2016), "Unsupervised deep embedding for clustering analysis", *International Conference on Machine Learning*, pp.478-487.
 
 ---
 
