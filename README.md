@@ -30,8 +30,9 @@
 > and again inside a fresh clone. Canonical copies of every table live in
 > [docs/NOTEBOOK.md](docs/NOTEBOOK.md); the `results/` tree is gitignored and
 > regenerable from the committed configs and seeds. Nothing here is projected,
-> estimated, or extrapolated. Analyses that are **implemented but not yet run** are
-> labelled *pre-registered* and appear only in Section V-F — never as results.
+> estimated, or extrapolated. The two pre-registered controls have now been run on Dataset A
+> (Sections VI-D2, VI-E2) on the same reference machine; their Dataset B counterparts remain
+> **not yet run** and are labelled as such wherever they appear.
 
 ---
 
@@ -51,10 +52,16 @@ public datasets (2,240 customers; 2.55 million users aggregated from 110 million
 288 sweep runs and six seeds per point, the findings are largely negative and specific.
 Non-neural incumbents set the bars: PCA reaches test PR-AUC 0.5677 ± 0.0729 on campaign
 response and three raw RFM features reach 0.1953 ± 0.0035 on future purchase, both beating
-a trained autoencoder. At its validation-selected operating point CA-DVAE reaches named-axis
-alignment R² up to 0.968 but sits significantly below both bars (0.5130 ± 0.0597 and
-0.1798 ± 0.0051), and its personas are markedly less stable than incumbent personas
-(ARI 0.467 / 0.583 versus 0.975 / 0.962 for RFM+K-means). Three positive findings emerge:
+a trained autoencoder. At its validation-selected operating point CA-DVAE reaches
+block-level construct alignment R² up to 0.968 but sits significantly below both bars
+(0.5130 ± 0.0597 and 0.1798 ± 0.0051), and its personas are markedly less stable than
+incumbent personas (ARI 0.467 / 0.583 versus 0.975 / 0.962 for RFM+K-means). Two
+pre-registered controls sharpen the negative result. A concept-leakage diagnostic shows the
+alignment is a property of the aligned *block*, not of individual axes: mean best-single-axis
+R² is 0.406 and mean axis purity is −0.025, so a named axis typically predicts some other
+construct as well as its own. And a zero-training control that simply uses the constructs as
+coordinates alongside PCA of the residual is statistically indistinguishable from the swept
+neural model while holding perfect axis purity by construction. Three positive findings emerge:
 against the *neural* incumbent the aligned model matches stability at matched performance
 and wins dormancy prediction in both test families; on the behavioural dataset the twelve
 named axes alone carry as much downstream signal as the autoencoder's full unnamed embedding;
@@ -157,7 +164,10 @@ The contributions of this work are as follows:
   hyperparameter selection — enforced by unit tests rather than by convention.
 - An empirical interpretability–performance–stability trade-off surface for construct-aligned
   persona representations, with the cost of interpretability quantified on both axes and
-  the operating point selected on validation data only.
+  the operating point selected on validation data only — together with two pre-registered
+  controls that test the mechanism rather than assume it: a concept-leakage diagnostic
+  separating block-level from axis-level alignment, and a zero-training named-axis control
+  that the swept model fails to beat.
 - Four findings that hold regardless of how the proposed model fares: learned neural
   embeddings do not automatically beat linear or heuristic incumbents under leakage-safe
   future-behaviour evaluation; hard cluster personas discard a large fraction of their
@@ -519,7 +529,7 @@ Fixed before any proposed-model run:
 | # | Hypothesis | Falsified if | Outcome |
 |---|---|---|---|
 | H1 | A construct-aligned representation matches or beats the strongest baseline on primary downstream lift | Sweet-spot PR-AUC significantly below the bar in both test families | **Falsified** on both datasets (VI-B) |
-| H2 | Alignment produces axes that predict the named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Supported** on prediction (VI-C); *purity* not yet tested (V-F) |
+| H2 | Alignment produces axes that predict the named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Split**: supported at *block* level (R² 0.87), **falsified at axis level** — mean purity −0.025 (VI-D2) |
 | H3 | Construct anchoring stabilizes personas relative to incumbents | Incumbent personas at least as stable as aligned ones | **Falsified** (VI-D) |
 | H4 | Increasing β improves downstream lift | Lift flat or decreasing in β | **Falsified**, in the direction [25] predicts (VI-B) |
 
@@ -541,8 +551,9 @@ pins the dual-evaluation heads to the exact Phase-3 specification. The same audi
 per-task best-baseline comparisons (avoiding straw-man significance tests) and atomic
 record writes.
 
-Two analyses are **implemented and unit-tested but not yet run**, and are reported here as
-pre-registered protocol, never as results:
+Two analyses were pre-registered here and have now been **run on Dataset A** (results in
+Sections VI-D2 and VI-E2); the Dataset B runs remain pending the raw event logs. They are
+described here as designed, before their outcomes, because they were specified in advance:
 
 1. **Named-axis baselines** (`constructs`, `construct_pca` in
    `cadvae.eval.representations`). Because the constructs are deterministic functions of
@@ -688,9 +699,10 @@ downstream head needs.
 
 ### C. Interpretability: The Mechanism Works, and MIG Does Not
 
-At the selected points the named axes carry their constructs strongly: Dataset A reaches
-mean alignment R² 0.854 with RFM-axis R² **0.968**; Dataset B reaches RFM-axis R² up to
-0.88 at λ = 4. Persona cards built from latent traversals are visually consistent with the
+At the selected points the aligned **block** carries the constructs almost perfectly:
+Dataset A reaches mean alignment-head R² 0.854 with RFM R² **0.968**; Dataset B reaches
+RFM R² up to 0.88 at λ = 4. **This is a block-level result, and Section VI-D2 shows it does
+not survive translation into a claim about individual axes.** Persona cards built from latent traversals are visually consistent with the
 names: Dataset A's price-sensitivity axis moves +deals / +kidhome / +recency against
 −income / −premium spend, which is deal-reliance semantics; every Dataset B affinity axis
 moves its own category share as the dominant feature.
@@ -717,6 +729,57 @@ tested, while R²-selection is slack-invariant on A and moves gracefully along t
 on B. Both curves are still emitted. MIG is low everywhere on Dataset A (0.02–0.05),
 which is itself a caution about its usefulness for continuous, correlated business
 constructs.
+
+### D2. Concept Leakage: The Named Axes Do Not Survive the Purity Test
+
+The alignment R² reported above is the diagonal of a matrix, and concept leakage is what
+inflates a diagonal [21], [22]. Running the pre-registered diagnostic on Dataset A's
+selected point (β = 0.25, λ = 4; 10 aligned / 6 free dims; 6 seeds) separates two claims
+the manuscript had been treating as one.
+
+**TABLE VIII** — Concept-leakage diagnostic, Dataset A at the selected point (6 seeds)
+
+| Construct | Best single axis R² | Best off-target R² | Purity | Aligned **block** R² | Free block R² |
+|---|---|---|---|---|---|
+| rfm_R (recency) | 0.423 | 0.296 | **+0.127** | 0.989 | 0.021 |
+| rfm_F (frequency) | 0.467 | 0.616 | **−0.149** | 0.988 | 0.167 |
+| rfm_M (monetary) | 0.572 | 0.535 | +0.036 | 0.985 | 0.334 |
+| price_sensitivity | 0.547 | 0.538 | +0.009 | 0.963 | 0.130 |
+| affinity_wines | 0.532 | 0.382 | **+0.151** | 0.881 | 0.092 |
+| affinity_fruits | 0.328 | 0.347 | −0.019 | 0.759 | 0.045 |
+| affinity_meat | 0.277 | 0.362 | −0.085 | 0.774 | 0.054 |
+| affinity_fish | 0.281 | 0.358 | −0.078 | 0.757 | 0.049 |
+| affinity_sweet | 0.274 | 0.448 | **−0.174** | 0.778 | 0.045 |
+| affinity_gold | 0.356 | 0.426 | −0.069 | 0.861 | 0.086 |
+| **mean** | **0.406** | — | **−0.025** | **0.873** | **0.102** |
+
+**What holds.** The aligned block *jointly* encodes the named constructs almost perfectly —
+mean block R² 0.873, and 0.985–0.989 for the three RFM constructs. Any named construct can
+be recovered from the ten aligned dimensions by a linear read-out. The block is a genuine
+**named subspace**, and Section VI-E confirms it is predictively load-bearing.
+
+**What does not hold.** The claim that individual *axes* are nameable fails on this
+evidence. Mean best-single-axis R² is **0.406**, not 0.87, and mean purity is
+**−0.025** — the axis that best predicts a given construct predicts some *other* construct
+equally well or better, on average. Six of the ten constructs have negative purity;
+frequency (−0.149) and sweet-affinity (−0.174) are worst. The mechanism is visible in the
+assignment itself: across seeds the ten constructs claim only **5.0 distinct winning
+dimensions** on average, so several constructs compete for the same axis.
+
+Free-block recoverability is comparatively low (mean R² 0.102, leakage ratio 0.117), so
+the failure is **not** the side-channel leakage of [21] — the constructs stay inside the
+aligned block. It is *within-block entanglement*: the block encodes the constructs as a
+distributed code rather than as separated directions.
+
+**Consequence for the paper's claims.** Hypothesis H2 is supported at block level and
+**falsified at axis level**. Reported alignment-head R² of 0.968 — the number this project
+had been citing as its interpretability evidence — is a block-level regression and does not
+license "there is a dimension you can point at and call recency". Persona cards built by
+traversing a single axis are therefore moving a direction that mixes several constructs,
+and the visual plausibility of those cards (Section VI-C) is weaker evidence than it
+appears. Restating the interpretability claim as *named subspace, not named axes* is the
+honest reading, and it is the measurement framework catching a failure that the standard
+reporting concealed.
 
 ### D. Stability: A Cost, Not a Benefit — and a Confound
 
@@ -775,14 +838,66 @@ the full latent. The named block is therefore predictively load-bearing rather t
 decorative — though this does not by itself establish construct purity, and the two claims
 should not be conflated.
 
-Two caveats are recorded with this table. First, it does not settle *concept leakage*
-(Section V-F): showing that the aligned block is informative is not the same as showing
-that each named axis carries only its own construct, which is what the purity diagnostic
-measures. Second, the block-restricted heads reproduce the sweep records
+Two caveats are recorded with this table. First, it does not settle *concept leakage*:
+showing that the aligned block is informative is not the same as showing that each named
+axis carries only its own construct. Section VI-D2 now runs that test, and the distinction
+turns out to matter — the block is informative, the individual axes are not separated. Second, the block-restricted heads reproduce the sweep records
 bit-exactly on B (2.8 × 10⁻¹⁷) but deviate by 5.3 × 10⁻³ on A — cross-hardware encoding
 noise (sweep embeddings from a Kaggle T4 under torch 2.10, re-encoded on the RTX 4050
 under torch 2.6) amplified by A's 448-row test set. B's 509k-row pipeline absorbs it. The
 magnitude is measured rather than assumed.
+
+### E2. The Strip Test: A Zero-Training Named-Axis Control
+
+The sharpest objection to the alignment mechanism is that the constructs are deterministic
+functions of the features (Section IV-C), so a representation with named axes is available
+without any training at all. Running the pre-registered control on Dataset A answers it.
+
+**TABLE IX** — Named-axis controls versus the proposed model, Dataset A (6 seeds, gbt head)
+
+| Representation | Test PR-AUC | Named axes | Training |
+|---|---|---|---|
+| raw features (ceiling)* | 0.6066 ± 0.0749 | none | none |
+| **PCA (d=16) — the bar** | **0.5677 ± 0.0729** | none | none |
+| `construct_pca` = [C ‖ PCA(residual)] | 0.5438 ± 0.0640 | **10, R² = 1 by construction** | **none** |
+| CA-DVAE (β = 0.25, λ = 4) | 0.5130 ± 0.0597 | 10, mean axis R² 0.406 | 144-run sweep |
+| `constructs` (C alone, 10 dims) | 0.4129 ± 0.0650 | 10, R² = 1 by construction | none |
+
+*Excluded from bar selection.
+
+Three paired comparisons over the six shared seeds, Holm-corrected within the family:
+
+| Comparison | Δ | Cohen's d_z | Wilcoxon | paired t | Holm-adj. t |
+|---|---|---|---|---|---|
+| `construct_pca` − CA-DVAE | +0.0307 | +0.82 | 0.094 | 0.099 | 0.199 |
+| PCA − `construct_pca` | +0.0239 | +0.54 | 0.438 | 0.241 | 0.241 |
+| `construct_pca` − `constructs` | +0.1308 | +5.46 | **0.031** | **4 × 10⁻⁵** | **1.3 × 10⁻⁴** |
+
+**The proposed model does not beat the control.** `construct_pca` is numerically ahead of
+CA-DVAE on five of six seeds (+0.031 mean, d_z = 0.82) while being statistically
+indistinguishable from it, and it is likewise indistinguishable from the PCA bar. The
+correct statement is not "the closed-form control wins" — at n = 6 this study cannot
+establish that — but the burden runs the other way: **a 144-run sweep over a neural
+architecture fails to demonstrate any advantage over a representation obtained in closed
+form from the same features, on the dataset where the alignment mechanism is strongest.**
+
+Read together with Section VI-D2 the position is worse for the proposed model than the
+lift numbers alone suggest. `construct_pca` has exactly one axis per construct, with
+R² = 1 and perfect purity by construction — precisely the property CA-DVAE claims and, per
+Table VIII, does not deliver. On Dataset A the control matches it on downstream lift and
+strictly dominates it on the interpretability property both are competing on.
+
+One positive result survives, and it is not trivial: `constructs` alone reaches only
+0.4129, far below `construct_pca` (Δ = +0.131, d_z = 5.46, significant under both families
+and after correction). The residual block carries real signal that the named constructs do
+not. Interpretable coordinates alone are **not** sufficient; the free capacity alongside
+them is doing necessary work. That finding holds for CA-DVAE's design too — it is the one
+architectural intuition of this project the data support — but it does not require a VAE
+to obtain.
+
+**Scope.** This is Dataset A only. Dataset B is where the control should bite hardest,
+since its 17 construct targets subsume the three RFM features that already beat every
+learned representation there; that run is pending the raw event logs (Section V-F).
 
 ### F. Where the Aligned Model Wins
 
@@ -845,6 +960,15 @@ three-way, not two-way, and the stability leg is the one the project's own desig
 originally got backwards. A practitioner can now make the trade explicitly instead of
 assuming it away.
 
+**But the price may not buy anything a simpler method cannot.** The two pre-registered
+controls, now run on Dataset A, both point the same way. The alignment is a property of the
+aligned block rather than of individual axes (mean axis purity −0.025), so the "named axis"
+reading the persona cards depend on is not supported; and a closed-form control with genuinely
+one axis per construct matches the swept model's downstream lift. Where the sweep buys
+something real is the residual capacity — constructs alone reach 0.4129 against 0.5438 with a
+residual block — but that is an argument for pairing interpretable coordinates with free
+capacity, not an argument for learning them with a VAE.
+
 **When each representation is the right choice.** If the goal is ranking customers by
 purchase propensity, use RFM: it is more accurate, more stable, free, and needs no GPU.
 If the goal is a persona scheme that names its own axes, supports traversal-based
@@ -868,8 +992,11 @@ collapsed ones.
 
 **Construct validity.** The constructs are deterministic functions of the features, so the
 alignment task adds no information and can only shape geometry (Section IV-C). The
-attribution analysis (VI-E) rules out the strongest form of the circularity objection but
-not concept leakage, whose diagnostic is pre-registered and unrun. Dataset B's
+attribution analysis (VI-E) counts against the strongest form of the circularity objection,
+and the leakage diagnostic (VI-D2) has now been run on Dataset A: it shows the alignment is
+block-level, with individual axes unseparated (mean purity −0.025). The equivalent run on
+Dataset B is pending, and its 17 correlated construct targets make within-block entanglement
+more likely there, not less. Dataset B's
 price-sensitivity target measures browsed price tier, not discount responsiveness.
 
 **Internal validity.** On Dataset A the split is redrawn per seed, so paired tests pair
@@ -1013,10 +1140,10 @@ also report machine learning exposing heterogeneity within dormant customers tha
 misses, which is consistent with this paper's dormancy finding (Section VI-F) — but it
 does not pre-empt the mechanism.
 
-**Future work, in priority order.** (1) Run the two pre-registered analyses of Section V-F
-— the named-axis baselines are the strip test this paper most needs, since a
-zero-training `[constructs | PCA(residual)]` representation has perfect named axes by
-construction, and the concept-leakage diagnostic completes the interpretability evidence.
+**Future work, in priority order.** (1) Repeat the two pre-registered controls of
+Section V-F on **Dataset B**, where both should bite harder: its 17 construct targets subsume
+the RFM features that already beat every learned representation, and correlated targets make
+within-block entanglement more likely. The Dataset A runs (VI-D2, VI-E2) are complete.
 (2) **Joint stochastic and temporal stability** — measuring both properties on the same
 representations, since [32] shows the temporal property is where data-driven personas
 actually fail (40% average change over 32 monthly rounds) and this study measures only the
@@ -1031,9 +1158,10 @@ the paper measures.
 This work replaces an unmeasured marketing artifact with three falsifiable measurements,
 builds the harness to take them honestly, and reports what the measurements say. They say
 that construct-aligned personas cost predictive lift and cost stability, that the
-incumbents this literature dismisses are hard to beat under honest evaluation, and that
-the interpretability being purchased is real — the named axes carry as much downstream
-signal on behavioural data as an autoencoder's entire embedding. Of four pre-registered
+incumbents this literature dismisses are hard to beat under honest evaluation, and that the
+interpretability being purchased is real but narrower than claimed — a named *subspace*
+rather than named axes, and one a closed-form control obtains without training or a
+measurable loss in lift. Of four pre-registered
 hypotheses, three were falsified, including one the project's own design expected to hold.
 The methodological findings — MIG-based selection inverting the alignment-strength ordering
 under correlated constructs, and the collapse-stability confound that makes unqualified
@@ -1202,8 +1330,9 @@ powercfg /change standby-timeout-ac 0     # once, before an overnight run
 .venv\Scripts\python.exe -m cadvae.eval.repro_check data=ecommerce eval.train_subsample=200000 model.max_epochs=40
 ```
 
-**Pre-registered additions (Section V-F), not yet run.** Both are wired into the existing
-entry points; neither needs new infrastructure, and neither requires re-running the sweep.
+**Pre-registered controls (Section V-F).** Both have been run on Dataset A; the commands
+below reproduce that, and the same commands with `data=ecommerce` complete Dataset B once
+its raw logs are present. Neither needs new infrastructure or a re-sweep.
 
 The Phase-5 artifacts live on the `kaggle-results` branch (288 model state_dicts, 292 run
 records), not in the working tree. Restore them first — this is a download, not a
@@ -1267,7 +1396,7 @@ Regenerated by `run_phase6` into `results/phase6/{personality,ecommerce}_analysi
 | `persona_cards.png` | Latent traversals along each named axis, standardized deltas with raw-unit annotations | VI-C |
 | `attribution.json` | Downstream performance by latent block (aligned / free / full) | VI-E |
 | `smp.json` | Stability at Matched Performance | VI-D |
-| `leakage.json` | Concept-leakage diagnostic at the selected point: axis purity, off-target R², free-block recoverability | V-F (pending run) |
+| `leakage.json` | Concept-leakage diagnostic at the selected point: axis purity, off-target R², free-block recoverability | **VI-D2 (Dataset A run)** |
 | `baseline_stability.json` | Cross-seed ARI for incumbent persona pipelines | VI-D |
 | `stability_k_sensitivity.json` | Stability over K ∈ {5, 8, 12} | VI-D |
 | `selection_sensitivity.json` | Sweet-spot robustness to the selection slack | VI-C |

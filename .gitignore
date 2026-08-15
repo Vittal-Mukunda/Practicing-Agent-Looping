@@ -27,3 +27,8 @@ desktop.ini
 
 # Built manuscript artifacts (regenerate from README.md)
 docs/CA-DVAE-paper.html
+
+# Raw + processed data (license posture; see data/README.md)
+data/raw/
+data/processed/
+data/interim/

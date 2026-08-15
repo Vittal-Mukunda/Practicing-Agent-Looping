@@ -188,3 +188,12 @@ datasets + GPU) and 8.21 (MIP conversion, recommended after 8.20).
 | 8.30 | Verify whether Phase-5 sweep artifacts still exist | **Completed** — D-048; 288 state_dicts + 292 records intact on `origin/kaggle-results`. Restore command added to Appendix A |
 | 8.31 | Propagate the D-045 MIG narrowing into the Introduction; soften "survive"/"most signal" | **Completed** — D-049 |
 | 8.20 | Run the named-axis baseline + leakage diagnostic on real data | **STILL BLOCKED (owner)** — sole prerequisite is the processed data caches; artifacts and code are both ready |
+
+### Phase 8 addendum 5 (2026-08-15): controls RUN on Dataset A
+
+| # | Task | Status |
+|---|------|--------|
+| 8.20a | Named-axis control (`constructs`, `construct_pca`), Dataset A | **DONE** — VI-E2; CA-DVAE not shown to beat it (Δ +0.031 to the control, 5/6 seeds, ns) |
+| 8.20b | Concept-leakage diagnostic, Dataset A | **DONE** — VI-D2; block R² 0.873 but mean axis purity −0.025 → H2 split |
+| 8.20c | Both controls on Dataset B | **Pending** — needs ~14.7 GB raw logs; expected to bite harder |
+| 8.32 | Environment integrity check before trusting new numbers | **DONE** — non-neural baselines + CA-DVAE sweet spot reproduce bit-exactly on CPU |

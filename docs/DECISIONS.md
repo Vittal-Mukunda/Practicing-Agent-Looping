@@ -846,3 +846,37 @@ cheaper than the manuscript implied.**
 - **Not worked around:** sourcing the datasets from a non-Kaggle mirror would produce
   numbers not comparable to the pre-registered bars, and Kaggle download requires the
   owner's API token, which is theirs to use and not to be handled here.
+
+**D-051 (2026-08-15) — the two pre-registered controls RUN on Dataset A; H2 splits.**
+- Owner supplied Dataset A. Verified before use (tab-separated, 29 fields, 2240 rows,
+  md5 3b624fc2bdbe29fa5fb01bdd577f78cd) and, critically, the run was **validated against
+  the recorded bars before any new number was trusted**: on CPU, pca/rfm/raw reproduce
+  Table I bit-exactly and the CA-DVAE sweet spot reproduces at 0.5130+/-0.0597 exactly.
+  Only `ae` drifts (0.5189 vs 0.5156), consistent with CPU-vs-CUDA in the neural trainer.
+- **Strip test (D-036):** construct_pca 0.5438+/-0.0640 vs CA-DVAE 0.5130+/-0.0597 —
+  the control is ahead on 5/6 seeds (+0.031, dz 0.82) but the difference is NOT significant
+  (Holm-adjusted t = 0.199), and the control is likewise indistinguishable from the PCA bar.
+  **Claim recorded as: the sweep fails to demonstrate an advantage over a closed-form
+  representation built from the same features — not that the control wins.** n=6 cannot
+  support the stronger reading, and overstating it would repeat the error this project
+  exists to avoid.
+  Genuine positive: constructs alone 0.4129 vs construct_pca 0.5438 (dz 5.46, significant
+  after correction) — the residual block is load-bearing. Interpretable coordinates alone
+  are insufficient; free capacity alongside them is necessary. That vindicates the
+  aligned/free *design*, not the VAE.
+- **Concept leakage (D-037) — the more consequential result.** Aligned BLOCK R2 0.873
+  (RFM 0.985-0.989), but mean best-SINGLE-AXIS R2 only **0.406** and mean purity
+  **-0.025**, with 6/10 constructs negative. Free-block R2 0.102 => this is NOT the
+  side-channel leakage of Mahinpei et al.; the constructs stay inside the block. It is
+  **within-block entanglement**, independently confirmed by the assignment collapsing onto
+  **5.0 distinct dims** for 10 constructs.
+- **Conflation corrected (CONSEQUENTIAL).** The "0.968 RFM axis R2" this project had been
+  citing as its interpretability evidence is the alignment HEAD's R2 — a linear read-out of
+  the whole 10-dim block — not a per-axis quantity. It does not license "there is a
+  dimension you can point at and call recency". **H2 is now split: supported at block
+  level, falsified at axis level.** The interpretability claim is restated throughout as
+  **named subspace, not named axes**, and the persona-card evidence is downgraded
+  accordingly (traversing one axis moves a mixed direction).
+- Net: the measurement framework caught a failure that the project's own standard reporting
+  concealed. That is the strongest available argument for the paper's thesis, and it arrived
+  by running the control rather than by arguing about it.

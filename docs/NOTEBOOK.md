@@ -838,3 +838,67 @@ the reason D-038 exists: two floor-valued Wilcoxons -> adjusted 0.0625 each, bot
 rejected at alpha=0.05.
 
 **Next (owner):** run 8.5/8.6 and fold into SS VI; read Hsu et al. 2023; then submit.
+
+## 2026-08-15 - Session 10: the two pre-registered controls RUN on Dataset A
+
+Owner supplied the Kaggle archive for Dataset A. Verified before use: tab-separated,
+29 fields, 2241 lines = header + **2240 rows**, md5 3b624fc2bdbe29fa5fb01bdd577f78cd.
+Placed at data/raw/customer_personality/marketing_campaign.csv.
+
+**Environment integrity check FIRST (this is what makes the new numbers usable).**
+Ran on CPU (no GPU in this session) via device=cpu. Re-ran the recorded baselines
+alongside the new ones. Non-neural baselines reproduce **bit-exactly** vs Table I:
+pca 0.5677+/-0.0729, rfm 0.3396+/-0.0462, raw 0.6066+/-0.0749 (gbt); logreg pca
+0.5613+/-0.0349, rfm 0.3794+/-0.0381. Only `ae` differs (0.5189 vs recorded 0.5156
+gbt) - CPU vs CUDA in the neural trainer, expected and documented. Phase-5 sweep
+artifacts restored from origin/kaggle-results (288 state_dicts + 292 records);
+CA-DVAE sweet spot reproduces **exactly** at 0.5130+/-0.0597. Conclusion: the
+environment is trustworthy and the new numbers are comparable to the pre-registered
+bars.
+
+**RESULT 1 - strip test (D-036 named-axis controls), Dataset A, 6 seeds, gbt:**
+| rep | pr_auc |
+|---|---|
+| pca (bar) | 0.5677 +/- 0.0729 |
+| construct_pca | **0.5438 +/- 0.0640** |
+| cadvae sweet (0.25,4) | 0.5130 +/- 0.0597 |
+| constructs alone | 0.4129 +/- 0.0650 |
+
+Paired over 6 shared seeds, Holm within family (m=3):
+- construct_pca - cadvae: +0.0307, dz=+0.82, W 0.094, t 0.099, **Holm 0.199 (ns)**;
+  construct_pca ahead on **5/6 seeds**.
+- pca - construct_pca: +0.0239, W 0.438, t 0.241 (ns).
+- construct_pca - constructs: +0.1308, dz=+5.46, W 0.031, t 4e-5, **Holm 1.3e-4 (sig)**.
+
+Reading: NOT "the control wins" (n=6 cannot establish that). The correct statement is
+that a 144-run sweep **fails to demonstrate any advantage** over a closed-form
+representation built from the same features. The one real positive: the residual block
+matters a lot (constructs alone 0.413 vs 0.544) - interpretable coordinates alone are
+insufficient. That supports pairing named coordinates with free capacity; it does not
+require a VAE.
+
+**RESULT 2 - concept leakage (D-037), Dataset A sweet spot, 10 aligned / 6 free:**
+- aligned **block** R2 mean **0.873** (RFM 0.985-0.989) - block-level alignment is real.
+- mean best-**single-axis** R2 **0.406**; mean **purity -0.025**; 6/10 constructs have
+  NEGATIVE purity (rfm_F -0.149, affinity_sweet -0.174).
+- free-block R2 mean 0.102, leakage_ratio 0.117 -> NOT side-channel leakage; the
+  constructs stay in the block. It is **within-block entanglement**.
+- Mechanism, independently visible: across seeds the 10 constructs claim only **5.0
+  distinct winning dims** on average (seed 0: dims [5,4,8,1,4,7,8,4,5,8] - dim 4 wins
+  3 constructs, dim 8 wins 3).
+
+**This corrects a conflation the project had been making.** The 0.968 "RFM axis R2"
+cited as interpretability evidence is the alignment HEAD's r2 - a linear map from the
+whole 10-dim block. It does NOT license "there is a dim you can point at and name".
+H2 is now **split**: supported at block level, falsified at axis level. Persona cards
+that traverse one axis are moving a mixed direction; their visual plausibility is
+weaker evidence than it looked.
+
+Manuscript updated: new SS VI-D2 (Table VIII) and VI-E2 (Table IX + paired tests);
+abstract, contributions, H2 row, VI-C, VI-E caveat, Discussion, Threats, Future work,
+status block and Appendix A/C all propagated. Interpretability claim restated as
+**named subspace, not named axes**.
+
+**Pending:** both controls on Dataset B (needs the ~14.7 GB raw logs). Expected to bite
+harder there - 17 correlated construct targets make within-block entanglement more
+likely, and those targets subsume the RFM features that already beat everything.
