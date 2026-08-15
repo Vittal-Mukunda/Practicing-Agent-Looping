@@ -1020,3 +1020,20 @@ cheaper than the manuscript implied.**
 - **Note on the reviewer's last point:** the `[Insert Table N about here]` markers in the
   anonymous file are not an oversight — Emerald requires tables in a separate file with
   their position labelled in the text. The author version has them inline for reading.
+
+**D-058 (2026-08-15) — figures embedded; every "pre-specified bar" phrasing resolved.**
+- **Figures are now physically embedded** in both manuscript versions, sized to the page
+  (tall figures capped by height rather than width) with numbered captions beneath. The
+  `[Insert Figure N about here]` placeholders are gone. A separate `MIP_figures.docx` is
+  also produced — figures pasted into a blank Word document, which is what the guidelines
+  ask for — and the 300 dpi TIFF originals are supplied alongside.
+- **Tables deliberately remain as `[Insert Table N about here]` markers in the anonymous
+  submission file.** This is not an oversight: the guidelines require tables in a separate
+  file with their position labelled in the text. The author version has them inline.
+- **"pre-specified" removed from all four bar references** (abstract, tuning-parity result,
+  figure callout, managerial implications). The manuscript spends a paragraph distinguishing
+  advance specification from formal pre-registration, so leaving the shorthand attached to
+  the bars invited exactly the misreading that paragraph exists to prevent. The bars are now
+  described by what actually happened: "fixed before the proposed-model sweep".
+- Word count with the guidelines' 250-per-table/figure allowance: ~6,750, inside the
+  6,000-8,000 band.

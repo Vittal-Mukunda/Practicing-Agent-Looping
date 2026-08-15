@@ -25,11 +25,12 @@ The draft-notice box has been removed from both manuscript files.
 
 | File | Purpose |
 |---|---|
-| `MIP_manuscript_FULL.docx` | **Complete document, tables inline, no draft notice** — the readable/editable version. |
-| `MIP_manuscript_ANONYMOUS.docx` | Submission version of the main text. No author name anywhere (verified). Tables replaced by `[Insert Table N about here]` markers, as required. Delete the red draft-notice box before submitting. |
+| `MIP_manuscript_AUTHOR_VERSION.docx` | Your version: title block with name/affiliation/email, normal repository statement, tables and figures inline. **Not for double-anonymous review.** |
+| `MIP_manuscript_ANONYMOUS.docx` | **The submission file.** No author block; repository link explicitly withheld; figures embedded with captions; tables as position markers. No author name anywhere (verified). Tables replaced by `[Insert Table N about here]` markers, as required. Delete the red draft-notice box before submitting. |
 | `MIP_tables.docx` | Tables in a separate file, Roman numerals — Emerald requires this. |
+| `MIP_figures.docx` | Figures pasted into a blank Word document, per the guidelines. |
 | `MIP_title_page.docx` | Author details, biography, acknowledgements, funding, conflict of interest, ethics statement. Separate file, never merged into the manuscript. |
-| `Figure1.tif`, `Figure2.tif` | 300 dpi TIFF. PNG is not an accepted figure format for Emerald. |
+| `Figure1.tif`, `Figure2.tif` | 300 dpi TIFF originals, supplied alongside as required. |
 
 ## Compliance status
 

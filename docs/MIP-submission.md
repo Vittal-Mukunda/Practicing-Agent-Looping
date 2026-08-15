@@ -20,7 +20,8 @@ marketing constructs, and stability across repeated estimation. Eleven represent
 including RFM, PCA, autoencoders and a construct-aligned variational autoencoder, are
 compared under a frozen-representation protocol on two public datasets (2,240 customers;
 2.55 million users from 110 million events), with leakage guards enforced by automated
-tests, six seeds per result, pre-specified performance bars and familywise correction.
+tests, six seeds per result, performance bars fixed before the proposed-model sweep, and
+familywise correction.
 
 **Findings** — Interpretability is costly and the cost is measurable. Non-neural incumbents
 set the strongest bars; the construct-aligned model falls significantly below both and
@@ -225,7 +226,8 @@ head, six seeds)
 | RFM + k-means personas | 0.2988 ± 0.0182 | 0.1073 ± 0.0064 |
 | CA-DVAE (validation-selected) | 0.5130 ± 0.0597 | 0.1798 ± 0.0051 |
 
-*Excluded from bar selection. Bold marks each dataset's pre-specified bar.
+*Excluded from bar selection. Bold marks each dataset's performance bar, fixed before the
+proposed-model sweep.
 
 The representations this literature most often treats as superseded are the strongest. On
 survey-style data PCA significantly beats a trained autoencoder (*t*, p = 0.002) and is
@@ -238,7 +240,7 @@ silhouette scores on a single run would observe none of this.
 Undertuned baselines are the most common source of illusory improvement, and the proposed
 model receives 24 configurations per seed from the sweep. To keep the comparison fair we ran
 a dedicated tuning study for the strongest neural baseline on the survey dataset — six
-configurations across six seeds. **The pre-specified bar survives**: the best-tuned
+configurations across six seeds. **The bar survives**: the best-tuned
 autoencoder reaches 0.5519 under the tree head, still below PCA. For transparency, an
 autoencoder at twice the proposed model's latent capacity reaches parity with PCA under the
 linear head (0.5731), a difference not statistically distinguishable in either test family.
@@ -255,13 +257,11 @@ extending the grid downward in β — and is therefore reported as a confirmed e
 rather than as a tested hypothesis.
 
 **Figure 1** plots the trade-off surface directly: downstream performance against construct
-alignment across the swept grid, with the pre-specified bar marked. It is the central
+alignment across the swept grid, with the bar marked. It is the central
 artefact of the paper — the exchange rate between accuracy and interpretability, drawn from
 data rather than asserted.
 
-*[Figure 1 near here: `mip_figures/figure1_tradeoff.png` — interpretability–performance
-trade-off surface, Dataset A, with the PCA bar and the validation-selected operating point
-marked.]*
+@@FIGURE1@@Interpretability–performance trade-off surface, Dataset A. Each point is a swept (β, λ) configuration; the horizontal line marks the performance bar fixed before the sweep, and the starred point is the configuration selected on validation data.
 
 ### 4.2 Stability is a cost, not a benefit
 
@@ -308,9 +308,7 @@ are separable gives a different answer.
 | Distinct winning dimensions for 10 constructs | 5.0 | Constructs compete for the same axes |
 | Free-block R², mean | 0.102 | Constructs stay inside the block: not side-channel leakage |
 
-*[Figure 2 near here: `mip_figures/figure2_persona_cards.png` — latent traversals along each
-best-aligned dimension. To be read with this section: the directions are interpretable in
-appearance but are not construct-pure.]*
+@@FIGURE2@@Latent traversals along each best-aligned dimension, Dataset A, showing standardised feature deltas with raw-unit changes annotated. To be read alongside Section 4.3: these directions are interpretable in appearance but are not construct-pure.
 
 **E2 splits: supported at block level, not supported at axis level.** The failure is not the
 side-channel leakage documented by Mahinpei *et al.* (2021) — the constructs remain inside
@@ -448,7 +446,7 @@ being unable to tell. Every result in this study came from infrastructure that i
 modern standards — the entire experimental programme, 288 sweep runs included, consumed
 under nine GPU-hours — while the measurement discipline that produced the findings costs
 nothing but protocol: hold the representation out of the labels, repeat across seeds, fix
-the bar before running the proposed method, and report the comparison you pre-specified
+the bar before running the proposed method, and report the comparison you specified in advance
 rather than the one that looks best afterwards. An organisation that adopts only the
 protocol and none of the models will still be better off than one that adopts a persona
 scheme on narrative appeal.
