@@ -899,3 +899,27 @@ cheaper than the manuscript implied.**
   correcting. It belongs in the abstract, where its scope is stated.
 - `build_paper.py` now reads the `<h1>` out of README rather than hardcoding it, so the
   PDF title can no longer drift from the manuscript (it had already drifted once).
+
+**D-053 (2026-08-15) — title broadened; block-vs-axis language swept; VI-C retitled.**
+- **Title** -> "What Does an Interpretable Buyer Persona Cost? A Measurement-First
+  Evaluation of **Customer Representations**". "Construct-Aligned Representations"
+  re-centred the losing method and narrowed the object: the study evaluates raw, PCA, RFM,
+  RFM+KMeans, constructs, construct_pca, AE, AE+KMeans, GMM-on-AE, DEC and CA-DVAE.
+  Construct alignment is one family among those, not the scope.
+- **Block-vs-axis sweep (audit, not find-replace).** 18 occurrences of "named
+  axes/axis" reviewed individually; **6 changed**, 12 kept. Changed were the ones resting
+  on the R2 ~ 0.97 alignment-head result: abstract and VI-E "the twelve named axes alone
+  carry as much downstream signal" -> "the twelve **aligned dimensions**" (it is a block
+  result); Discussion "buys high named-axis alignment (R2 up to 0.968)" -> "high
+  **block-level construct** alignment"; VI-F "adds named axes" -> "adds a named construct
+  **subspace**"; persona-card artifact row now says "best-aligned dimension" and points at
+  VI-D2. Kept were the ones that are true or are the finding itself: `construct_pca`
+  genuinely has one named axis per construct with R2 = 1; lambda = 0 genuinely produces no
+  named axes; and the sentences stating that axis-level nameability FAILED.
+- **Property (2) restated** in the Introduction: "latent axes should align with named
+  constructs" -> the latent space should carry them "recoverably **and separably**",
+  measured at both block and axis level, with a forward reference to VI-D2. The old
+  wording made the property single-valued, which is exactly the conflation D-051 exposed.
+- **VI-C heading** "Interpretability: The Mechanism Works, and MIG Does Not" ->
+  "**Construct Alignment and the Limits of MIG-Based Selection**". "The Mechanism Works"
+  is false at axis level and was the most quotable overclaim left in the paper.

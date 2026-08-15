@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>What Does an Interpretable Buyer Persona Cost? A Measurement-First Evaluation of Construct-Aligned Representations</h1>
+<h1>What Does an Interpretable Buyer Persona Cost? A Measurement-First Evaluation of Customer Representations</h1>
 
 <p>
   <b>Vittal Muku</b><br>
@@ -64,7 +64,8 @@ coordinates alongside PCA of the residual is statistically indistinguishable fro
 neural model while holding perfect axis purity by construction. Three positive findings emerge:
 against the *neural* incumbent the aligned model matches stability at matched performance
 and wins dormancy prediction in both test families; on the behavioural dataset the twelve
-named axes alone carry as much downstream signal as the autoencoder's full unnamed embedding;
+aligned dimensions alone carry as much downstream signal as the autoencoder's full unnamed
+embedding;
 and Mutual-Information-Gap-based selection is shown to reverse the preferred
 alignment-strength ordering on the behavioural dataset, because increasing alignment spreads
 construct information across correlated axes and shrinks the top-1/top-2 gap the metric
@@ -120,10 +121,13 @@ properties, each measurable and each able to fail independently:
    future behaviour (campaign response, next purchase, dormancy) at least as well as
    incumbent representations, under a protocol that forbids the representation from ever
    seeing the labels.
-2. **Interpretability.** Latent axes should align with *named* marketing constructs:
-   recency-frequency-monetary value (RFM), price sensitivity, and category affinity,
-   quantified by per-axis alignment R², the Mutual Information Gap (MIG), and the
-   Separated Attribute Predictability (SAP) score.
+2. **Interpretability.** The latent space should carry *named* marketing constructs —
+   recency-frequency-monetary value (RFM), price sensitivity, and category affinity —
+   recoverably and separably, quantified by alignment R² (both from the aligned block and
+   from the best single dimension), axis purity, the Mutual Information Gap (MIG), and the
+   Separated Attribute Predictability (SAP) score. Section VI-D2 shows why the block and
+   axis forms of this property must be measured and reported separately: on Dataset A the
+   first holds and the second does not.
 3. **Stability.** Persona assignments should persist across random seeds and bootstrap
    resamples, quantified by the adjusted Rand index (ARI) and normalized mutual
    information (NMI).
@@ -140,12 +144,12 @@ what we call the frontier.
 contribution. Under leakage-safe evaluation the strongest baselines are the two
 representations the neural-segmentation literature most often treats as superseded: PCA
 on tabular survey data and three raw RFM features on behavioural data. At its
-validation-selected operating point CA-DVAE buys high named-axis alignment
+validation-selected operating point CA-DVAE buys high block-level construct alignment
 (R² up to 0.968) at a significant cost in predictive lift *and* a substantial cost in
 stability; incumbent personas are far more stable than aligned ones. Three findings run
 the other way and are reported with equal weight: against the *neural* incumbent
 specifically, the aligned model matches stability at matched performance and wins
-dormancy prediction in both test families; the twelve named axes alone carry as much
+dormancy prediction in both test families; the twelve aligned dimensions alone carry as much
 downstream signal on the behavioural dataset as the autoencoder's full unnamed embedding,
 which counts against the "the names are decoration on a black box" reading without
 settling construct purity; and MIG-based selection inverts the preferred
@@ -697,7 +701,7 @@ both datasets, confirming the posterior-collapse diagnostic recorded at the Phas
 dimension-wise independence costs informativeness, and informativeness is what the
 downstream head needs.
 
-### C. Interpretability: The Mechanism Works, and MIG Does Not
+### C. Construct Alignment and the Limits of MIG-Based Selection
 
 At the selected points the aligned **block** carries the constructs almost perfectly:
 Dataset A reaches mean alignment-head R² 0.854 with RFM R² **0.968**; Dataset B reaches
@@ -831,7 +835,7 @@ latent block addresses this directly.
 | A (β=0.25, λ=4) | 0.5127 | 0.4429 (10 dims) | 0.4456 (6 dims) | raw RFM 0.3794 |
 | B (β=0.10, λ=1) | 0.1798 | **0.1722** (12 dims) | 0.1447 (4 dims) | AE full 0.1723 |
 
-On Dataset B, **the twelve named axes alone carry as much downstream signal as the
+On Dataset B, **the twelve aligned dimensions alone carry as much downstream signal as the
 autoencoder's entire unnamed embedding**. On Dataset A the named block alone beats raw
 RFM, and the two blocks are complementary rather than redundant — neither alone reaches
 the full latent. The named block is therefore predictively load-bearing rather than merely
@@ -918,7 +922,7 @@ bimodality observed in the baselines is not cured by construct anchoring.
 Taken together with Section VI-D's SMP result, the defensible positive claim is narrow and
 specific: **against the neural persona pipeline — the thing this literature actually
 proposes — the construct-aligned model matches stability at matched performance, wins
-dormancy prediction, and adds named axes at no measured cost in the primary task relative
+dormancy prediction, and adds a named construct subspace at no measured cost in the primary task relative
 to that pipeline.** Against the non-neural incumbents it loses on lift and stability
 alike.
 
@@ -1393,7 +1397,7 @@ Regenerated by `run_phase6` into `results/phase6/{personality,ecommerce}_analysi
 | `tradeoff_r2.png` / `tradeoff_mig.png` | Interpretability–performance curves on both x-axes | VI-B, VI-C |
 | `stability.png`, `stability_map.{json,png}` | Cross-seed ARI/NMI at the selected point and over all 24 grid points | VI-D |
 | `frontier3.png` | Three-way frontier: downstream × alignment R² × cross-seed ARI | VI-B, VI-D |
-| `persona_cards.png` | Latent traversals along each named axis, standardized deltas with raw-unit annotations | VI-C |
+| `persona_cards.png` | Latent traversals along each best-aligned dimension, standardized deltas with raw-unit annotations (read with VI-D2: these directions are not construct-pure) | VI-C |
 | `attribution.json` | Downstream performance by latent block (aligned / free / full) | VI-E |
 | `smp.json` | Stability at Matched Performance | VI-D |
 | `leakage.json` | Concept-leakage diagnostic at the selected point: axis purity, off-target R², free-block recoverability | **VI-D2 (Dataset A run)** |
