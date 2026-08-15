@@ -30,7 +30,7 @@
 > and again inside a fresh clone. Canonical copies of every table live in
 > [docs/NOTEBOOK.md](docs/NOTEBOOK.md); the `results/` tree is gitignored and
 > regenerable from the committed configs and seeds. Nothing here is projected,
-> estimated, or extrapolated. The two pre-registered controls have now been run on Dataset A
+> estimated, or extrapolated. The two pre-specified controls have now been run on Dataset A
 > (Sections VI-D2, VI-E2) on the same reference machine; their Dataset B counterparts remain
 > **not yet run** and are labelled as such wherever they appear.
 
@@ -56,7 +56,7 @@ a trained autoencoder. At its validation-selected operating point CA-DVAE reache
 block-level construct alignment R² up to 0.968 but sits significantly below both bars
 (0.5130 ± 0.0597 and 0.1798 ± 0.0051), and its personas are markedly less stable than
 incumbent personas (ARI 0.467 / 0.583 versus 0.975 / 0.962 for RFM+K-means). Two
-pre-registered controls sharpen the negative result. A concept-leakage diagnostic shows the
+pre-specified controls sharpen the negative result. A concept-leakage diagnostic shows the
 alignment is a property of the aligned *block*, not of individual axes: mean best-single-axis
 R² is 0.406 and mean axis purity is −0.025, so a named axis typically predicts some other
 construct as well as its own. And a zero-training control that simply uses the constructs as
@@ -158,7 +158,7 @@ alignment-strength ordering when the named constructs are correlated.
 The contributions of this work are as follows:
 
 - A reformulation of persona quality as three measurable, falsifiable properties, with a
-  concrete instrument for each and pre-registered bars fixed before any proposed-model
+  concrete instrument for each and pre-specified bars fixed before any proposed-model
   run. Measuring persona quality by predictive accuracy is not new [17], nor is assessing
   segmentation stability by resampling agreement [28]; what is claimed is holding all
   three properties as co-equal criteria and measuring what each costs the others.
@@ -168,7 +168,7 @@ The contributions of this work are as follows:
   hyperparameter selection — enforced by unit tests rather than by convention.
 - An empirical interpretability–performance–stability trade-off surface for construct-aligned
   persona representations, with the cost of interpretability quantified on both axes and
-  the operating point selected on validation data only — together with two pre-registered
+  the operating point selected on validation data only — together with two pre-specified
   controls that test the mechanism rather than assume it: a concept-leakage diagnostic
   separating block-level from axis-level alignment, and a zero-training named-axis control
   that the swept model fails to beat.
@@ -542,7 +542,7 @@ predicts downstream performance better than dimension-wise disentanglement, incr
 should *cost* lift rather than buy it.
 
 **Is the negative result publishable?** Yes, and this was decided before running: the bars
-are pre-registered, the protocol is leakage-audited, and "the interpretable model loses to
+are pre-specified, the protocol is leakage-audited, and "the interpretable model loses to
 three raw features under honest evaluation" is a result the applied literature needs. The
 project was designed so that its value does not depend on the effect existing.
 
@@ -555,7 +555,7 @@ pins the dual-evaluation heads to the exact Phase-3 specification. The same audi
 per-task best-baseline comparisons (avoiding straw-man significance tests) and atomic
 record writes.
 
-Two analyses were pre-registered here and have now been **run on Dataset A** (results in
+Two analyses were pre-specified here and have now been **run on Dataset A** (results in
 Sections VI-D2 and VI-E2); the Dataset B runs remain pending the raw event logs. They are
 described here as designed, before their outcomes, because they were specified in advance:
 
@@ -676,7 +676,7 @@ complete. The λ = 0 column is the β-VAE ablation; the β = 1 row is the alignm
 ablation. Operating points are selected on **validation** downstream score and reported on
 **test**.
 
-**TABLE IV** — Validation-selected operating points versus the pre-registered bars
+**TABLE IV** — Validation-selected operating points versus the pre-specified bars
 
 | Dataset | Sweet spot (β, λ) | Test PR-AUC (gbt) | Bar | Gap | Wilcoxon | paired t |
 |---|---|---|---|---|---|---|
@@ -737,7 +737,7 @@ constructs.
 ### D2. Concept Leakage: The Named Axes Do Not Survive the Purity Test
 
 The alignment R² reported above is the diagonal of a matrix, and concept leakage is what
-inflates a diagonal [21], [22]. Running the pre-registered diagnostic on Dataset A's
+inflates a diagonal [21], [22]. Running the pre-specified diagnostic on Dataset A's
 selected point (β = 0.25, λ = 4; 10 aligned / 6 free dims; 6 seeds) separates two claims
 the manuscript had been treating as one.
 
@@ -855,7 +855,7 @@ magnitude is measured rather than assumed.
 
 The sharpest objection to the alignment mechanism is that the constructs are deterministic
 functions of the features (Section IV-C), so a representation with named axes is available
-without any training at all. Running the pre-registered control on Dataset A answers it.
+without any training at all. Running the pre-specified control on Dataset A answers it.
 
 **TABLE IX** — Named-axis controls versus the proposed model, Dataset A (6 seeds, gbt head)
 
@@ -940,10 +940,10 @@ strip-test sense: each changes the measured outcome, and each has its own ablati
 
 An AE mini-sweep on Dataset A (6 configurations × 6 seeds) was run so that the hard
 baseline is not undertuned relative to the proposed model's 24 configurations per seed.
-**The pre-registered bar is defended:** the best AE under the tree head reaches 0.5519,
+**The pre-specified bar is defended:** the best AE under the tree head reaches 0.5519,
 still below PCA's 0.5677. For transparency, a tuned latent-32 AE — twice the CA-DVAE
 capacity — reaches 0.5731 on the logistic head, at parity with PCA and not significantly
-different in either family (Wilcoxon 0.22 / 0.44; t 0.17 / 0.86). The pre-registered bar
+different in either family (Wilcoxon 0.22 / 0.44; t 0.17 / 0.86). The pre-specified bar
 (gbt head) is unchanged, and the raw ceiling of 0.615 remains above everything.
 
 ## VII. Discussion
@@ -964,7 +964,7 @@ three-way, not two-way, and the stability leg is the one the project's own desig
 originally got backwards. A practitioner can now make the trade explicitly instead of
 assuming it away.
 
-**But the price may not buy anything a simpler method cannot.** The two pre-registered
+**But the price may not buy anything a simpler method cannot.** The two pre-specified
 controls, now run on Dataset A, both point the same way. The alignment is a property of the
 aligned block rather than of individual axes (mean axis purity −0.025), so the "named axis"
 reading the persona cards depend on is not supported; and a closed-form control with genuinely
@@ -1144,7 +1144,7 @@ also report machine learning exposing heterogeneity within dormant customers tha
 misses, which is consistent with this paper's dormancy finding (Section VI-F) — but it
 does not pre-empt the mechanism.
 
-**Future work, in priority order.** (1) Repeat the two pre-registered controls of
+**Future work, in priority order.** (1) Repeat the two pre-specified controls of
 Section V-F on **Dataset B**, where both should bite harder: its 17 construct targets subsume
 the RFM features that already beat every learned representation, and correlated targets make
 within-block entanglement more likely. The Dataset A runs (VI-D2, VI-E2) are complete.
@@ -1165,7 +1165,7 @@ that construct-aligned personas cost predictive lift and cost stability, that th
 incumbents this literature dismisses are hard to beat under honest evaluation, and that the
 interpretability being purchased is real but narrower than claimed — a named *subspace*
 rather than named axes, and one a closed-form control obtains without training or a
-measurable loss in lift. Of four pre-registered
+measurable loss in lift. Of four pre-specified
 hypotheses, three were falsified, including one the project's own design expected to hold.
 The methodological findings — MIG-based selection inverting the alignment-strength ordering
 under correlated constructs, and the collapse-stability confound that makes unqualified
@@ -1334,7 +1334,7 @@ powercfg /change standby-timeout-ac 0     # once, before an overnight run
 .venv\Scripts\python.exe -m cadvae.eval.repro_check data=ecommerce eval.train_subsample=200000 model.max_epochs=40
 ```
 
-**Pre-registered controls (Section V-F).** Both have been run on Dataset A; the commands
+**Pre-specified controls (Section V-F).** Both have been run on Dataset A; the commands
 below reproduce that, and the same commands with `data=ecommerce` complete Dataset B once
 its raw logs are present. Neither needs new infrastructure or a re-sweep.
 

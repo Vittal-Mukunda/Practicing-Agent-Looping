@@ -950,3 +950,31 @@ cheaper than the manuscript implied.**
   .docx, and resolve the double-anonymous conflict with the public repository (the
   availability statement names the author's repo; anonymise for review or omit and restore
   on acceptance).
+
+**D-055 (2026-08-15) — editorial pass: claim-strength wording, applied to BOTH documents.**
+- **"pre-registered" -> "pre-specified" (22 occurrences across README + MIP).** The bars and
+  hypotheses were fixed before any proposed-model run and committed to the decision log and
+  checklist, which is a genuine and timestamped internal record — but there is **no external
+  registration** (OSF, AsPredicted). "Pre-registered" implies one. "Pre-specified" is the
+  accurate and still-strong claim. This was an overclaim carried since the first rewrite.
+- **"vindicates the aligned/free design" -> "supports the aligned/free decomposition".** The
+  constructs-alone-vs-constructs-plus-residual result shows free capacity is necessary; it
+  does not establish that this particular architecture is the right way to get it.
+- **"matches the neural model's lift" -> "achieves comparable measured lift"** (abstract and
+  introduction). The paired test was not significant; "matches" asserts equality that the
+  data do not establish, in the same way "beats" would.
+- **"costs stability" -> "can reduce stability"**, with "strong" added to the subject. The
+  measured effect is non-monotone: moderate alignment improved stability over the unaligned
+  ablation, strong alignment degraded it. The blanket claim contradicted our own VI-D.
+- **"around 0.3 adjusted Rand index"** removed in favour of "a substantial adjusted-Rand
+  stability gap". The figure was wrong as well as vague: the selected-point gaps against
+  RFM+k-means are 0.508 (A) and 0.379 (B), so 0.3 understated the effect being described.
+- **"no amount of stability compensates for a representation that cannot express the question
+  being asked" -> "stability does not compensate for a representation that lacks information
+  relevant to the prediction task."** Same argument without the absolute quantifier.
+- Draft-notice box removed from the Word generator; both manuscript files rebuilt and
+  verified clear of it, of author identifiers, and of repository URLs.
+- **Deliberately NOT weakened:** the VI-D2/VI-E2 argument separating block-level R2 0.873
+  from single-axis R2 0.406, and the conclusion that the defensible claim is a named
+  subspace rather than named axes. That is the paper's most interesting result and it is
+  stated at exactly the strength the evidence supports.

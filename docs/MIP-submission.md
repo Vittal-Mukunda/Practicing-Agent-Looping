@@ -20,14 +20,14 @@ marketing constructs, and stability across repeated estimation. Eleven represent
 including RFM, PCA, autoencoders and a construct-aligned variational autoencoder, are
 compared under a frozen-representation protocol on two public datasets (2,240 customers;
 2.55 million users from 110 million events), with leakage guards enforced by automated
-tests, six seeds per result, pre-registered performance bars and familywise correction.
+tests, six seeds per result, pre-specified performance bars and familywise correction.
 
 **Findings** — Interpretability is costly and the cost is measurable. Non-neural incumbents
 set the strongest bars; the construct-aligned model falls significantly below both and
 yields markedly less stable personas. Two controls sharpen this: alignment proves to be a
 property of a latent subspace rather than of individual named axes, and a zero-training
-representation built directly from the constructs matches the neural model's lift while
-holding perfect axis purity by construction.
+representation built directly from the constructs achieves comparable measured lift to the
+neural model while holding perfect axis purity by construction.
 
 **Originality/value** — The contribution is measurement rather than method: a protocol that
 prices interpretability, and evidence that an assumed benefit of neural segmentation does
@@ -74,11 +74,12 @@ what it costs.
 
 The findings are largely negative and specific, which is the contribution. Under honest
 evaluation the incumbents this literature tends to dismiss are the strongest baselines.
-Construct alignment costs predictive lift and costs stability. Most consequentially, when
+Strong construct alignment costs predictive lift and can reduce stability. Most
+consequentially, when
 the interpretability claim is itself tested rather than assumed, it proves narrower than
 reported: the constructs live in a latent *subspace*, not on individual named axes, and a
-representation that simply uses the constructs as coordinates matches the neural model
-without any training at all.
+representation that simply uses the constructs as coordinates achieves comparable measured
+lift without any training at all.
 
 ## 2. Background
 
@@ -195,7 +196,7 @@ none survives Holm correction across a realistic comparison family. Claims there
 the paired *t*-test, effect sizes and per-seed consistency, with Holm-adjusted values
 reported alongside.
 
-**Pre-registered hypotheses.** H1: the aligned representation matches or beats the strongest
+**Pre-specified hypotheses.** H1: the aligned representation matches or beats the strongest
 baseline on lift. H2: alignment produces axes that carry the named constructs. H3: construct
 anchoring stabilises personas relative to incumbents. H4: increasing β improves lift.
 
@@ -218,7 +219,7 @@ head, six seeds)
 | RFM + k-means personas | 0.2988 ± 0.0182 | 0.1073 ± 0.0064 |
 | CA-DVAE (validation-selected) | 0.5130 ± 0.0597 | 0.1798 ± 0.0051 |
 
-*Excluded from bar selection. Bold marks each dataset's pre-registered bar.
+*Excluded from bar selection. Bold marks each dataset's pre-specified bar.
 
 The representations this literature most often treats as superseded are the strongest. On
 survey-style data PCA significantly beats a trained autoencoder (*t*, p = 0.002) and is
@@ -231,7 +232,7 @@ silhouette scores on a single run would observe none of this.
 Undertuned baselines are the most common source of illusory improvement, and the proposed
 model receives 24 configurations per seed from the sweep. To keep the comparison fair we ran
 a dedicated tuning study for the strongest neural baseline on the survey dataset — six
-configurations across six seeds. **The pre-registered bar survives**: the best-tuned
+configurations across six seeds. **The pre-specified bar survives**: the best-tuned
 autoencoder reaches 0.5519 under the tree head, still below PCA. For transparency, an
 autoencoder at twice the proposed model's latent capacity reaches parity with PCA under the
 linear head (0.5731), a difference not statistically distinguishable in either test family.
@@ -245,7 +246,7 @@ configurations are the worst on both datasets, because pressure toward dimension
 independence costs the informativeness the downstream head needs.
 
 **Figure 1** plots the trade-off surface directly: downstream performance against construct
-alignment across the swept grid, with the pre-registered bar marked. It is the central
+alignment across the swept grid, with the pre-specified bar marked. It is the central
 artefact of the paper — the exchange rate between accuracy and interpretability, drawn from
 data rather than asserted.
 
@@ -350,7 +351,7 @@ it on the interpretability property both are competing on.
 One finding runs the other way and is robust: constructs *alone* reach only 0.4129, far
 below the same constructs with a residual block (*d_z* = 5.46, significant after
 correction). Interpretable coordinates alone are insufficient; free capacity alongside them
-does necessary work. That vindicates the aligned/free design — but not the neural machinery
+does necessary work. That supports the aligned/free decomposition — but not the neural machinery
 used to obtain it.
 
 ### 4.5 Where alignment does pay
@@ -372,8 +373,8 @@ alone carry as much downstream signal as the autoencoder's entire unnamed embedd
 the survey dataset the aligned block alone beats raw RFM — so the named subspace is
 predictively load-bearing, not a label attached to a black box. Second, RFM, dominant on
 purchase prediction, collapses to below base rate on next-category prediction: it contains
-no category information at all, and no amount of stability compensates for a representation
-that cannot express the question being asked. Where a persona scheme must carry category
+no category information at all, and stability does not compensate for a representation that
+lacks information relevant to the prediction task. Where a persona scheme must carry category
 structure, a learned representation remains necessary.
 
 The shape of the trade-off surface is also practically informative. It is smooth rather than
@@ -402,8 +403,8 @@ neural machinery used to obtain it is not demonstrably earning its cost.
 
 **Interpretability has a price, and this study quantifies it.** Named construct structure at
 block-level R² ≈ 0.97 costs roughly 0.055 PR-AUC against PCA on survey data, 0.016 against
-RFM on behavioural data, and around 0.3 adjusted Rand index of persona stability relative to
-the non-neural incumbent. A manager can now make that trade explicitly rather than assuming
+RFM on behavioural data, and a substantial adjusted-Rand stability gap relative to the
+non-neural incumbent. A manager can now make that trade explicitly rather than assuming
 it away.
 
 **Choose the representation by the job.** For ranking customers by purchase propensity, use
@@ -437,7 +438,7 @@ being unable to tell. Every result in this study came from infrastructure that i
 modern standards — the entire experimental programme, 288 sweep runs included, consumed
 under nine GPU-hours — while the measurement discipline that produced the findings costs
 nothing but protocol: hold the representation out of the labels, repeat across seeds, fix
-the bar before running the proposed method, and report the comparison you pre-registered
+the bar before running the proposed method, and report the comparison you pre-specified
 rather than the one that looks best afterwards. An organisation that adopts only the
 protocol and none of the models will still be better off than one that adopts a persona
 scheme on narrative appeal.
@@ -468,7 +469,7 @@ today, still valid next quarter — is the natural next study.
 ## 7. Conclusion
 
 This paper replaces an unmeasured marketing artefact with three falsifiable measurements and
-reports what they say. Of four pre-registered hypotheses, three were falsified, including
+reports what they say. Of four pre-specified hypotheses, three were falsified, including
 one this study's own design expected to hold. The interpretability being purchased is real
 but narrower than claimed — a named subspace rather than named axes, and one a closed-form
 control obtains without training or measurable loss in lift. For practice, the finding is

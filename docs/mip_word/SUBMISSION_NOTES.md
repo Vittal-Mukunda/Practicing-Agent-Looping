@@ -19,15 +19,14 @@ Two things follow, and both are the author's responsibility:
    and validity of the published work rests with the author, and a claim you have not
    personally verified is a claim you should not submit.
 
-`MIP_manuscript_FULL.docx` carries no draft notice. The `_v2` anonymous file retains one; it
-is a reminder to the author, not a submission requirement — delete it before submitting.
+The draft-notice box has been removed from both manuscript files.
 
 ## Files
 
 | File | Purpose |
 |---|---|
 | `MIP_manuscript_FULL.docx` | **Complete document, tables inline, no draft notice** — the readable/editable version. |
-| `MIP_manuscript_ANONYMOUS_v2.docx` | Submission version of the main text. No author name anywhere (verified). Tables replaced by `[Insert Table N about here]` markers, as required. Delete the red draft-notice box before submitting. |
+| `MIP_manuscript_ANONYMOUS.docx` | Submission version of the main text. No author name anywhere (verified). Tables replaced by `[Insert Table N about here]` markers, as required. Delete the red draft-notice box before submitting. |
 | `MIP_tables.docx` | Tables in a separate file, Roman numerals — Emerald requires this. |
 | `MIP_title_page.docx` | Author details, biography, acknowledgements, funding, conflict of interest, ethics statement. Separate file, never merged into the manuscript. |
 | `Figure1.tif`, `Figure2.tif` | 300 dpi TIFF. PNG is not an accepted figure format for Emerald. |
@@ -48,6 +47,7 @@ is a reminder to the author, not a submission requirement — delete it before s
 | Emerald Harvard references | ✓ formatted; check each entry yourself before submitting |
 | Word format | ✓ |
 | Prose | Author has confirmed provenance; read every sentence before submitting |
+| Methodological claims worded as "pre-specified", not "pre-registered" | ✓ — no external registration record is claimed |
 
 ## Still to do
 
