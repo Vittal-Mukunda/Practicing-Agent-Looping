@@ -1098,3 +1098,25 @@ and turned out to be wrong.
   that remain with the author.
 - **Word count is safe under either counting rule:** 6,883 at the guidelines' 250 words per
   table/figure, 7,093 at the 280 the journal page states. Both inside the 6,000-8,000 band.
+
+**D-062 (2026-08-15) — all 23 references verified against source indexes.**
+- Automated query against OpenAlex and Crossref for every entry, comparing year, venue,
+  volume, issue, page range and the full author list in order. PMLR consulted directly for
+  the ICML papers, because OpenAlex indexes only their arXiv preprints and therefore returns
+  preprint years (Locatello 2018 rather than 2019, Xie 2015 rather than 2016) and no pages.
+- **Result: 23 of 23 verified, no factual error found.** Twelve initial flags were all
+  artefacts of the checking method: arXiv indexed as primary location for conference papers,
+  article-number journals reporting "243-243" style page ranges, institutional repository
+  copies, and the checker's own umlaut transliteration.
+- **Two checked by hand rather than by script.** Dolnicar and Leisch: online 5 Aug 2009,
+  print issue March 2010, so citing 2010 is correct for Vol. 21 No. 1. Nai et al. third
+  author: OpenAlex renders "Li Ji", which is given name Ji and surname Li, so "Li, J." is
+  right.
+- **Four references upgraded** with proceedings detail confirmed during the check: Koh et al.
+  (PMLR 119, pp.5338-5348), Locatello et al. (PMLR 97, pp.4114-4124), Xie et al. (PMLR 48),
+  and Träuble et al. (proceedings title expanded). These were previously cited by conference
+  name alone.
+- **Stated limitation:** this verifies that the works exist as described. It does not
+  re-confirm that every claim attributed to a source is faithful to that source. Six were
+  read at abstract level or in full during the literature work and carry verification tags in
+  `research/ledger.md`.

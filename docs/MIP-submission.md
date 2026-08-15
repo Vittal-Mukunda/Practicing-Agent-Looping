@@ -518,11 +518,11 @@ Jansen, B.J., Jung, S., Chowdhury, S.A. and Salminen, J. (2021), "Persona analyt
 
 Kingma, D.P. and Welling, M. (2014), "Auto-encoding variational Bayes", *International Conference on Learning Representations*.
 
-Koh, P.W., Nguyen, T., Tang, Y.S., Mussmann, S., Pierson, E., Kim, B. and Liang, P. (2020), "Concept bottleneck models", *International Conference on Machine Learning*.
+Koh, P.W., Nguyen, T., Tang, Y.S., Mussmann, S., Pierson, E., Kim, B. and Liang, P. (2020), "Concept bottleneck models", *Proceedings of the 37th International Conference on Machine Learning*, PMLR 119, pp.5338-5348.
 
 Kumar, A., Sattigeri, P. and Balakrishnan, A. (2018), "Variational inference of disentangled latent concepts from unlabeled observations", *International Conference on Learning Representations*.
 
-Locatello, F., Bauer, S., Lucic, M., Rätsch, G., Gelly, S., Schölkopf, B. and Bachem, O. (2019), "Challenging common assumptions in the unsupervised learning of disentangled representations", *International Conference on Machine Learning*.
+Locatello, F., Bauer, S., Lucic, M., Rätsch, G., Gelly, S., Schölkopf, B. and Bachem, O. (2019), "Challenging common assumptions in the unsupervised learning of disentangled representations", *Proceedings of the 36th International Conference on Machine Learning*, PMLR 97, pp.4114-4124.
 
 Mahinpei, A., Clark, J., Lage, I., Doshi-Velez, F. and Pan, W. (2021), "Promises and pitfalls of black-box concept learning models", arXiv:2106.13314.
 
@@ -536,9 +536,9 @@ Salminen, J., Guan, K., Jung, S.G. and Jansen, B.J. (2021), "A survey of 15 year
 
 Sawada, Y. and Nakamura, K. (2022), "Concept bottleneck model with additional unsupervised concepts", *IEEE Access*.
 
-Träuble, F., Creager, E., Kilbertus, N., Locatello, F., Dittadi, A., Goyal, A., Schölkopf, B. and Bauer, S. (2021), "On disentangled representations learned from correlated data", *International Conference on Machine Learning*, PMLR 139, pp.10401-10412.
+Träuble, F., Creager, E., Kilbertus, N., Locatello, F., Dittadi, A., Goyal, A., Schölkopf, B. and Bauer, S. (2021), "On disentangled representations learned from correlated data", *Proceedings of the 38th International Conference on Machine Learning*, PMLR 139, pp.10401-10412.
 
-Xie, J., Girshick, R. and Farhadi, A. (2016), "Unsupervised deep embedding for clustering analysis", *International Conference on Machine Learning*, pp.478-487.
+Xie, J., Girshick, R. and Farhadi, A. (2016), "Unsupervised deep embedding for clustering analysis", *Proceedings of the 33rd International Conference on Machine Learning*, PMLR 48, pp.478-487.
 
 ---
 
