@@ -1037,3 +1037,43 @@ cheaper than the manuscript implied.**
   described by what actually happened: "fixed before the proposed-model sweep".
 - Word count with the guidelines' 250-per-table/figure allowance: ~6,750, inside the
   6,000-8,000 band.
+
+**D-059 (2026-08-15) — final editorial pass; two review items corrected rather than applied.**
+Six items were raised. Four applied as given; two were checked against the artefacts first
+and turned out to be wrong.
+
+- **"Eleven representations" was CORRECT, not a miscount.** ALL_METHODS holds ten methods
+  plus CA-DVAE. The two absent from Table I are `constructs` and `construct_pca`, which
+  appear in Table IV and were run on Dataset A only. Changing 11 to 9 would have introduced
+  an error. Reworded instead: "Nine representations ... on two public datasets, with two
+  further construct-based controls on the first", and a Table I footnote points to Table IV.
+- **The p-value was already correct.** The DOCX contains U+207B U+2075, a real superscript
+  minus five: `p = 3.4 x 10^-5`. The reviewer's text extractor dropped the minus; the file
+  never lost it. Verified by codepoint inspection, not by eye. No change made.
+- **The "twelve dormant customers" figure IS backed by a threshold analysis** and the
+  objection was reasonable given what the paper said. It comes from precision within the top
+  10% of the ranked list (0.9312 vs 0.9300), so 0.0012 x 10,000 = 12 at that depth. It does
+  NOT come from the PR-AUC difference, which coincidentally is also 0.0012 and is exactly why
+  it read as an illegitimate extrapolation. Fixed by stating the basis rather than deleting
+  the claim.
+- **Applied as given:** abstract and introduction now scope the subspace and control findings
+  to the survey dataset; "the alignment component costs primary lift" -> "reduces primary
+  predictive lift in this evaluation".
+- **"State of the art" kept, with attribution added.** It is Grinsztajn et al.'s own wording
+  for their result; softening it to "highly competitive" would have understated the cited
+  source. Now framed as what their 45-dataset benchmark found.
+
+**D-060 (2026-08-15) — humanizer pass over the MIP prose.**
+- **All 53 em dashes removed** (0 remain). One en dash survives, in "Kullback-Leibler", where
+  it is correct proper-noun typography. Numeric ranges rewritten as "0.64 to 0.70" and
+  similar; structured-abstract labels changed from "**Purpose** —" to "**Purpose.**".
+- Removed inflated significance ("It is the central artefact of the paper", "drawn from data
+  rather than asserted"), signposting ("Most consequentially", "This is the practical
+  implication we would emphasise"), and a negative-parallelism construction ("The costliest
+  thing an organisation can do here is not X; it is Y").
+- Sentence rhythm varied: several long clause-chains split, and colon-and-dash asides
+  rewritten as sentences.
+- Register deliberately left neutral and plain. Per the skill's own guidance, that is the
+  correct human voice for a research manuscript; no opinions or first-person colour added.
+- **Every numeric result verified present after the rewrite** by automated check against a
+  list of 45 reported figures. Nothing was lost or altered.
