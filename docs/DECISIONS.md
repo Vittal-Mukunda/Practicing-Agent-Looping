@@ -880,3 +880,22 @@ cheaper than the manuscript implied.**
 - Net: the measurement framework caught a failure that the project's own standard reporting
   concealed. That is the strongest available argument for the paper's thesis, and it arrived
   by running the control rather than by arguing about it.
+
+**D-052 (2026-08-15) — title changed to match the findings.**
+- Old: "Construct-Aligned Disentangled Variational Autoencoders for Interpretable Buyer
+  Personas: Measuring the Interpretability-Performance-Stability Frontier".
+- Three problems after D-051. (1) "**for** Interpretable Buyer Personas" asserts the
+  mechanism delivers interpretability - the claim VI-D2 just split, supported at block
+  level and falsified at axis level. (2) It leads with the method, which is not the
+  contribution and which lost to a closed-form control. (3) "Frontier" was already
+  demoted to "trade-off surface" in the body by D-045; the title contradicted the text.
+- New: "**What Does an Interpretable Buyer Persona Cost? A Measurement-First Evaluation
+  of Construct-Aligned Representations**". Question form (conventional in marketing
+  venues, and MIP is the target); "cost" is the finding both datasets support; the object
+  is named without claiming it succeeds; no VAE jargon for a marketing readership.
+- **Deliberately NOT titled on the subspace finding** ("Interpretable personas are a
+  subspace, not a set of axes"), which is sharper but rests on Dataset A alone. Leading a
+  title with a single-dataset result would repeat the overclaiming this project keeps
+  correcting. It belongs in the abstract, where its scope is stated.
+- `build_paper.py` now reads the `<h1>` out of README rather than hardcoding it, so the
+  PDF title can no longer drift from the manuscript (it had already drifted once).

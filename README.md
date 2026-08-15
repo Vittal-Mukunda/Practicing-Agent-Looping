@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1>Construct-Aligned Disentangled Variational Autoencoders for Interpretable Buyer Personas: Measuring the Interpretability–Performance–Stability Frontier</h1>
+<h1>What Does an Interpretable Buyer Persona Cost? A Measurement-First Evaluation of Construct-Aligned Representations</h1>
 
 <p>
   <b>Vittal Muku</b><br>
