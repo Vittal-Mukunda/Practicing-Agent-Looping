@@ -530,14 +530,13 @@ construction and is the honest form of the stability comparison.
 
 Fixed before any proposed-model run:
 
-| # | Hypothesis | Falsified if | Outcome |
+| # | Design expectation, recorded in advance | Would fail if | Outcome |
 |---|---|---|---|
-| H1 | A construct-aligned representation matches or beats the strongest baseline on primary downstream lift | Sweet-spot PR-AUC significantly below the bar in both test families | **Falsified** on both datasets (VI-B) |
-| H2 | Alignment produces axes that predict the named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Split**: supported at *block* level (R² 0.87), **falsified at axis level** — mean purity −0.025 (VI-D2) |
-| H3 | Construct anchoring stabilizes personas relative to incumbents | Incumbent personas at least as stable as aligned ones | **Falsified** (VI-D) |
-| H4 | Increasing β improves downstream lift | Lift flat or decreasing in β | **Falsified**, in the direction [25] predicts (VI-B) |
+| E1 | The representation predicts behaviour better than incumbents | Sweet-spot PR-AUC below the bar under the paired test | **Not supported** on both datasets (VI-B) |
+| E2 | Latent *axes* align with named constructs | Best per-axis R² near zero, or no better than an unaligned control | **Split**: supported at *block* level (R² 0.87), **not supported at axis level** — mean purity −0.025 (VI-D2) |
+| E3 | Personas persist across seeds better than incumbents | Incumbent personas at least as stable | **Not supported** (VI-D) |
 
-Directional hypothesis for H4 was stated in advance from [25]: because informativeness
+A further directional expectation was formed during model development, from [25]: because informativeness
 predicts downstream performance better than dimension-wise disentanglement, increasing β
 should *cost* lift rather than buy it.
 
@@ -683,7 +682,7 @@ ablation. Operating points are selected on **validation** downstream score and r
 | A | (0.25, 4) | 0.5130 ± 0.0597 | 0.5677 (PCA) | −0.055 | 0.0312 (floor) | 3.0 × 10⁻³ |
 | B | (0.10, 1) | 0.1798 ± 0.0051 | 0.1953 (RFM) | −0.016 | 0.0312 (floor) | 3.4 × 10⁻⁵ |
 
-**H1 is falsified on both datasets.** The interpretability cost in predictive lift is
+**E1 is not supported on both datasets.** The interpretability cost in predictive lift is
 real, quantified, and significant under the paired t; the Wilcoxon values sit at the
 n = 6 floor and would not survive familywise correction on their own (Section V-C), but
 the t-test and the effect sizes carry the claim, and the direction is consistent across
@@ -695,7 +694,7 @@ R² of only 0.35: the lift is recoverable precisely by giving up the naming. On 
 the best point anywhere in the grid is 0.1827 ± 0.0018 at (β = 0.1, λ = 0), i.e. with the
 alignment switched off entirely, and it still does not reach the RFM bar.
 
-**H4 is falsified in the predicted direction.** High-β rows (β ∈ {1, 2}) are the worst on
+**the β expectation is falsified in the predicted direction.** High-β rows (β ∈ {1, 2}) are the worst on
 both datasets, confirming the posterior-collapse diagnostic recorded at the Phase-4 gate
 (KL_free ≈ 0.02 at β = 1) and matching the expectation set from [25]: pressure toward
 dimension-wise independence costs informativeness, and informativeness is what the
@@ -775,7 +774,7 @@ the failure is **not** the side-channel leakage of [21] — the constructs stay 
 aligned block. It is *within-block entanglement*: the block encodes the constructs as a
 distributed code rather than as separated directions.
 
-**Consequence for the paper's claims.** Hypothesis H2 is supported at block level and
+**Consequence for the paper's claims.** Hypothesis E2 is supported at block level and
 **falsified at axis level**. Reported alignment-head R² of 0.968 — the number this project
 had been citing as its interpretability evidence — is a block-level regression and does not
 license "there is a dimension you can point at and call recency". Persona cards built by
@@ -796,7 +795,7 @@ reporting concealed.
 | CA-DVAE, stable region (λ ∈ [0.25, 1], low β) | 0.64–0.70 | 0.58–0.73 |
 | CA-DVAE at the selected point | 0.467 | 0.583 |
 
-**H3 is falsified.** Both incumbents produce more stable personas than the selected
+**E3 is not supported.** Both incumbents produce more stable personas than the selected
 aligned model. RFM+K-means is near-perfectly stable — unsurprisingly, since it clusters
 three deterministic features, so stability was never RFM's weakness. Strong alignment
 actively destabilizes: λ = 4 gives 0.46–0.55 across all β on Dataset A and is erratic on B
@@ -1165,8 +1164,8 @@ that construct-aligned personas cost predictive lift and cost stability, that th
 incumbents this literature dismisses are hard to beat under honest evaluation, and that the
 interpretability being purchased is real but narrower than claimed — a named *subspace*
 rather than named axes, and one a closed-form control obtains without training or a
-measurable loss in lift. Of four pre-specified
-hypotheses, three were falsified, including one the project's own design expected to hold.
+measurable loss in lift. Of the three properties the study set out to establish, none held in
+the form originally stated.
 The methodological findings — MIG-based selection inverting the alignment-strength ordering
 under correlated constructs, and the collapse-stability confound that makes unqualified
 stability comparisons meaningless — are offered as cautions to anyone evaluating persona

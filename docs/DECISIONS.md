@@ -978,3 +978,45 @@ cheaper than the manuscript implied.**
   from single-axis R2 0.406, and the conclusion that the defensible claim is a named
   subspace rather than named axes. That is the paper's most interesting result and it is
   stated at exactly the strength the evidence supports.
+
+**D-056 (2026-08-15) — hypothesis framing corrected after checking the record (INTEGRITY).**
+- External review asked whether H1-H4 were genuinely pre-specified. **Checked rather than
+  assumed, and the answer was no.** The numbered H1-H4 table appears nowhere before D-039
+  (2026-08-14) — it was constructed during manuscript writing, four weeks after the project
+  completed (2026-07-11) and with all results already in hand.
+- **What WAS genuinely fixed in advance**, and is now claimed at exactly that strength:
+  (a) the performance bars — CLAUDE.md line 96, written at project start, makes "the bar to
+  beat is fixed before any CA-DVAE work" a phase gate, and CHECKLIST confirms Phase 3
+  completed before the sweep; (b) the three properties and their expected directions, set
+  out in CLAUDE.md's "Core scientific idea" before any model was run. Note that (b) says
+  "latent **axes** align with named constructs" — the exact claim VI-D2 later split.
+- **H4 was a straw man and has been deleted.** The project never held that increasing beta
+  improves lift; by Phase 4, before the sweep, it had already logged the posterior-collapse
+  diagnostic and predicted "beta down = better" (NOTEBOOK line 583). Presenting it as a
+  pre-specified hypothesis that was "falsified" inflated the score from 3-of-4 to something
+  the record does not support. The beta behaviour is now reported as a **confirmed
+  expectation formed during development**, which is what it was.
+- Relabelled H1-H3 -> **E1-E3 ("design expectations recorded in advance")** in both
+  documents, with an explicit statement that no external pre-registration was filed and the
+  labels are expository.
+- **"falsified" -> "not supported"** throughout, per the reviewer's point that
+  falsification language sits awkwardly on n=6 inference resting on paired t-tests.
+- Conclusion tally corrected: "of four pre-specified hypotheses, three were falsified" ->
+  "of the three properties the study set out to establish, none held in the form originally
+  stated" — which is both true and stronger.
+
+**D-057 (2026-08-15) — two genuinely distinct manuscript versions.**
+- The file previously called *_FULL differed from *_ANONYMOUS only in having tables inline;
+  neither carried author details, so "full" was a misnomer.
+- Now: **MIP_manuscript_ANONYMOUS.docx** (no author block, availability statement states the
+  repository link is withheld to preserve double-anonymous review, tables as position
+  markers per Emerald's separate-tables requirement) and
+  **MIP_manuscript_AUTHOR_VERSION.docx** (title block with name/affiliation/email, normal
+  repository statement, tables inline for reading).
+- Verified programmatically that each version carries exactly the identifiers it should and
+  none it should not.
+- Both [AUTHOR: ...] drafting instructions removed; the availability and AI-disclosure
+  paragraphs are now final text, generated per version.
+- **Note on the reviewer's last point:** the `[Insert Table N about here]` markers in the
+  anonymous file are not an oversight — Emerald requires tables in a separate file with
+  their position labelled in the text. The author version has them inline for reading.

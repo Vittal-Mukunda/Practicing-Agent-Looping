@@ -196,9 +196,15 @@ none survives Holm correction across a realistic comparison family. Claims there
 the paired *t*-test, effect sizes and per-seed consistency, with Holm-adjusted values
 reported alongside.
 
-**Pre-specified hypotheses.** H1: the aligned representation matches or beats the strongest
-baseline on lift. H2: alignment produces axes that carry the named constructs. H3: construct
-anchoring stabilises personas relative to incumbents. H4: increasing β improves lift.
+**What was fixed in advance.** Two things, and it is worth being exact about which. First,
+the performance bars: running all baselines and fixing the bar before any proposed-model run
+was a gate in the project protocol, and the baseline campaign completed before the sweep
+began. Second, the three properties and the direction expected of each were set out in the
+project's design document before any model was run — that the representation would predict
+behaviour better than incumbents (E1), that its *latent axes* would align with named
+constructs (E2), and that persona assignments would persist across seeds and resamples (E3).
+These are design expectations recorded in advance, not a registered analysis plan: no
+external pre-registration was filed, and the labels are introduced here for exposition.
 
 ## 4. Findings
 
@@ -238,12 +244,15 @@ autoencoder at twice the proposed model's latent capacity reaches parity with PC
 linear head (0.5731), a difference not statistically distinguishable in either test family.
 The bar is unchanged, and the raw ceiling remains above everything.
 
-**H1 is falsified on both datasets.** CA-DVAE at its validation-selected operating point
-sits significantly below both bars (Dataset A: −0.055, *t* p = 0.003; Dataset B: −0.016,
-*t* p = 3.4 × 10⁻⁵), consistently across every seed. **H4 is also falsified**, in the
-direction the disentanglement literature predicts (Nai *et al.*, 2024): high-β
+**E1 is not supported on either dataset.** CA-DVAE at its validation-selected operating
+point sits below both bars under the paired *t*-test (Dataset A: −0.055, p = 0.003;
+Dataset B: −0.016, p = 3.4 × 10⁻⁵), consistently across every seed. A separate observation
+points the same way and is consistent with prior work (Nai *et al.*, 2024): high-β
 configurations are the worst on both datasets, because pressure toward dimension-wise
-independence costs the informativeness the downstream head needs.
+independence costs the informativeness the downstream head needs. This was anticipated
+during model development — a posterior-collapse diagnostic recorded before the sweep led to
+extending the grid downward in β — and is therefore reported as a confirmed expectation
+rather than as a tested hypothesis.
 
 **Figure 1** plots the trade-off surface directly: downstream performance against construct
 alignment across the swept grid, with the pre-specified bar marked. It is the central
@@ -256,7 +265,7 @@ marked.]*
 
 ### 4.2 Stability is a cost, not a benefit
 
-**H3 is falsified.** Incumbent personas are markedly more stable across seeds than aligned
+**E3 is not supported.** Incumbent personas are markedly more stable across seeds than aligned
 ones: RFM+k-means reaches cross-seed adjusted Rand index 0.975 (A) and 0.962 (B), AE+k-means
 0.703 and 0.745, against 0.467 and 0.583 for CA-DVAE at its selected point. RFM's stability
 is unsurprising — it clusters three deterministic features — and stability was never its
@@ -303,7 +312,7 @@ are separable gives a different answer.
 best-aligned dimension. To be read with this section: the directions are interpretable in
 appearance but are not construct-pure.]*
 
-**H2 splits: supported at block level, falsified at axis level.** The failure is not the
+**E2 splits: supported at block level, not supported at axis level.** The failure is not the
 side-channel leakage documented by Mahinpei *et al.* (2021) — the constructs remain inside
 the aligned block — but *within-block entanglement*: the block encodes the constructs as a
 distributed code rather than as separated directions. The practical consequence is direct.
@@ -397,7 +406,8 @@ ablation. But the direction is unflattering to the design. The alignment compone
 primary lift while supplying the interpretability the study is about, and the disentanglement
 component costs lift without a compensating measured benefit in this setting. Read alongside
 Section 4.4, the honest summary is that the aligned/free *structure* is worth keeping and the
-neural machinery used to obtain it is not demonstrably earning its cost.
+neural machinery used to obtain it does not demonstrate a measurable advantage in this
+setting.
 
 ## 5. Discussion and managerial implications
 
@@ -469,31 +479,19 @@ today, still valid next quarter — is the natural next study.
 ## 7. Conclusion
 
 This paper replaces an unmeasured marketing artefact with three falsifiable measurements and
-reports what they say. Of four pre-specified hypotheses, three were falsified, including
-one this study's own design expected to hold. The interpretability being purchased is real
+reports what they say. Of the three properties the study set out to establish, none held in
+the form originally stated: the representation did not beat incumbents on lift, its named
+structure proved to be a subspace rather than the individual axes the design anticipated,
+and its personas were less stable than the incumbents'. The interpretability being purchased is real
 but narrower than claimed — a named subspace rather than named axes, and one a closed-form
 control obtains without training or measurable loss in lift. For practice, the finding is
 usable immediately: incumbent representations are hard to beat, interpretable coordinates
 are cheap to construct directly, and the cost of an interpretable persona is now a number
 rather than an assumption.
 
-**Data and code availability.** Both datasets are publicly available. All configurations,
-seeds and analysis code are archived and will be released on publication; reported results
-reproduce bit-exactly from the committed configurations. *[AUTHOR: for double-anonymous
-review, supply an anonymised repository link here or omit this statement and restore it on
-acceptance — a link carrying your name would compromise anonymity.]*
+@@AVAILABILITY@@
 
-**Generative AI disclosure.** Generative AI (Claude, Anthropic) was used in this work.
-Its use is declared here and at submission. *[AUTHOR: confirm the wording below matches your
-actual use across the whole project history before submitting, and name the tool version.]*
-Research direction, the study design, and every consequential methodological decision were
-made by the author and are recorded individually in a project decision log. No AI tool is
-credited with authorship, and accountability for the integrity, originality and validity of
-this work rests with the author. No statistic reported here was produced or estimated by a
-language model: every figure was computed by executed code on real data and logged to a
-configuration-hashed run record, and all reported values reproduce bit-exactly from the
-committed configurations and seeds. No figure is AI-generated, and no personal or sensitive
-data was submitted to any AI platform.
+@@AIDISCLOSURE@@
 
 ## References
 
